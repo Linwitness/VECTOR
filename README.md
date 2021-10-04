@@ -1,3 +1,3 @@
 # VECTOR
-VoxEel-based boundary mooThing AlgORithms
+VoxEel-based boundary inClination mooThing AlgORithms
 
