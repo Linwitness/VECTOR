@@ -1,4 +1,4 @@
 __pycache__
-output/*
+output/.DS_Store
 .DS_Store
 input/.DS_Store
