@@ -1,0 +1,13 @@
+# YAML 1.2
+---
+authors: 
+  -
+    family-names: Yang
+    given-names: Lin
+    orcid: "https://orcid.org/https://orcid.org/ 0000-0002-1753-9462"
+cff-version: "1.1.0"
+message: "If you use this software, please cite it using these metadata."
+repository-code: "https://github.com/Linwitness/VECTOR"
+title: VECTOR
+version: "1.0.0"
+...
