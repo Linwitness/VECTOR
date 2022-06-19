@@ -20,51 +20,51 @@ from mpl_toolkits.mplot3d import Axes3D
 # import image from SPPARKS .init file
 def init2IC(nx,ny,ng,filename,filepath=current_path+"/input/"):
     R = np.zeros((nx,ny,2))
-    
+
     with open(filepath+filename, 'r') as file:
         beginNum = 3
         fig = []
-        
+
         while beginNum >= 0:
             line = file.readline()
             beginNum -= 1
-        
+
         if line[0] != '1':
             print("Please change beginning line! " + line)
-            
+
         while line:
             eachline = line.split()
             fig.append([int(eachline[1])])
             line = file.readline()
-    
+
     fig = np.array(fig)
     fig = fig.reshape(nx,ny)
     fig = np.flipud(fig)
     fig = fig[:,:,None]
-    
+
     return fig,R
 
 def init2IC3d(nx,ny,nz,ng,filename,dream3d=False,filepath=current_path+"/input/"):
     R = np.zeros((nx,ny,nz,3))
-    
+
     with open(filepath+filename, 'r') as file:
         beginNum = 3
         fig = np.zeros((nx*ny*nz))
-        
+
         while beginNum >= 0:
             line = file.readline()
             beginNum -= 1
-        
+
         if line[0] != '1':
             print("Please change beginning line! " + line)
-            
+
         while line:
             eachline = line.split()
             fig[int(eachline[0])-1]=int(eachline[1])
             # fig.append([int(eachline[1])])
-            
+
             line = file.readline()
-    
+
     # fig = np.array(fig)
     fig = fig.reshape(nz,nx,ny)
     fig = fig.transpose((1,2,0))
@@ -75,18 +75,19 @@ def init2IC3d(nx,ny,nz,ng,filename,dream3d=False,filepath=current_path+"/input/"
     fig = fig[:,:,:,None]
     return fig,R
 
+
 # Circle IC
 def Circle_IC(nx,ny):
 # =============================================================================
-#     output the circle initial condition, 
-#     nx is the sites in x coordination, 
-#     ny is the site in y coordination, 
+#     output the circle initial condition,
+#     nx is the sites in x coordination,
+#     ny is the site in y coordination,
 #     ng is the grain number
 # =============================================================================
     ng = 2
     P = np.zeros((nx,ny,ng))
     R = np.zeros((nx,ny,2))
-    
+
     for i in range(0,nx):
         for j in range(0,ny):
             radius = math.sqrt((j-ny/2)**2+(i-nx/2)**2)
@@ -103,24 +104,50 @@ def Circle_IC(nx,ny):
 
     return P,R
 
-# 3D Circle IC
-def Circle_IC3d(nx,ny,nz):
+def QuarterCircle_IC(nx,ny):
 # =============================================================================
-#     output the circle initial condition, 
-#     nx is the sites in x coordination, 
-#     ny is the site in y coordination, 
+#     output the quarter circle initial condition,
+#     nx is the sites in x coordination,
+#     ny is the site in y coordination,
+#     ng is the grain number
+# =============================================================================
+    ng = 2
+    P = np.zeros((nx,ny,ng))
+    R = np.zeros((nx,ny,2))
+
+    for i in range(0,nx):
+        for j in range(0,ny):
+            radius = math.sqrt((j-ny/2)**2+(i-nx/2)**2)
+            if radius < 40 and i < nx/2 and j < ny/2:
+                P[i,j,0] = 1.
+                if radius != 0:
+                    R[i,j,0] = (j-ny/2)/radius
+                    R[i,j,1] = (i-nx/2)/radius
+            else:
+                P[i,j,1] = 1.
+                if radius != 0:
+                    R[i,j,0] = (j-ny/2)/radius
+                    R[i,j,1] = (i-nx/2)/radius
+
+    return P,R
+# 3D Circle IC
+def Circle_IC3d(nx,ny,nz,r=25):
+# =============================================================================
+#     output the circle initial condition,
+#     nx is the sites in x coordination,
+#     ny is the site in y coordination,
 #     nz is the site in z coordination,
 #     ng is the grain number
 # =============================================================================
     ng = 2
     P = np.zeros((nx,ny,nz,ng))
     R = np.zeros((nx,ny,nz,3))
-    
+
     for i in range(0,nx):
         for j in range(0,ny):
             for k in range(0,nz):
                 radius = math.sqrt((j-ny/2)**2+(i-nx/2)**2+(k-nz/2)**2)
-                if radius < nx/4:
+                if radius < r:
                     P[i,j,k,0] = 1.
                     if radius != 0:
                         R[i,j,k,0] = (j-ny/2)/radius
@@ -138,59 +165,59 @@ def Circle_IC3d(nx,ny,nz):
 # Voronoi IC
 def Voronoi_IC(nx,ny,ng):
 # =============================================================================
-#     output the Voronoi initial condition, 
-#     nx is the sites in x coordination, 
-#     ny is the site in y coordination, 
+#     output the Voronoi initial condition,
+#     nx is the sites in x coordination,
+#     ny is the site in y coordination,
 #     ng is the grain number
 # =============================================================================
     P = np.zeros((nx,ny,ng))
     R = np.zeros((nx,ny,2))
-    
+
     # # generate points randomly
     # GCoords = np.zeros((ng,2))
     # for i in range(0,ng):
     #     GCoords[i,0],GCoords[i,1]= np.random.randint(nx),np.random.randint(ny)
-    
+
     # Paint each domain site according to which grain center is closest(200,200,5)
     GCoords = np.array([[ 36., 132.],
                         [116.,  64.],
                         [ 43.,  90.],
                         [128., 175.],
                         [194.,  60.]])
-    
+
     # (400,400,5)
     # GCoords = np.array([[ 69., 321.],
     #                     [298., 134.],
     #                     [174., 138.],
     #                     [294., 392.],
     #                     [ 69., 324.]])
-    
+
     # (100,100,5)
     # GCoords = np.array([[20., 95.],
     #                     [27., 61.],
     #                     [37., 93.],
     #                     [65., 18.],
     #                     [25., 17.]])
-    
+
     # (50,50,5)
     # GCoords = np.array([[ 0., 35.],
     #                     [43., 36.],
     #                     [43.,  9.],
     #                     [38., 37.],
     #                     [28., 36.]])
-    
-    
+
+
     for i in range(0,nx):
         for j in range(0,ny):
             MinDist = math.sqrt((GCoords[0,1]-j)**2+(GCoords[0,0]-i)**2)
             GG = 0
             for G in range(1,ng):
-                dist = math.sqrt((GCoords[G,1]-j)**2+(GCoords[G,0]-i)**2) 
+                dist = math.sqrt((GCoords[G,1]-j)**2+(GCoords[G,0]-i)**2)
                 if dist < MinDist:
                     GG = G
                     MinDist = dist
             P[i,j,GG] = 1.
-            
+
     # (200,200,5)
     for i in range(0,nx):
         for j in range(0,ny):
@@ -212,7 +239,7 @@ def Voronoi_IC(nx,ny,ng):
             elif (i==94 or i==95 or i==96) and (j==121 or j==122):
                 R[i,j,0] = -2.0/math.sqrt(5)
                 R[i,j,1] = 1.0/math.sqrt(5)
-    
+
     # (400,400,5)
     # for i in range(0,nx):
     #     for j in range(0,ny):
@@ -240,8 +267,8 @@ def Voronoi_IC(nx,ny,ng):
     #         elif j>=279 and j<322 and i<=205 and i>=192:
     #             R[i,j,0] = 13.0/math.sqrt(2105)
     #             R[i,j,1] = 44.0/math.sqrt(2105)
-            
-                
+
+
     # (100,100,5)
     # for i in range(0,nx):
     #     for j in range(0,ny):
@@ -262,14 +289,14 @@ def Voronoi_IC(nx,ny,ng):
     #             R[i,j,1] = 1
     #         elif j==ny-1:
     #             R[i,j,0] = 1
-    #             R[i,j,1] = 0         
+    #             R[i,j,1] = 0
     #         elif i>0 and i<=26 and j<=79 and j>=74:
     #             R[i,j,0] = -27.0/math.sqrt(754)
     #             R[i,j,1] = 5.0/math.sqrt(754)
     #         elif j>=79 and j<ny-1 and i<=29 and i>=26:
     #             R[i,j,0] = -3.0/math.sqrt(634)
     #             R[i,j,1] = 25.0/math.sqrt(634)
-            
+
     # (50,50,5)
     # for i in range(0,nx):
     #     for j in range(0,ny):
@@ -293,40 +320,41 @@ def Voronoi_IC(nx,ny,ng):
     #             R[i,j,1] = 1
     #         elif j==ny-1 or j==0:
     #             R[i,j,0] = 1
-    #             R[i,j,1] = 0         
+    #             R[i,j,1] = 0
     #         elif i>=8 and i<=14 and j<=10 and j>=0:
     #             R[i,j,0] = -3.0/math.sqrt(34)
     #             R[i,j,1] = 5.0/math.sqrt(34)
     #         elif j>=10 and j<=ny-1 and i<=14 and i>=13:
     #             R[i,j,0] = 1.0/math.sqrt(1522)
     #             R[i,j,1] = 39.0/math.sqrt(1522)
-    
+
     # R = np.load('npy/voronoi_R.npy')
-    
+
     return P,R
 
 
 
 # Sin(x) IC
-def Complex2G_IC(nx,ny):
+def Complex2G_IC(nx,ny,wavelength=20):
 # =============================================================================
-#     output the sin(x) initial condition, 
-#     nx is the sites in x coordination, 
-#     ny is the site in y coordination, 
+#     output the sin(x) initial condition,
+#     nx is the sites in x coordination,
+#     ny is the site in y coordination,
 #     ng is the grain number
 # =============================================================================
-    
+
     ng = 2
     P = np.zeros((nx,ny,ng))
     R = np.zeros((nx,ny,2))
-     
+    A = wavelength/2
+
     for i in range(0,nx):
         # slope
-        slope = -1.0/(math.pi*math.cos(math.pi/10*(i+5)))
+        slope = -1.0/(10*math.pi/A*math.cos(math.pi/A*(i+A/2)))
         length = math.sqrt(1 + slope**2)
-        
+
         for j in range(0,ny):
-            if j < ny/2 + 10*math.sin((i+5)*0.31415926):
+            if j < ny/2 + 10*math.sin((i+A/2)*3.1415926/A):
                 P[i,j,0] = 1.
                 R[i,j,0] = slope/length
                 R[i,j,1] = 1.0/length
@@ -334,45 +362,46 @@ def Complex2G_IC(nx,ny):
                 P[i,j,1] = 1.
                 R[i,j,0] = slope/length
                 R[i,j,1] = 1.0/length
-    
+
     for i in range(0,nx):
         for j in range(0,ny):
-            if (i==0 and j==0) or (i==nx-1 and j==ny-1):
-                R[i,j,0]=math.sqrt(0.5)
-                R[i,j,1]=math.sqrt(0.5)
-            elif (i==0 and j==ny-1) or (i==nx-1 and j==0):
-                R[i,j,0]=-math.sqrt(0.5)
-                R[i,j,1]=math.sqrt(0.5)
-            elif j==0 or j==nx-1:
+            # if (i==0 and j==0) or (i==nx-1 and j==ny-1):
+            #     R[i,j,0]=math.sqrt(0.5)
+            #     R[i,j,1]=math.sqrt(0.5)
+            # elif (i==0 and j==ny-1) or (i==nx-1 and j==0):
+            #     R[i,j,0]=-math.sqrt(0.5)
+            #     R[i,j,1]=math.sqrt(0.5)
+            if j==0 or j==nx-1:
                 R[i,j,0]=1
                 R[i,j,1]=0
 
     return P,R
 
-def Complex2G_IC3d(nx,ny,nz):
+def Complex2G_IC3d(nx,ny,nz,wavelength=20):
 # =============================================================================
-#     output the circle initial condition, 
-#     nx is the sites in x coordination, 
-#     ny is the site in y coordination, 
+#     output the circle initial condition,
+#     nx is the sites in x coordination,
+#     ny is the site in y coordination,
 #     nz is the site in z coordination,
 #     ng is the grain number
 # =============================================================================
     ng = 2
     P = np.zeros((nx,ny,nz,ng))
     R = np.zeros((nx,ny,nz,3))
-    
+    A = wavelength/2
+
     for i in range(0,nx):
         for j in range(0,ny):
-            vector_i = np.array([1, 0, math.pi/4*math.cos(math.pi/10*(0.5*i+5))])
-            length_i = math.sqrt(1 + (math.pi/4*math.cos(math.pi/10*(0.5*i+5)))**2)
+            vector_i = np.array([1, 0, 5*math.pi/(2*A)*math.cos(math.pi/A*(0.5*i+A/2))])
+            length_i = math.sqrt(1 + (5*math.pi/(2*A)*math.cos(math.pi/A*(0.5*i+A/2)))**2)
             vector_i = vector_i/length_i
-            vector_j = np.array([0, 1, math.pi/4*math.cos(math.pi/10*(0.5*j+5))])
-            length_j = math.sqrt(1 + (math.pi/4*math.cos(math.pi/10*(0.5*j+5)))**2)
+            vector_j = np.array([0, 1, 5*math.pi/(2*A)*math.cos(math.pi/A*(0.5*j+A/2))])
+            length_j = math.sqrt(1 + (5*math.pi/(2*A)*math.cos(math.pi/A*(0.5*j+A/2)))**2)
             vector_j = vector_j/length_j
-            
-            
+
+
             for k in range(0,nz):
-                if k < nz/2 + 5*math.sin((0.5*i+5)*0.31415926) + 5*math.sin((0.5*j+5)*0.31415926):
+                if k < nz/2 + 5*math.sin((0.5*i+A/2)*3.1415926/A) + 5*math.sin((0.5*j+A/2)*3.1415926/A):
                     P[i,j,k,0] = 1.
                     R[i,j,k,:] = np.cross(vector_i,vector_j)
                     tmp_r = R[i,j,k,:]/np.linalg.norm(R[i,j,k,:])
@@ -380,35 +409,35 @@ def Complex2G_IC3d(nx,ny,nz):
                     # print(f"i={i} j={j} k={k}")
                     # print(R[i,j,k,:])
                 else:
-                    P[i,j,k,1] = 1. 
+                    P[i,j,k,1] = 1.
                     R[i,j,k,:] = -np.cross(vector_i,vector_j)
                     tmp_r = R[i,j,k,:]/np.linalg.norm(R[i,j,k,:])
                     R[i,j,k,:]=[tmp_r[1],tmp_r[0],tmp_r[2]]
-                    
-                    
-            
+
+
+
     for k in [0,nz-1]:
         for i in range(0,nx):
             for j in range(0,ny):
                 R[i,j,k,2] = 2.*((k>nz/2)*1-0.5)
-    
+
     return P, R
-        
+
 
 # A real abnormal grain growth
 def Abnormal_IC(nx,ny):
-    
+
     ng = 2
     P = np.zeros((nx,ny,ng))
     R = np.zeros((nx,ny,2))
 
     file=open(f"input/AG{nx}x{ny}.txt")
     lines=file.readlines()
-     
+
     row=0
     for line in lines:
         # line = " ".join(line)
-        line=line.strip().split() 
+        line=line.strip().split()
         for i in range(0,len(line)):
             P[row,i,0]=float(line[i])
             P[row,i,1]=1-float(line[i])
@@ -420,7 +449,7 @@ def Abnormal_IC(nx,ny):
         R2 = np.load('npy/BLabnormal04_R.npy')
         R3 = np.load('npy/LSabnormal01_R.npy')
         R4 = np.load('npy/VTabnormal03_R.npy')
-        
+
         m=0
         for i in range(0,nx):
             for j in range(0,ny):
@@ -429,7 +458,7 @@ def Abnormal_IC(nx,ny):
                     R4[i,j,1] = -R4[i,j,0]
                     m+=1
                     # print("i = " + str(i) + " j = " + str(j) + " m = " + str(m))
-        
+
         for i in range(0,nx):
             for j in range(0,ny):
                 R[i,j,0] = (R1[i,j,0] + R2[i,j,0] + R3[i,j,0] + R4[i,j,0])/4
@@ -441,52 +470,164 @@ def Abnormal_IC(nx,ny):
                 else:
                     R[i,j,0] = R[i,j,0]/length
                     R[i,j,1] = R[i,j,1]/length
-            
-    
+
+
     return P,R
-    
-    
+
+
 def SmallestGrain_IC(nx,ny):
      ng = 2
      P = np.zeros((nx,ny,ng))
-     
+
      for i in range(0,nx):
-         
+
          for j in range(0,ny):
-             
+
              if i==25 and j==10:
                  P[i,j,0] = 1
              elif i>=50 and i<=90 and j==10:
                  P[i,j,0] = 1
-                 
+
              elif i>=24 and i<=25 and j>=25 and j<=26:
                  P[i,j,0] = 1
              elif i>=50 and i<=90 and j>=25 and j<=26:
                  P[i,j,0] = 1
-                 
+
              elif i>=23 and i<=25 and j>=40 and j<=42:
                  P[i,j,0] = 1
              elif i>=50 and i<=90 and j>=40 and j<=42:
                  P[i,j,0] = 1
-                 
+
              elif i>=22 and i<=25 and j>=60 and j<=63:
                  P[i,j,0] = 1
              elif i>=50 and i<=90 and j>=60 and j<=63:
                  P[i,j,0] = 1
-                 
+
              elif i>=21 and i<=25 and j>=83 and j<=87:
                  P[i,j,0] = 1
              elif i>=50 and i<=90 and j>=83 and j<=87:
                  P[i,j,0] = 1
-                 
+
              else:
                  P[i,j,1] = 1
-                 
+
      return P
 
 
 #%% Basic function in Smooth Algorithm
- 
+
+def output_linear_smoothing_matrix(iteration):
+# =============================================================================
+#     The function will output the bottom matrix,
+#     the matrix can be use to calculate smoothing status.
+#     bottom matrix length is 2*iteration+1
+# =============================================================================
+
+    matrix_length = 2*iteration+3
+    matrix = np.zeros((iteration, matrix_length, matrix_length))
+    matrix_unit = np.array([[1/16, 1/8, 1/16], [1/8, 1/4, 1/8], [1/16, 1/8, 1/16]])
+    matrix[iteration-1,iteration:iteration+3,iteration:iteration+3] = matrix_unit
+
+    for i in range(iteration-2,-1,-1):
+        for j in range(i+1, matrix_length-i-1):
+            for k in range(i+1, matrix_length-i-1):
+                matrix[i,j,k] += np.sum(matrix[i+1,j-1:j+2,k-1:k+2] * matrix_unit)
+
+
+
+    return matrix[0,1:-1,1:-1]
+
+def output_linear_smoothing_matrix3D(iteration):
+# =============================================================================
+#     The function will output the bottom matrix,
+#     the matrix can be use to calculate smoothing status.
+#     bottom matrix length is 2*iteration+1
+# =============================================================================
+
+    matrix_length = 2*iteration+3
+    sa, sb, sc, sd = 1/8, 1/16, 1/32, 1/64
+    matrix = np.zeros((iteration, matrix_length, matrix_length, matrix_length))
+    matrix_unit = np.array([[[sd,sc,sd],[sc,sb,sc],[sd,sc,sd]],
+                            [[sc,sb,sc],[sb,sa,sb],[sc,sb,sc]],
+                            [[sd,sc,sd],[sc,sb,sc],[sd,sc,sd]]])
+    matrix[iteration-1,iteration:iteration+3,iteration:iteration+3,iteration:iteration+3] = matrix_unit
+
+    for i in range(iteration-2,-1,-1):
+        for j in range(i+1, matrix_length-i-1):
+            for k in range(i+1, matrix_length-i-1):
+                for p in range(i+1, matrix_length-i-1):
+                    matrix[i,j,k,p] += np.sum(matrix[i+1,j-1:j+2,k-1:k+2,p-1:p+2] * matrix_unit)
+
+
+
+    return matrix[0,1:-1,1:-1,1:-1]
+
+def output_linear_vector_matrix(iteration,clip=0):
+# =============================================================================
+#     The function will output the bottom matrix,
+#     the matrix can be use to calculate vector from smoothing status.
+#     bottom matrix length is 2*iteration+1
+#     00 im 00
+#     jm CT jp
+#     00 ip 00
+# =============================================================================
+
+    matrix_length = 2*iteration+3
+    matrix_j = np.zeros((matrix_length, matrix_length))
+    matrix_i = np.zeros((matrix_length, matrix_length))
+    smoothing_matrix = output_linear_smoothing_matrix(iteration)
+    matrix_j[1:-1,2:] = smoothing_matrix
+    matrix_j[1:-1,0:-2] += -smoothing_matrix
+    matrix_i[2:,1:-1] = smoothing_matrix
+    matrix_i[0:-2,1:-1] += -smoothing_matrix
+
+    matrix_i = matrix_i[clip:matrix_length-clip, clip:matrix_length-clip]
+    matrix_j = matrix_j[clip:matrix_length-clip, clip:matrix_length-clip]
+
+    return matrix_i, matrix_j
+
+def output_linear_vector_matrix3D(iteration, clip=0):
+# =============================================================================
+#     The function will output the bottom matrix,
+#     the matrix can be use to calculate vector from smoothing status.
+#     bottom matrix length is 2*iteration+1
+#     00 im 00
+# km  jm CT jp   kp
+#     00 ip 00
+# =============================================================================
+
+    matrix_length = 2*iteration+3
+    matrix_j = np.zeros((matrix_length, matrix_length, matrix_length))
+    matrix_i = np.zeros((matrix_length, matrix_length, matrix_length))
+    matrix_k = np.zeros((matrix_length, matrix_length, matrix_length))
+    smoothing_matrix = output_linear_smoothing_matrix3D(iteration)
+    matrix_j[1:-1,2:,1:-1] = smoothing_matrix
+    matrix_j[1:-1,0:-2,1:-1] += -smoothing_matrix
+    matrix_i[2:,1:-1,1:-1] = smoothing_matrix
+    matrix_i[0:-2,1:-1,1:-1] += -smoothing_matrix
+    matrix_k[1:-1,1:-1,2:] = smoothing_matrix
+    matrix_k[1:-1,1:-1,0:-2] += -smoothing_matrix
+    matrix_i = matrix_i[clip:matrix_length-clip, clip:matrix_length-clip, clip:matrix_length-clip]
+    matrix_j = matrix_j[clip:matrix_length-clip, clip:matrix_length-clip, clip:matrix_length-clip]
+    matrix_k = matrix_k[clip:matrix_length-clip, clip:matrix_length-clip, clip:matrix_length-clip]
+
+    return matrix_i, matrix_j, matrix_k
+
+def output_smoothed_matrix(simple_test3,linear_smoothing_matrix):
+# =============================================================================
+#     output the smoothed final matrix
+# =============================================================================
+    edge = int(np.floor(np.shape(linear_smoothing_matrix)[0]/2))
+    ilen,jlen = np.shape(simple_test3)
+    smoothed_matrix3 = np.zeros((ilen,jlen))
+    for i in range(edge,ilen-edge):
+        for j in range(edge, jlen-edge):
+            smoothed_matrix3[i,j] = np.sum(simple_test3[i-edge:i+edge+1,j-edge:j+edge+1]*linear_smoothing_matrix)
+
+    return smoothed_matrix3
+
+
+
 def periodic_bc(nx,ny,i,j):
     ip = i + 1
     im = i - 1
@@ -598,14 +739,14 @@ def split_cores(cores, sc_d = 2):
     while cores != 1:
         cores = cores/2
         sc_p += 1
-        
+
     sc_length  = 2**(math.ceil(sc_p/sc_d))
     sc_width = 2**(math.floor(sc_p/sc_d))
-    
+
     if sc_d == 3:
         sc_height = int(2**sc_p/(sc_length*sc_width))
         return sc_length, sc_width, sc_height
-    
+
     return sc_length, sc_width
 
 
@@ -617,7 +758,7 @@ def split_IC(split_V,cores,dimentions=2, sic_nx_order = 1, sic_ny_order = 2, sic
         sic_lc,sic_wc,sic_hc = split_cores(cores,dimentions)
     # sic_width  = nx/sic_wc
     # sic_length  = ny /sic_lc
-    
+
     new_arrayin = np.array_split(split_V, sic_wc, axis = sic_nx_order)
     new_arrayout = []
     for arrayi in new_arrayin:
@@ -630,5 +771,5 @@ def split_IC(split_V,cores,dimentions=2, sic_nx_order = 1, sic_ny_order = 2, sic
             new_arrayout.append(new_array3)
         else:
             new_arrayout.append(arrayi)
-    
+
     return new_arrayout
