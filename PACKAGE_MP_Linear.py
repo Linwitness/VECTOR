@@ -35,8 +35,10 @@ class linear_class(object):
         self.R = R  # results of analysis model
         # convert individual grains map into one grain map
         self.P = np.zeros((3,nx,ny)) # matrix to store IC and normal vector results
+        self.C = np.zeros((2,nx,ny)) # curvature result matrix
         for i in range(0,np.shape(P0)[2]):
             self.P[0,:,:] += P0[:,:,i]*(i+1)
+            self.C[0,:,:] += P0[:,:,i]*(i+1)
 
         # data for multiprocessing
         self.cores = cores
@@ -44,6 +46,7 @@ class linear_class(object):
         # data for accuracy
         self.loop_times = loop_times
         self.tableL = 2*(loop_times+1)+1 # when repeatting two times, the table length will be 7 (7 by 7 table)
+        self.tableL_curv = 2*(loop_times+2)+1
         self.halfL = loop_times+1
 
         # temporary matrix to increase efficiency
@@ -58,6 +61,10 @@ class linear_class(object):
         # Outout the result matrix, first level is microstructure,
         # last two layers are normal vectors
         return self.P
+
+    def get_C(self):
+        # Get curvature matrix
+        return self.C
 
     def get_errors(self):
         ge_gbsites = self.get_gb_list()
@@ -123,11 +130,8 @@ class linear_class(object):
 
         return ca_area_cen, ca_area_nei
 
-
-
-
-    def find_window(self,i,j):
-        fw_len = self.tableL - 2*self.clip
+    def find_window(self,i,j,fw_len):
+        # fw_len = self.tableL - 2*self.clip
         fw_half = int((fw_len-1)/2)
         window = np.zeros((fw_len,fw_len))
 
@@ -143,10 +147,93 @@ class linear_class(object):
 
         return window
 
+    def calculate_curvature(self,matrix):
+        # calculate curvature based on 5x5 smoothed matrix
+
+        I02 = matrix[0,2]
+        I11 = matrix[1,1]
+        I12 = matrix[1,2]
+        I13 = matrix[1,3]
+        I20 = matrix[2,0]
+        I21 = matrix[2,1]
+        I22 = matrix[2,2]
+        I23 = matrix[2,3]
+        I24 = matrix[2,4]
+        I31 = matrix[3,1]
+        I32 = matrix[3,2]
+        I33 = matrix[3,3]
+        I42 = matrix[4,2]
+
+        # calculate the improve or decrease of each site
+        Ii = (I32-I12)/2 #
+        Ij = (I23-I21)/2 #
+
+        Imi = (I22-I02)/2 #
+        Ipi = (I42-I22)/2 #
+        Imj = (I22-I20)/2 #
+        Ipj = (I24-I22)/2 #
+        Imij = (I13-I11)/2 #
+        Ipij = (I33-I31)/2 #
+
+        Iii = (Ipi-Imi)/2 #
+        Ijj = (Ipj-Imj)/2 #
+        Iij = (Ipij-Imij)/2 #
+
+        if (Ii**2 + Ij**2) == 0:
+            return 0
+
+        return abs(Ii**2 * Ijj - 2*Ii*Ij*Iij + Ij**2 * Iii) / (Ii**2 + Ij**2)**1.5
     #%%
     # Core
+    def linear_curvature_core(self,core_input):
+        # Return the curvature of each boundary pixel:
+        # 1. find the smoothed matrix
+        # 2. calculate curvature based on the smoothed matrix by equation
+        #    K = (Ii**2 * Ijj - 2*Ii*Ij*Iij + Ij**2 * Iii) / (Ii**2 + Ij**2)**(1.5)
+        core_stime = datetime.datetime.now()
+        li,lj,lk=np.shape(core_input)
+        fval = np.zeros((self.nx,self.ny,1))
 
-    def linear_normal_vector_core(self,core_input, core_all_queue):
+        corner1 = core_input[0,0,:]
+        corner3 = core_input[li-1,lj-1,:]
+
+        core_area_cen, core_area_nei = self.check_subdomain_and_nei(corner1)
+        print(f'the processor {core_area_cen} start...')
+
+        test_check_read_num = 0
+        test_check_max_qsize = 0
+        for core_a in core_input:
+            for core_b in core_a:
+                i = core_b[0]
+                j = core_b[1]
+
+                ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
+                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
+
+                    window = np.zeros((self.tableL_curv,self.tableL_curv))
+                    window = self.find_window(i,j,self.tableL_curv - 2*self.clip)
+                    smoothed_matrix = myInput.output_smoothed_matrix(window, myInput.output_linear_smoothing_matrix(self.loop_times))[self.loop_times:-self.loop_times,self.loop_times:-self.loop_times]
+
+                    # Error check for smoothed matrix
+                    if (smoothed_matrix.shape != (5,5)):
+                        print(f"The smoothed matrix is not correct: {smoothed_matrix.shape}")
+
+
+                    # print(window)
+
+                    fval[i,j,0] = self.calculate_curvature(smoothed_matrix)
+
+        print(f"process{core_area_cen} read {test_check_read_num} times and max qsize {test_check_max_qsize}")
+        core_etime = datetime.datetime.now()
+        print("my core time is " + str((core_etime - core_stime).total_seconds()))
+        return (fval,(core_etime - core_stime).total_seconds())
+
+    def linear_one_normal_vector_core(self,core_input):
+        # Return the normal vector of one specific pixel:
+
+        return
+
+    def linear_normal_vector_core(self,core_input):
         core_stime = datetime.datetime.now()
         li,lj,lk=np.shape(core_input)
         fval = np.zeros((self.nx,self.ny,2))
@@ -170,7 +257,7 @@ class linear_class(object):
                 if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
 
                     window = np.zeros((self.tableL,self.tableL))
-                    window = self.find_window(i,j)
+                    window = self.find_window(i,j,self.tableL - 2*self.clip)
                     # print(window)
 
                     fval[i,j,0] = -np.sum(window*self.smoothed_vector_i)
@@ -188,12 +275,15 @@ class linear_class(object):
             self.running_coreTime = core_time
 
         print("res_back start...")
-        self.P[1,:,:] += fval[:,:,0]
-        self.P[2,:,:] += fval[:,:,1]
+        if fval.shape[2] == 1:
+            self.C[1,:,:] += fval[:,:,0]
+        elif fval.shape[2] == 2:
+            self.P[1,:,:] += fval[:,:,0]
+            self.P[2,:,:] += fval[:,:,1]
         res_etime = datetime.datetime.now()
         print("my res time is " + str((res_etime - res_stime).total_seconds()))
 
-    def linear_main(self):
+    def linear_main(self, purpose="inclination"):
 
         # global starttime, endtime
         starttime = datetime.datetime.now()
@@ -201,25 +291,20 @@ class linear_class(object):
         pool = mp.Pool(processes=self.cores)
         main_lc, main_wc = myInput.split_cores(self.cores)
 
-        # create all the queue
-        manager = mp.Manager()
-        all_queue = []
-        print(f"The max size of queue {int(((self.nx/main_wc)+(self.ny/main_lc))*self.loop_times*self.loop_times)}")
-        for queue_i in range(main_wc):
-            tmp = []
-            for queue_j in range(main_lc):
-                tmp.append(manager.Queue(int(((self.nx/main_wc)+(self.ny/main_lc))*(1+self.loop_times)*(1+self.loop_times))))
-            all_queue.append(tmp)
-
-
         all_sites = np.array([[x,y] for x in range(self.nx) for y in range(self.ny) ]).reshape(self.nx,self.ny,2)
         multi_input = myInput.split_IC(all_sites, self.cores,2, 0,1)
 
         res_list=[]
-        for ki in range(main_wc):
-            for kj in range(main_lc):
-                res_one = pool.apply_async(func = self.linear_normal_vector_core, args = (multi_input[ki][kj], all_queue, ), callback=self.res_back )
-                res_list.append(res_one)
+        if purpose == "inclination":
+            for ki in range(main_wc):
+                for kj in range(main_lc):
+                    res_one = pool.apply_async(func = self.linear_normal_vector_core, args = (multi_input[ki][kj], ), callback=self.res_back )
+                    res_list.append(res_one)
+        elif purpose == "curvature":
+            for ki in range(main_wc):
+                for kj in range(main_lc):
+                    res_one = pool.apply_async(func = self.linear_curvature_core, args = (multi_input[ki][kj], ), callback=self.res_back )
+                    res_list.append(res_one)
 
 
         pool.close()
@@ -254,12 +339,15 @@ if __name__ == '__main__':
 
     for cores in [4]:
         # loop_times=10
-        for loop_times in range(5,6):
+        for loop_times in range(20,21):
 
 
             test1 = linear_class(nx,ny,ng,cores,loop_times,P0,R)
-            test1.linear_main()
-            P = test1.get_P()
+            # test1.linear_main()
+            # P = test1.get_P()
+
+            test1.linear_main("curvature")
+            C = test1.get_C()
 
 
             #%%

@@ -31,8 +31,10 @@ class vertex_class(object):
         self.R = R  # results of analysis model
         # convert individual grains map into one grain map
         self.P = np.zeros((3,nx,ny)) # matrix to store IC and normal vector results
+        self.C = np.zeros((2,nx,ny)) # curvature result matrix
         for i in range(0,np.shape(P0)[2]):
             self.P[0,:,:] += P0[:,:,i]*(i+1)
+            self.C[0,:,:] += P0[:,:,i]*(i+1)
 
         # data for multiprocessing
         self.cores = cores
@@ -45,6 +47,10 @@ class vertex_class(object):
         # Outout the result matrix, first level is microstructure,
         # last two layers are normal vectors
         return self.P
+
+    def get_C(self):
+        # Get curvature matrix
+        return self.C
 
     def get_errors(self):
         ge_gbsites = self.get_gb_list()
@@ -231,8 +237,74 @@ class vertex_class(object):
 
         return output
 
-
     #%% Core base
+    def vertex_curvature_core(self,core_input):
+        core_stime = datetime.datetime.now()
+        li,lj,lk=np.shape(core_input)
+        fval = np.zeros((self.nx,self.ny,1))
+
+
+        for core_a in core_input:
+            for core_b in core_a:
+                i = core_b[0]
+                j = core_b[1]
+
+                stored_boun = [] # store all the boundary by sequence
+
+                ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
+                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
+                    stored_boun.append([i,j])
+                    stored_boun.append([i,j])
+                    direc = self.find_connect([i,j])
+
+                    if direc == []:
+                        print("exception1")
+                        return -1
+
+                    # remove the exception case: don't care when 3 neighbor, only site with 1 neighbor are important
+                    if direc[0] == direc[1]:
+                        inc_i = i-direc[0][0]
+                        inc_j = j-direc[0][1]
+                        vec_len = math.sqrt(inc_i**2+inc_j**2)
+                        H = 1.0
+                        fval[i,j,0] = 2  # max curvature in the IC, r=0.5 voxel, so k=1/r=2
+
+                    direc_a = direc[0]
+                    direc_b = direc[1]
+                    stored_boun.append(direc_a)
+                    stored_boun.append(direc_b)
+                    #remove the exception case when we only need 1 interval
+                    if self.interval == 1:
+                        pass
+                    else:
+                        for k in range(2,self.interval+1):
+                            # for clockwise direction
+                            next_point = self.find_connect_single(direc_a,stored_boun[-4],1)
+                            direc_a = next_point[0]
+                            stored_boun.append(direc_a)
+
+                            next_point = self.find_connect_single(direc_b,stored_boun[-4],0)
+                            direc_b = next_point[0]
+                            stored_boun.append(direc_b)
+
+                        if len(stored_boun) != (self.interval+1)*2:
+                            print("stored_boun cannot get right length " + str((self.interval+1)*2-len(stored_boun)) )
+
+                    # two boundary case: line and circle
+                    if self.check_collinear(stored_boun[0],stored_boun[-1],stored_boun[-2]):
+                        inc_i = stored_boun[-2][0]-stored_boun[-1][0]
+                        inc_j = stored_boun[-2][1]-stored_boun[-1][1]
+                        vec_len = math.sqrt(inc_i**2+inc_j**2)
+                        H = 1.0
+                        fval[i,j,0] = 0
+                    else:
+                        x0,y0,radius = self.find_circle(stored_boun[-1],stored_boun[0],stored_boun[-2])
+
+                        fval[i,j,0] = 1/radius
+        core_etime = datetime.datetime.now()
+        print("my core time is " + str((core_etime - core_stime).total_seconds()))
+        return (fval,(core_etime - core_stime).total_seconds())
+
 
     def vertex_normal_vector_core(self,core_input):
         core_stime = datetime.datetime.now()
@@ -304,7 +376,7 @@ class vertex_class(object):
         print("my core time is " + str((core_etime - core_stime).total_seconds()))
         return (fval,(core_etime - core_stime).total_seconds())
 
-    def vertex_main(self):
+    def vertex_main(self, purpose="inclination"):
         # calculate time
             starttime = datetime.datetime.now()
 
@@ -315,11 +387,18 @@ class vertex_class(object):
             multi_input = myInput.split_IC(all_sites, self.cores,2, 0,1)
 
             res_list=[]
-            for ki in range(main_wc):
-                for kj in range(main_lc):
-                    print(f'the processor [{ki},{kj}] start...')
-                    res_one = pool.apply_async(func = self.vertex_normal_vector_core, args = (multi_input[ki][kj], ), callback=self.res_back )
-                    res_list.append(res_one)
+            if purpose == "inclination":
+                for ki in range(main_wc):
+                    for kj in range(main_lc):
+                        print(f'the processor [{ki},{kj}] start...')
+                        res_one = pool.apply_async(func = self.vertex_normal_vector_core, args = (multi_input[ki][kj], ), callback=self.res_back )
+                        res_list.append(res_one)
+            elif purpose == "curvature":
+                for ki in range(main_wc):
+                    for kj in range(main_lc):
+                        print(f'the processor [{ki},{kj}] start...')
+                        res_one = pool.apply_async(func = self.vertex_curvature_core, args = (multi_input[ki][kj], ), callback=self.res_back )
+                        res_list.append(res_one)
 
             pool.close()
             pool.join()
@@ -339,8 +418,11 @@ class vertex_class(object):
             self.running_coreTime = core_time
 
         print("res_back start...")
-        self.P[1,:,:] += fval[:,:,0]
-        self.P[2,:,:] += fval[:,:,1]
+        if fval.shape[2] == 1:
+            self.C[1,:,:] += fval[:,:,0]
+        elif fval.shape[2] == 2:
+            self.P[1,:,:] += fval[:,:,0]
+            self.P[2,:,:] += fval[:,:,1]
         res_etime = datetime.datetime.now()
         print("my res time is " + str((res_etime - res_stime).total_seconds()))
 
@@ -354,22 +436,23 @@ if __name__ == '__main__':
     # VT2_errors =np.zeros(10)
     # VT2_runningTime = np.zeros(10)
     # ctx = mp.get_context('fork')
-    interval = range(1,11)
+    interval = range(10,11)
     nx, ny = 200, 200
-    ng = 5
-    cores = [1]
+    ng = 2
+    cores = [4]
 
     # P0,R=myInput.init2IC(nx, ny, ng, "PolyIC.init")
-    # P0,R=myInput.Circle_IC(nx,ny)
-    P0,R=myInput.Voronoi_IC(nx,ny,ng)
+    P0,R=myInput.Circle_IC(nx,ny)
+    # P0,R=myInput.Voronoi_IC(nx,ny,ng)
     # P0,R=myInput.Complex2G_IC(nx,ny)
     # P0,R=myInput.Abnormal_IC(nx,ny)
     # P0[:,:,:]=myInput.SmallestGrain_IC(100,100)
     for ci in cores:
         for inti in interval:
             test1 = vertex_class(nx,ny,ng,ci,inti,P0,R)
-            test1.vertex_main()
-            P = test1.get_P()
+            test1.vertex_main("curvature")
+            # P = test1.get_P()
+            C_vt = test1.get_C()
 
             #%% figure
             # test1.get_2d_plot('Poly', 'Vertex')
