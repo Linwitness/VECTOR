@@ -110,7 +110,14 @@ class linear_class(object):
         for i in range(0,self.nx):
             for j in range(0,self.ny):
                 ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) )\
+                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or 
+                     ((self.P[0,im,j]-self.P[0,i,j])!=0) or 
+                     ((self.P[0,i,jp]-self.P[0,i,j])!=0) or 
+                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) or
+                     ((self.P[0,ip,jp]-self.P[0,i,j])!=0) or
+                     ((self.P[0,ip,jm]-self.P[0,i,j])!=0) or
+                     ((self.P[0,im,jp]-self.P[0,i,j])!=0) or
+                     ((self.P[0,im,jm]-self.P[0,i,j])!=0) )\
                         and self.P[0,i,j]==grainID:
                     ggn_gbsites.append([i,j])
         return ggn_gbsites
@@ -254,7 +261,14 @@ class linear_class(object):
 
 
                 ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
+                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or 
+                     ((self.P[0,im,j]-self.P[0,i,j])!=0) or 
+                     ((self.P[0,i,jp]-self.P[0,i,j])!=0) or 
+                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) or
+                     ((self.P[0,ip,jp]-self.P[0,i,j])!=0) or
+                     ((self.P[0,ip,jm]-self.P[0,i,j])!=0) or
+                     ((self.P[0,im,jp]-self.P[0,i,j])!=0) or
+                     ((self.P[0,im,jm]-self.P[0,i,j])!=0) ):
 
                     window = np.zeros((self.tableL,self.tableL))
                     window = self.find_window(i,j,self.tableL - 2*self.clip)
