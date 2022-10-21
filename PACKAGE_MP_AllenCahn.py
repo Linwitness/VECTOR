@@ -130,7 +130,7 @@ class allenCahn_class(object):
 
     def res_back(self,back_result):
         res_stime = datetime.datetime.now()
-        (fval,core_time) = back_result
+        (fval,core_time,self.V) = back_result
         if core_time > self.running_coreTime:
             self.running_coreTime = core_time
 
@@ -196,12 +196,15 @@ class allenCahn_class(object):
                                     df0 = self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]**3-self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]+3*self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]*Etas  #Free energy derivative, simple multi-well
                                     fd = (self.V[kk-1,local_xm1,local_y,int(self.P[0,i,j]-1)]+self.V[kk-1,local_xp1,local_y,int(self.P[0,i,j]-1)]-4*self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]+self.V[kk-1,local_x,local_ym1,int(self.P[0,i,j]-1)]+self.V[kk-1,local_x,local_yp1,int(self.P[0,i,j]-1)])/1**2 #2nd order central differencing
                                     self.V[kk,local_x,local_y,int(self.P[0,i,j]-1)] = self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)] - self.L*(self.m*df0-self.k*fd)*self.dt
-
+                                    # if i==64 and j==65 :
+                                    #     print(f"!!!the value ({ii+2},{jj+2}) is {self.V[kk,local_x,local_y,int(self.P[0,i,j]-1)]}")
                     # necessary coordination
+                    local_x = (i)%self.nx
                     local_xp1 = (i+1)%self.nx
                     local_xp2 = (i+2)%self.nx
                     local_xm1 = (i-1)%self.nx
                     local_xm2 = (i-2)%self.nx
+                    local_y = (j)%self.ny
                     local_yp1 = (j+1)%self.ny
                     local_yp2 = (j+2)%self.ny
                     local_ym1 = (j-1)%self.ny
@@ -239,10 +242,15 @@ class allenCahn_class(object):
                         fval[i,j,0] = 0
                     else:
                         fval[i,j,0]=abs(Ii**2 * Ijj - 2*Ii*Ij*Iij + Ij**2 * Iii) / (Ii**2 + Ij**2)**1.5
+                        
+                    # if i==64 and j==65:
+                    #     print(f"I02:{I02}; I1,1-3:{I11},{I12},{I13}; I2,0-4:{I20},{I21},{I22},{I23},{I24}; I3,1-3:{I31},{I32},{I33}; I42:{I42}")
+                    # if i==65 and j==65:
+                    #     print(f"I02:{I02}; I1,1-3:{I11},{I12},{I13}; I2,0-4:{I20},{I21},{I22},{I23},{I24}; I3,1-3:{I31},{I32},{I33}; I42:{I42}")
         print(f"processor {core_area_cen} read {test_check_read_num} times and max qsize {test_check_max_qsize}")
         core_etime = datetime.datetime.now()
         print("my core time is " + str((core_etime - core_stime).total_seconds()))
-        return (fval,(core_etime - core_stime).total_seconds())
+        return (fval,(core_etime - core_stime).total_seconds(),self.V)
 
 
     def allenCahn_normal_vector_core(self,core_input):
@@ -360,6 +368,7 @@ if __name__ == '__main__':
             test1.allenCahn_main("curvature")
             # P = test1.get_P()
             C_ac = test1.get_C()
+            V_ac = test1.V
 
             #%% Figure
 

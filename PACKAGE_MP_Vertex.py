@@ -61,6 +61,14 @@ class vertex_class(object):
             # self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,0]-ge_dy*self.R[gei,gej,1]),5))
         self.errors_per_site = self.errors/len(ge_gbsites)
 
+    def get_curvature_errors(self):
+        gce_gbsites = self.get_gb_list()
+        for gceSite in gce_gbsites:
+            [gcei, gcej] = gceSite
+            self.errors += abs(self.R[gcei, gcej, 2] - self.C[1, gcei, gcej])
+            
+        self.errors_per_site = self.errors/len(gce_gbsites)
+
     def get_2d_plot(self,init,algo):
         m = 35
         n = 2
@@ -109,8 +117,8 @@ class vertex_class(object):
         for i in range(0,self.nx):
             for j in range(0,self.ny):
                 ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) )\
-                        and self.P[0,i,j]==grainID:
+                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ): #\
+                        # and self.P[0,i,j]==grainID:
                     ggn_gbsites.append([i,j])
         return ggn_gbsites
 
@@ -409,7 +417,10 @@ class vertex_class(object):
             endtime = datetime.datetime.now()
 
             self.running_time = (endtime - starttime).total_seconds()
-            self.get_errors()
+            if purpose == "inclination":
+                self.get_errors()
+            elif purpose == "curvature":
+                self.get_curvature_errors()
 
     def res_back(self,back_result):
         res_stime = datetime.datetime.now()
@@ -431,18 +442,18 @@ class vertex_class(object):
 #%%
 if __name__ == '__main__':
 
-    VT_errors =np.zeros(10)
-    VT_runningTime = np.zeros(10)
+    # VT_errors =np.zeros(10)
+    # VT_runningTime = np.zeros(10)
     # VT2_errors =np.zeros(10)
     # VT2_runningTime = np.zeros(10)
     # ctx = mp.get_context('fork')
-    interval = range(10,11)
+    interval = range(11,12)
     nx, ny = 200, 200
     ng = 2
     cores = [4]
 
     # P0,R=myInput.init2IC(nx, ny, ng, "PolyIC.init")
-    P0,R=myInput.Circle_IC(nx,ny)
+    P0,R=myInput.Circle_IC(nx,ny, 5)
     # P0,R=myInput.Voronoi_IC(nx,ny,ng)
     # P0,R=myInput.Complex2G_IC(nx,ny)
     # P0,R=myInput.Abnormal_IC(nx,ny)
@@ -467,5 +478,5 @@ if __name__ == '__main__':
             print('per_errors = %.3f' % test1.errors_per_site)
             print()
 
-            VT_errors[inti-1] = test1.errors_per_site
-            VT_runningTime[inti-1] = test1.running_coreTime
+            # VT_errors[inti-1] = test1.errors_per_site
+            # VT_runningTime[inti-1] = test1.running_coreTime

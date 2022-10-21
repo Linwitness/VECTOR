@@ -12,6 +12,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import h5py
 
 
 # nx,ny = 200,200
@@ -77,7 +78,7 @@ def init2IC3d(nx,ny,nz,ng,filename,dream3d=False,filepath=current_path+"/input/"
 
 
 # Circle IC
-def Circle_IC(nx,ny):
+def Circle_IC(nx,ny,r=50):
 # =============================================================================
 #     output the circle initial condition,
 #     nx is the sites in x coordination,
@@ -86,21 +87,23 @@ def Circle_IC(nx,ny):
 # =============================================================================
     ng = 2
     P = np.zeros((nx,ny,ng))
-    R = np.zeros((nx,ny,2))
+    R = np.zeros((nx,ny,3))
 
     for i in range(0,nx):
         for j in range(0,ny):
             radius = math.sqrt((j-ny/2)**2+(i-nx/2)**2)
-            if radius < nx/4:
+            if radius < r:
                 P[i,j,0] = 1.
                 if radius != 0:
                     R[i,j,0] = (j-ny/2)/radius
                     R[i,j,1] = (i-nx/2)/radius
+                    R[i,j,2] = 1/radius
             else:
                 P[i,j,1] = 1.
                 if radius != 0:
                     R[i,j,0] = (j-ny/2)/radius
                     R[i,j,1] = (i-nx/2)/radius
+                    R[i,j,2] = 1/radius
 
     return P,R
 
@@ -141,7 +144,7 @@ def Circle_IC3d(nx,ny,nz,r=25):
 # =============================================================================
     ng = 2
     P = np.zeros((nx,ny,nz,ng))
-    R = np.zeros((nx,ny,nz,3))
+    R = np.zeros((nx,ny,nz,4))
 
     for i in range(0,nx):
         for j in range(0,ny):
@@ -153,12 +156,14 @@ def Circle_IC3d(nx,ny,nz,r=25):
                         R[i,j,k,0] = (j-ny/2)/radius
                         R[i,j,k,1] = (i-nx/2)/radius
                         R[i,j,k,2] = (k-nz/2)/radius
+                        R[i,j,k,3] = 1/radius
                 else:
                     P[i,j,k,1] = 1.
                     if radius != 0:
                         R[i,j,k,0] = (j-ny/2)/radius
                         R[i,j,k,1] = (i-nx/2)/radius
                         R[i,j,k,2] = (k-nz/2)/radius
+                        R[i,j,k,3] = 1/radius
 
     return P,R
 
@@ -626,6 +631,38 @@ def output_smoothed_matrix(simple_test3,linear_smoothing_matrix):
 
     return smoothed_matrix3
 
+def output_smoothed_matrix3D(simple_test3,linear_smoothing_matrix):
+# =============================================================================
+#     output the smoothed final matrix
+# =============================================================================
+    edge = int(np.floor(np.shape(linear_smoothing_matrix)[0]/2))
+    ilen,jlen,klen = np.shape(simple_test3)
+    smoothed_matrix3 = np.zeros((ilen,jlen,klen))
+    for i in range(edge,ilen-edge):
+        for j in range(edge, jlen-edge):
+            for k in range(edge, klen-edge):
+                smoothed_matrix3[i,j,k] = np.sum(simple_test3[i-edge:i+edge+1,j-edge:j+edge+1,k-edge:k+edge+1]*linear_smoothing_matrix)
+
+    return smoothed_matrix3
+
+def output_dream3d(P0, path):
+    
+    if len(P0.shape) == 3:
+        matrix = np.zeros(P0.shape[0:len(P0.shape)-1])
+        for i in range(0,P0.shape[len(P0.shape)-1]):
+            matrix += P0[:,:,i]*(i+1)
+        bounds = [matrix.shape[0],matrix.shape[1], 1]
+    elif len(P0.shape) == 4:
+        matrix = np.zeros(P0.shape[0:len(P0.shape)-1])
+        for i in range(0,P0.shape[len(P0.shape)-1]):
+            matrix += P0[:,:,:,i]*(i+1)
+        bounds = np.array(matrix.shape)
+    else:
+        print("WTF!!!")
+        print(matrix.shape)
+    with h5py.File(path, 'w') as f:
+        f["bounds"] = bounds
+        f["IC"] = matrix
 
 
 def periodic_bc(nx,ny,i,j):

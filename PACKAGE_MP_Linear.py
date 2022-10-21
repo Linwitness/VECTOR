@@ -74,6 +74,15 @@ class linear_class(object):
             self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,0]+ge_dy*self.R[gei,gej,1]),5))
 
         self.errors_per_site = self.errors/len(ge_gbsites)
+        
+    def get_curvature_errors(self):
+        gce_gbsites = self.get_gb_list()
+        for gbSite in gce_gbsites :
+            [gcei,gcej] = gbSite
+            self.errors += abs(self.R[gcei, gcej, 2] - self.C[1, gcei, gcej])
+            
+        self.errors_per_site = self.errors/len(gce_gbsites)
+        
 
     def get_2d_plot(self,init,algo):
         plt.subplots_adjust(wspace=0.2,right=1.8)
@@ -110,8 +119,8 @@ class linear_class(object):
         for i in range(0,self.nx):
             for j in range(0,self.ny):
                 ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) )\
-                        and self.P[0,i,j]==grainID:
+                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):#\
+                        # and self.P[0,i,j]==grainID:
                     ggn_gbsites.append([i,j])
         return ggn_gbsites
 
@@ -178,6 +187,9 @@ class linear_class(object):
         Iii = (Ipi-Imi)/2 #
         Ijj = (Ipj-Imj)/2 #
         Iij = (Ipij-Imij)/2 #
+        
+        # if signal == 1:
+        #     print(f"I02:{I02}; I1,1-3:{I11},{I12},{I13}; I2,0-4:{I20},{I21},{I22},{I23},{I24}; I3,1-3:{I31},{I32},{I33}; I42:{I42}")
 
         if (Ii**2 + Ij**2) == 0:
             return 0
@@ -220,8 +232,13 @@ class linear_class(object):
 
 
                     # print(window)
-
+                    
+                    # if i==64 and j==65:
+                    #     signal = 1
+                    # else:
+                    #     signal=0
                     fval[i,j,0] = self.calculate_curvature(smoothed_matrix)
+                    
 
         print(f"process{core_area_cen} read {test_check_read_num} times and max qsize {test_check_max_qsize}")
         core_etime = datetime.datetime.now()
@@ -317,21 +334,29 @@ class linear_class(object):
         endtime = datetime.datetime.now()
 
         self.running_time = (endtime - starttime).total_seconds()
-        self.get_errors()
+        if purpose == "inclination":
+            self.get_errors()
+        elif purpose == "curvature":
+            self.get_curvature_errors()
 
 
 
 
 if __name__ == '__main__':
-    BL_errors =np.zeros(10)
-    BL_runningTime = np.zeros(10)
+    
 
     nx, ny = 200, 200
     ng = 2
     # cores = 8
+    max_iteration = 20
+    radius = 80
+    filename_save = f"examples/curvature_calculation/BL_Curvature_R{radius}_Iteration_1_{max_iteration}"
+    
+    BL_errors =np.zeros(max_iteration)
+    BL_runningTime = np.zeros(max_iteration)
 
     # P0,R=myInput.init2IC(nx, ny, ng, "PolyIC.init")
-    P0,R=myInput.Circle_IC(nx,ny)
+    P0,R=myInput.Circle_IC(nx,ny,radius)
     # P0,R=myInput.Voronoi_IC(nx,ny,ng)
     # P0,R=myInput.Complex2G_IC(nx,ny)
     # P0,R=myInput.Abnormal_IC(nx,ny)
@@ -339,7 +364,7 @@ if __name__ == '__main__':
 
     for cores in [4]:
         # loop_times=10
-        for loop_times in range(20,21):
+        for loop_times in range(1,max_iteration):
 
 
             test1 = linear_class(nx,ny,ng,cores,loop_times,P0,R)
@@ -347,7 +372,7 @@ if __name__ == '__main__':
             # P = test1.get_P()
 
             test1.linear_main("curvature")
-            C = test1.get_C()
+            C_ln = test1.get_C()
 
 
             #%%
@@ -366,3 +391,5 @@ if __name__ == '__main__':
 
             BL_errors[loop_times-1] = test1.errors_per_site
             BL_runningTime[loop_times-1] = test1.running_coreTime
+            
+    np.savez(filename_save, BL_errors=BL_errors, BL_runningTime=BL_runningTime)

@@ -266,10 +266,12 @@ class levelSet_class(object):
                                         # self.V[kk,local_x,local_y] = self.V[kk-1,local_x,local_y] + self.myTable[local_x,local_y]*self.dt* -math.sqrt(Ii**2 + Ij**2)
 
                     # necessary coordination
+                    local_x = (i)%self.nx
                     local_xp1 = (i+1)%self.nx
                     local_xp2 = (i+2)%self.nx
                     local_xm1 = (i-1)%self.nx
                     local_xm2 = (i-2)%self.nx
+                    local_y = (j)%self.ny
                     local_yp1 = (j+1)%self.ny
                     local_yp2 = (j+2)%self.ny
                     local_ym1 = (j-1)%self.ny
