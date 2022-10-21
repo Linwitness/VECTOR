@@ -74,15 +74,15 @@ class linear_class(object):
             self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,0]+ge_dy*self.R[gei,gej,1]),5))
 
         self.errors_per_site = self.errors/len(ge_gbsites)
-        
+
     def get_curvature_errors(self):
         gce_gbsites = self.get_gb_list()
         for gbSite in gce_gbsites :
             [gcei,gcej] = gbSite
             self.errors += abs(self.R[gcei, gcej, 2] - self.C[1, gcei, gcej])
-            
+
         self.errors_per_site = self.errors/len(gce_gbsites)
-        
+
 
     def get_2d_plot(self,init,algo):
         plt.subplots_adjust(wspace=0.2,right=1.8)
@@ -119,8 +119,15 @@ class linear_class(object):
         for i in range(0,self.nx):
             for j in range(0,self.ny):
                 ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):#\
-                        # and self.P[0,i,j]==grainID:
+                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or
+                     ((self.P[0,im,j]-self.P[0,i,j])!=0) or
+                     ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
+                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) or
+                     ((self.P[0,ip,jp]-self.P[0,i,j])!=0) or
+                     ((self.P[0,ip,jm]-self.P[0,i,j])!=0) or
+                     ((self.P[0,im,jp]-self.P[0,i,j])!=0) or
+                     ((self.P[0,im,jm]-self.P[0,i,j])!=0) )\
+                        and self.P[0,i,j]==grainID:
                     ggn_gbsites.append([i,j])
         return ggn_gbsites
 
@@ -187,7 +194,7 @@ class linear_class(object):
         Iii = (Ipi-Imi)/2 #
         Ijj = (Ipj-Imj)/2 #
         Iij = (Ipij-Imij)/2 #
-        
+
         # if signal == 1:
         #     print(f"I02:{I02}; I1,1-3:{I11},{I12},{I13}; I2,0-4:{I20},{I21},{I22},{I23},{I24}; I3,1-3:{I31},{I32},{I33}; I42:{I42}")
 
@@ -232,13 +239,13 @@ class linear_class(object):
 
 
                     # print(window)
-                    
+
                     # if i==64 and j==65:
                     #     signal = 1
                     # else:
                     #     signal=0
                     fval[i,j,0] = self.calculate_curvature(smoothed_matrix)
-                    
+
 
         print(f"process{core_area_cen} read {test_check_read_num} times and max qsize {test_check_max_qsize}")
         core_etime = datetime.datetime.now()
@@ -271,7 +278,14 @@ class linear_class(object):
 
 
                 ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
+                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or
+                     ((self.P[0,im,j]-self.P[0,i,j])!=0) or
+                     ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
+                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) or
+                     ((self.P[0,ip,jp]-self.P[0,i,j])!=0) or
+                     ((self.P[0,ip,jm]-self.P[0,i,j])!=0) or
+                     ((self.P[0,im,jp]-self.P[0,i,j])!=0) or
+                     ((self.P[0,im,jm]-self.P[0,i,j])!=0) ):
 
                     window = np.zeros((self.tableL,self.tableL))
                     window = self.find_window(i,j,self.tableL - 2*self.clip)
@@ -343,7 +357,7 @@ class linear_class(object):
 
 
 if __name__ == '__main__':
-    
+
 
     nx, ny = 200, 200
     ng = 2
@@ -351,7 +365,7 @@ if __name__ == '__main__':
     max_iteration = 20
     radius = 80
     filename_save = f"examples/curvature_calculation/BL_Curvature_R{radius}_Iteration_1_{max_iteration}"
-    
+
     BL_errors =np.zeros(max_iteration)
     BL_runningTime = np.zeros(max_iteration)
 
@@ -391,5 +405,5 @@ if __name__ == '__main__':
 
             BL_errors[loop_times-1] = test1.errors_per_site
             BL_runningTime[loop_times-1] = test1.running_coreTime
-            
+
     np.savez(filename_save, BL_errors=BL_errors, BL_runningTime=BL_runningTime)
