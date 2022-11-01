@@ -430,6 +430,5 @@ if __name__ == '__main__':
             print('per_errors = %.3f' % test1.errors_per_site)
             print()
 
-
             BL3d2_errors[loop_times-1] = test1.errors_per_site
             BL3d2_runningTime[loop_times-1] = test1.running_coreTime

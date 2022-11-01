@@ -2,4 +2,6 @@ __pycache__
 output/.DS_Store
 .DS_Store
 input/.DS_Store
-examples/
+*.npz
+*.hdf5
+*.dream3d

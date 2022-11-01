@@ -392,32 +392,46 @@ def Complex2G_IC3d(nx,ny,nz,wavelength=20):
 # =============================================================================
     ng = 2
     P = np.zeros((nx,ny,nz,ng))
-    R = np.zeros((nx,ny,nz,3))
+    R = np.zeros((nx,ny,nz,4))
     A = wavelength/2
 
     for i in range(0,nx):
         for j in range(0,ny):
-            vector_i = np.array([1, 0, 5*math.pi/(2*A)*math.cos(math.pi/A*(0.5*i+A/2))])
-            length_i = math.sqrt(1 + (5*math.pi/(2*A)*math.cos(math.pi/A*(0.5*i+A/2)))**2)
+            dk_di = 5*math.pi/(2*A)*math.cos(math.pi/A*(0.5*i+A/2))
+            dk_dj = 5*math.pi/(2*A)*math.cos(math.pi/A*(0.5*j+A/2))
+            dk_didi = -5*math.pi/(2*A)*math.pi/(2*A)*math.sin(math.pi/A*(0.5*i+A/2))
+            dk_djdj = -5*math.pi/(2*A)*math.pi/(2*A)*math.sin(math.pi/A*(0.5*j+A/2))
+            dk_didj = 0
+            
+            vector_i = np.array([1, 0, dk_di])
+            length_i = math.sqrt(1 + (dk_di)**2)
             vector_i = vector_i/length_i
-            vector_j = np.array([0, 1, 5*math.pi/(2*A)*math.cos(math.pi/A*(0.5*j+A/2))])
-            length_j = math.sqrt(1 + (5*math.pi/(2*A)*math.cos(math.pi/A*(0.5*j+A/2)))**2)
+            vector_j = np.array([0, 1, dk_dj])
+            length_j = math.sqrt(1 + (dk_dj)**2)
             vector_j = vector_j/length_j
 
 
             for k in range(0,nz):
                 if k < nz/2 + 5*math.sin((0.5*i+A/2)*3.1415926/A) + 5*math.sin((0.5*j+A/2)*3.1415926/A):
                     P[i,j,k,0] = 1.
-                    R[i,j,k,:] = np.cross(vector_i,vector_j)
-                    tmp_r = R[i,j,k,:]/np.linalg.norm(R[i,j,k,:])
-                    R[i,j,k,:]=[tmp_r[1],tmp_r[0],tmp_r[2]]
+                    R[i,j,k,:3] = np.cross(vector_i,vector_j)
+                    tmp_r = R[i,j,k,:3]/np.linalg.norm(R[i,j,k,:3])
+                    R[i,j,k,:3]=[tmp_r[1],tmp_r[0],tmp_r[2]]
+                    R[i,j,k,3] = ((1 + (dk_di)**2) * dk_djdj - 
+                                   2 * dk_di * dk_dj * dk_didj + 
+                                   (1 + (dk_dj)**2) * dk_didi) /\
+                                  (2 * (1 + dk_di**2 + dk_dj**2)**(1.5))
                     # print(f"i={i} j={j} k={k}")
                     # print(R[i,j,k,:])
                 else:
                     P[i,j,k,1] = 1.
-                    R[i,j,k,:] = -np.cross(vector_i,vector_j)
-                    tmp_r = R[i,j,k,:]/np.linalg.norm(R[i,j,k,:])
-                    R[i,j,k,:]=[tmp_r[1],tmp_r[0],tmp_r[2]]
+                    R[i,j,k,:3] = -np.cross(vector_i,vector_j)
+                    tmp_r = R[i,j,k,:3]/np.linalg.norm(R[i,j,k,:3])
+                    R[i,j,k,:3]=[tmp_r[1],tmp_r[0],tmp_r[2]]
+                    R[i,j,k,3] = ((1 + (dk_di)**2) * dk_djdj - 
+                                   2 * dk_di * dk_dj * dk_didj + 
+                                   (1 + (dk_dj)**2) * dk_didi) /\
+                                  (2 * (1 + dk_di**2 + dk_dj**2)**(1.5))
 
 
 
@@ -425,6 +439,7 @@ def Complex2G_IC3d(nx,ny,nz,wavelength=20):
         for i in range(0,nx):
             for j in range(0,ny):
                 R[i,j,k,2] = 2.*((k>nz/2)*1-0.5)
+                R[i,j,k,3] = 0
 
     return P, R
 

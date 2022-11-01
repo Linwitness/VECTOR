@@ -31,8 +31,10 @@ class vertex3d_class(object):
         self.R = R  # results of analysis model
         # convert individual grains map into one grain map
         self.P = np.zeros((4,nx,ny,nz)) # matrix to store IC and normal vector results
+        self.C = np.zeros((2,nx,ny,nz)) # curvature result matrix
         for i in range(0,np.shape(P0)[3]):
             self.P[0,:,:,:] += P0[:,:,:,i]*(i+1)
+            self.C[0,:,:,:] += P0[:,:,:,i]*(i+1)
 
         # data for multiprocessing
         self.cores = cores
@@ -47,6 +49,10 @@ class vertex3d_class(object):
         # Outout the result matrix, first level is microstructure,
         # last two layers are normal vectors
         return self.P
+    
+    def get_C(self):
+        # Get curvature matrix
+        return self.C
 
     def get_errors(self):
         ge_gbsites = self.get_gb_list()
@@ -56,6 +62,14 @@ class vertex3d_class(object):
             self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,gek,0]+ge_dy*self.R[gei,gej,gek,1]+ge_dz*self.R[gei,gej,gek,2]),5))
 
         self.errors_per_site = self.errors/len(ge_gbsites)
+
+    def get_curvature_errors(self):
+        gce_gbsites = self.get_gb_list()
+        for gceSite in gce_gbsites :
+            [gcei,gcej,gcek] = gceSite
+            self.errors += abs(self.R[gcei, gcej, gcek, 3] - self.C[1, gcei, gcej, gcek])
+            
+        self.errors_per_site = self.errors/len(gce_gbsites)
 
     def get_2d_plot(self,init,algo,z_surface = 0):
         # z_surface = int(self.nz/2)
@@ -115,8 +129,8 @@ class vertex3d_class(object):
                     ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
                     if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or\
                          ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or\
-                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) )\
-                           and self.P[0,i,j,k]==grainID:
+                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ): #\
+                           # and self.P[0,i,j,k]==grainID:
                         ggn_gbsites.append([i,j,k])
         return ggn_gbsites
 
@@ -213,6 +227,76 @@ class vertex3d_class(object):
 
 
     #%% Core base
+    
+    def vertex3d_curvature_core(self,core_input):
+        core_stime = datetime.datetime.now()
+        li,lj,lk,lp=np.shape(core_input)
+        fval = np.zeros((self.nx,self.ny,self.nz,1))
+
+        for core_a in core_input:
+            for core_b in core_a:
+                for core_c in core_b:
+                    i = core_c[0]
+                    j = core_c[1]
+                    k = core_c[2]
+    
+                    ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
+                    if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or
+                         ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or
+                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ):
+    
+                        # collect all data
+                        stored_boun = [[f"{i},{j},{k}"]]
+
+                        for surr_i in range(0,self.interval):
+                            # surr_i:  all sites in each "circle" on surface
+                            surr_sites = stored_boun[surr_i]
+                            next_cir = []
+                            for surr_j in surr_sites:
+                                # surr_j: each site on the "circle"
+                                next_cir.extend(self.find_neighbor_sites(surr_j))
+
+                            # remove all all sites on otehr "circle"
+                            for surr_k in range(0,surr_i+1):
+                                # surr_k: the number order of previous level
+                                next_cir = list(set(next_cir)-set(stored_boun[surr_k]))
+
+                            if len(next_cir) == 0:
+                                pass
+                            # elif len(next_cir) < 4:
+                            #     pass
+
+                            stored_boun.append(next_cir)
+                        # print(stored_boun)
+                        # choose the data you need
+                        fitting_data = stored_boun[0]
+                        fitting_data.extend(stored_boun[-1])
+
+                        # if we dont have enough points
+                        if len(fitting_data) < 4:
+                            fitting_data = stored_boun[0]
+                            for fdi in range(1,len(stored_boun)):
+                                fitting_data.extend(stored_boun[fdi])
+
+                            if len(fitting_data) < 4:
+                                fval[i,j,k,0] = 1
+                                break
+
+                        # print(fitting_data)
+                        # calculation for plane and hump
+                        if self.check_coplane(fitting_data):
+                            # calculay=te normal vector on one plane
+                            fval[i,j,k,0] = 0
+
+                        else:
+                            # print(fitting_data)
+                            x0,y0,z0,radius = self.find_fittingSphere(fitting_data)
+                            fval[i,j,k,0] = 1/radius
+                    
+
+        core_etime = datetime.datetime.now()
+        print("my core time is " + str((core_etime - core_stime).total_seconds()))
+        return (fval,(core_etime - core_stime).total_seconds())
 
     def vertex3d_normal_vector_core(self,core_input):
         core_stime = datetime.datetime.now()
@@ -259,7 +343,7 @@ class vertex3d_class(object):
                         fitting_data = stored_boun[0]
                         fitting_data.extend(stored_boun[-1])
 
-                        # if we dont have enought points
+                        # if we dont have enough points
                         if len(fitting_data) < 4:
                             fitting_data = stored_boun[0]
                             for fdi in range(1,len(stored_boun)):
@@ -289,7 +373,7 @@ class vertex3d_class(object):
         print("my core time is " + str((core_etime - core_stime).total_seconds()))
         return (fval,(core_etime - core_stime).total_seconds())
 
-    def vertex3d_main(self):
+    def vertex3d_main(self, purpose ="inclination"):
         # calculate time
         starttime = datetime.datetime.now()
 
@@ -300,11 +384,19 @@ class vertex3d_class(object):
         multi_input = myInput.split_IC(all_sites, self.cores,3, 0,1,2)
 
         res_list=[]
-        for mpi in range(main_wc):
-            for mpj in range(main_lc):
-                for mpk in range(main_hc):
-                    res_one = pool.apply_async(func = self.vertex3d_normal_vector_core, args = (multi_input[mpi][mpj][mpk], ), callback=self.res_back )
-                    res_list.append(res_one)
+        if purpose == "inclination":
+            for mpi in range(main_wc):
+                for mpj in range(main_lc):
+                    for mpk in range(main_hc):
+                        res_one = pool.apply_async(func = self.vertex3d_normal_vector_core, args = (multi_input[mpi][mpj][mpk], ), callback=self.res_back )
+                        res_list.append(res_one)
+        elif purpose == "curvature":
+            for mpi in range(main_wc):
+                for mpj in range(main_lc):
+                    for mpk in range(main_hc):
+                        res_one = pool.apply_async(func = self.vertex3d_curvature_core, args = (multi_input[mpi][mpj][mpk], ), callback=self.res_back )
+                        res_list.append(res_one)
+            
 
         pool.close()
         pool.join()
@@ -315,7 +407,10 @@ class vertex3d_class(object):
         endtime = datetime.datetime.now()
 
         self.running_time = (endtime - starttime).total_seconds()
-        self.get_errors()
+        if purpose == "inclination":
+            self.get_errors()
+        elif purpose == "curvature":
+            self.get_curvature_errors()
 
     def res_back(self,back_result):
         res_stime = datetime.datetime.now()
@@ -324,9 +419,12 @@ class vertex3d_class(object):
             self.running_coreTime = core_time
 
         print("res_back start...")
-        self.P[1,:,:,:] += fval[:,:,:,0]
-        self.P[2,:,:,:] += fval[:,:,:,1]
-        self.P[3,:,:,:] += fval[:,:,:,2]
+        if fval.shape[3] == 1:
+            self.C[1,:,:,:] += fval[:,:,:,0]
+        else:
+            self.P[1,:,:,:] += fval[:,:,:,0]
+            self.P[2,:,:,:] += fval[:,:,:,1]
+            self.P[3,:,:,:] += fval[:,:,:,2]
         res_etime = datetime.datetime.now()
         print("my res time is " + str((res_etime - res_stime).total_seconds()))
 
@@ -338,14 +436,14 @@ if __name__ == '__main__':
     VT3d_errors =np.zeros(10)
     VT3d_runningTime = np.zeros(10)
     # ctx = mp.get_context('fork')
-    interval = range(1,11)
-    nx, ny, nz = 100, 100, 100
+    interval = range(1,20)
+    nx, ny, nz = 50, 50, 50
     ng = 2
     cores = [8]
 
     # P0,R=myInput.init2IC(nx, ny, ng, "PolyIC.init")
     # P0,R=myInput.Circle_IC(nx,ny)
-    P0,R=myInput.Circle_IC3d(nx,ny,nz)
+    P0,R=myInput.Circle_IC3d(nx,ny,nz,10)
     # P0,R = myInput.Complex2G_IC3d(nx,ny,nz)
     # P0,R=myInput.Voronoi_IC(nx,ny,ng)
     # P0,R=myInput.Complex2G_IC(nx,ny)
@@ -354,11 +452,11 @@ if __name__ == '__main__':
     for ci in cores:
         for inti in interval:
             test1 = vertex3d_class(nx,ny,nz,ng,ci,inti,P0,R)
-            test1.vertex3d_main()
+            test1.vertex3d_main('curvature')
             P = test1.get_P()
 
             #%% figure
-            test1.get_2d_plot('Poly', 'Vertex')
+            # test1.get_2d_plot('Poly', 'Vertex')
 
             #%% error
 
@@ -370,5 +468,5 @@ if __name__ == '__main__':
             print('per_errors = %.3f' % test1.errors_per_site)
             print()
 
-            VT3d_errors[inti-1] = test1.errors_per_site
-            VT3d_runningTime[inti-1] = test1.running_coreTime
+            # VT3d_errors[inti-1] = test1.errors_per_site
+            # VT3d_runningTime[inti-1] = test1.running_coreTime
