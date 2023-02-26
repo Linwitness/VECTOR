@@ -436,15 +436,15 @@ if __name__ == '__main__':
     VT3d_errors =np.zeros(10)
     VT3d_runningTime = np.zeros(10)
     # ctx = mp.get_context('fork')
-    interval = range(1,20)
-    nx, ny, nz = 50, 50, 50
+    interval = range(3,5)
+    nx, ny, nz = 80, 80, 40
     ng = 2
     cores = [8]
 
     # P0,R=myInput.init2IC(nx, ny, ng, "PolyIC.init")
     # P0,R=myInput.Circle_IC(nx,ny)
-    P0,R=myInput.Circle_IC3d(nx,ny,nz,10)
-    # P0,R = myInput.Complex2G_IC3d(nx,ny,nz)
+    # P0,R=myInput.Circle_IC3d(nx,ny,nz,10)
+    P0,R = myInput.Complex2G_IC3d(nx,ny,nz)
     # P0,R=myInput.Voronoi_IC(nx,ny,ng)
     # P0,R=myInput.Complex2G_IC(nx,ny)
     # P0[:,:,:],R=myInput.Abnormal_IC(nx,ny)
@@ -453,7 +453,7 @@ if __name__ == '__main__':
         for inti in interval:
             test1 = vertex3d_class(nx,ny,nz,ng,ci,inti,P0,R)
             test1.vertex3d_main('curvature')
-            P = test1.get_P()
+            # P = test1.get_P()
 
             #%% figure
             # test1.get_2d_plot('Poly', 'Vertex')

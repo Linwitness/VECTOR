@@ -2,6 +2,12 @@ __pycache__
 output/.DS_Store
 .DS_Store
 input/.DS_Store
+*/Input
 *.npz
+*.npy
 *.hdf5
 *.dream3d
+*.init
+*.txt
+*.pptx
+
