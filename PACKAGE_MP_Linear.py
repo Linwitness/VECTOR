@@ -73,7 +73,8 @@ class linear_class(object):
             ge_dx,ge_dy = myInput.get_grad(self.P,gei,gej)
             self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,0]+ge_dy*self.R[gei,gej,1]),5))
 
-        self.errors_per_site = self.errors/len(ge_gbsites)
+        if len(ge_gbsites) > 0: self.errors_per_site = self.errors/len(ge_gbsites)
+        else: self.errors_per_site = 0
 
     def get_curvature_errors(self):
         gce_gbsites = self.get_gb_list()
@@ -122,11 +123,7 @@ class linear_class(object):
                 if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or
                      ((self.P[0,im,j]-self.P[0,i,j])!=0) or
                      ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
-                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) or
-                     ((self.P[0,ip,jp]-self.P[0,i,j])!=0) or
-                     ((self.P[0,ip,jm]-self.P[0,i,j])!=0) or
-                     ((self.P[0,im,jp]-self.P[0,i,j])!=0) or
-                     ((self.P[0,im,jm]-self.P[0,i,j])!=0) )\
+                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) )\
                         and self.P[0,i,j]==grainID:
                     ggn_gbsites.append([i,j])
         return ggn_gbsites
@@ -281,11 +278,7 @@ class linear_class(object):
                 if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or
                      ((self.P[0,im,j]-self.P[0,i,j])!=0) or
                      ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
-                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) or
-                     ((self.P[0,ip,jp]-self.P[0,i,j])!=0) or
-                     ((self.P[0,ip,jm]-self.P[0,i,j])!=0) or
-                     ((self.P[0,im,jp]-self.P[0,i,j])!=0) or
-                     ((self.P[0,im,jm]-self.P[0,i,j])!=0) ):
+                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
 
                     window = np.zeros((self.tableL,self.tableL))
                     window = self.find_window(i,j,self.tableL - 2*self.clip)

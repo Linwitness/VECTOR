@@ -243,6 +243,6 @@ def test_vertex_3dComplex():
 
 if __name__ == '__main__':
     
-    test_vertex_3d()
+    test_vertex_3dComplex()
     
     
