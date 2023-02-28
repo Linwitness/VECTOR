@@ -187,7 +187,11 @@ if __name__ == '__main__':
     iteration=5
     
     # Read the 2D input file
-    triple_map = read_2d_input(filename,nx,ny)
+    # triple_map = read_2d_input(filename,nx,ny)
+    
+    # Read from other npy file
+    triple_map = np.load("Input/HexIC.npy")
+    triple_map = triple_map[:,:,0]
     
     # Calculate the tanget for corresponding triple junction
     triple_coord, triple_angle, triple_grain = calculate_tangent(triple_map, iteration)

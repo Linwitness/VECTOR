@@ -128,6 +128,18 @@ class linear_class(object):
                     ggn_gbsites.append([i,j])
         return ggn_gbsites
 
+    def get_all_gb_list(self):
+        gagn_gbsites = [[] for _ in range(int(self.ng))]
+        for i in range(0,self.nx):
+            for j in range(0,self.ny):
+                ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
+                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or
+                     ((self.P[0,im,j]-self.P[0,i,j])!=0) or
+                     ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
+                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
+                    gagn_gbsites[int(self.P[0,i,j]-1)].append([i,j])
+        return gagn_gbsites
+
     def check_subdomain_and_nei(self,A):
         ca_length,ca_width = myInput.split_cores(self.cores)
         ca_area_cen = [int(A[0]/self.nx*ca_width),int(A[1]/self.ny*ca_length)]
@@ -352,11 +364,11 @@ class linear_class(object):
 if __name__ == '__main__':
 
 
-    nx, ny = 200, 200
+    nx, ny = 50, 50
     ng = 2
     # cores = 8
-    max_iteration = 20
-    radius = 80
+    max_iteration = 5
+    radius = 20
     filename_save = f"examples/curvature_calculation/BL_Curvature_R{radius}_Iteration_1_{max_iteration}"
 
     BL_errors =np.zeros(max_iteration)
@@ -369,9 +381,9 @@ if __name__ == '__main__':
     # P0,R=myInput.Abnormal_IC(nx,ny)
     # P0[:,:,:]=myInput.SmallestGrain_IC(100,100)
 
-    for cores in [4]:
+    for cores in [1]:
         # loop_times=10
-        for loop_times in range(1,max_iteration):
+        for loop_times in range(4,max_iteration):
 
 
             test1 = linear_class(nx,ny,ng,cores,loop_times,P0,R)
@@ -399,4 +411,4 @@ if __name__ == '__main__':
             BL_errors[loop_times-1] = test1.errors_per_site
             BL_runningTime[loop_times-1] = test1.running_coreTime
 
-    np.savez(filename_save, BL_errors=BL_errors, BL_runningTime=BL_runningTime)
+    # np.savez(filename_save, BL_errors=BL_errors, BL_runningTime=BL_runningTime)
