@@ -251,8 +251,25 @@ class linear_class(object):
 
     def linear_one_normal_vector_core(self,core_input):
         # Return the normal vector of one specific pixel:
+        i = core_input[0]
+        j = core_input[1]
+        # fv_i, fv_j = self.find_tableij(corner1,i,j)
 
-        return
+        window = np.zeros((self.tableL,self.tableL))
+        ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
+        if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or
+             ((self.P[0,im,j]-self.P[0,i,j])!=0) or
+             ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
+             ((self.P[0,i,jm]-self.P[0,i,j])!=0) or
+             ((self.P[0,ip,jp]-self.P[0,i,j])!=0) or
+             ((self.P[0,im,jp]-self.P[0,i,j])!=0) or
+             ((self.P[0,ip,jm]-self.P[0,i,j])!=0) or
+             ((self.P[0,im,jm]-self.P[0,i,j])!=0) ):
+
+            
+            window = self.find_window(i,j,self.tableL - 2*self.clip)
+
+        return np.array([-np.sum(window*self.smoothed_vector_i), np.sum(window*self.smoothed_vector_j)])
 
     def linear_normal_vector_core(self,core_input):
         core_stime = datetime.datetime.now()
