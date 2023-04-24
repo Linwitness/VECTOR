@@ -300,7 +300,7 @@ class linear3d_class(object):
                          ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ):
 
                         window = np.zeros((self.tableL,self.tableL,self.tableL))
-                        window = self.find_window(i,j,k)
+                        window = self.find_window(i,j,k,self.tableL - 2*self.clip)
                         # print(window)
 
                         fval[i,j,k,0] = -np.sum(window*self.smoothed_vector_i)
@@ -373,7 +373,7 @@ class linear3d_class(object):
         pool.join()
 
         print("core done!")
-        # print(res_list[0].get())
+        print(res_list[0].get())
 
         # calculate time
         endtime = datetime.datetime.now()
