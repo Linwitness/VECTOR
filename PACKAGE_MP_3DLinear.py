@@ -373,7 +373,7 @@ class linear3d_class(object):
         pool.join()
 
         print("core done!")
-        print(res_list[0].get())
+        # print(res_list[0].get())
 
         # calculate time
         endtime = datetime.datetime.now()
