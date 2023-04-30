@@ -76,7 +76,8 @@ class linear3d_class(object):
             ge_dx,ge_dy,ge_dz = myInput.get_grad3d(self.P,gei,gej,gek)
             self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,gek,0]+ge_dy*self.R[gei,gej,gek,1]+ge_dz*self.R[gei,gej,gek,2]),5))
 
-        self.errors_per_site = self.errors/len(ge_gbsites)
+        if len(ge_gbsites) > 0: self.errors_per_site = self.errors/len(ge_gbsites)
+        else: self.errors_per_site = 0
 
     def get_curvature_errors(self):
         gce_gbsites = self.get_gb_list()
