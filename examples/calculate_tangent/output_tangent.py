@@ -82,6 +82,10 @@ def find_normal(P,i,j,nei_flat,iteration):
         tri_norm[2,0], tri_norm[2,1] = find_normal_structure(P,i,j,iteration,P[i+1,j])
         tri_norm[3,0], tri_norm[3,1] = find_normal_structure(P,i,j,iteration,P[i,j])
         tri_grains = np.array([P[i+1,j+1], P[i+1,j], P[i,j]])
+        
+    else:
+        print("ERROR: This is not a triple junction!")
+        return 0, 0
     
     for ni in range(4):
         tri_norm[ni] = tri_norm[ni]/np.linalg.norm(tri_norm[ni])
@@ -148,6 +152,7 @@ def read_2d_input(filename,nx,ny):
     return triple_map
 
 def calculate_tangent(triple_map,iteration=5):
+    nx, ny = triple_map.shape
     num = 0
     issue_num = 0
     triple_grain = []
@@ -165,6 +170,7 @@ def calculate_tangent(triple_map,iteration=5):
                 # print(str(i)+" "+str(j))
                 
                 each_normal, grain_sequence = find_normal(triple_map,i,j,nei_flat,iteration) # Get basic normals and grain id sequence
+                if isinstance(each_normal,(int, float)): continue
                 triple_normal.append(each_normal) # Save the normals
                 triple_coord.append(np.array([i,j])) # Save the coordinate of the triple point
                 triple_grain.append(grain_sequence) # Save the grain id sequence
@@ -174,7 +180,8 @@ def calculate_tangent(triple_map,iteration=5):
                 if abs(sum(find_angle(each_normal))-360) > 5: issue_num += 1
             
     print(f"The number of useful triple junction is {num}")
-    print(f"The issue propotion is {issue_num/num*100}%")
+    if num==0: print("The issue propotion is 0%")
+    else: print(f"The issue propotion is {issue_num/num*100}%")
     
     return np.array(triple_coord), np.array(triple_angle), np.array(triple_grain)
 

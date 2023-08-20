@@ -600,7 +600,7 @@ def output_linear_vector_matrix(iteration,clip=0):
     matrix_j[1:-1,0:-2] += -smoothing_matrix
     matrix_i[2:,1:-1] = smoothing_matrix
     matrix_i[0:-2,1:-1] += -smoothing_matrix
-
+    # print("matrix_length: " + str(type(matrix_length)) + "clip:" + str(type(clip)))
     matrix_i = matrix_i[clip:matrix_length-clip, clip:matrix_length-clip]
     matrix_j = matrix_j[clip:matrix_length-clip, clip:matrix_length-clip]
 

@@ -83,7 +83,7 @@ class linear3d_class(object):
         for gceSite in gce_gbsites :
             [gcei,gcej,gcek] = gceSite
             self.errors += abs(self.R[gcei, gcej, gcek, 3] - self.C[1, gcei, gcej, gcek])
-            
+
         self.errors_per_site = self.errors/len(gce_gbsites)
 
 
@@ -151,7 +151,7 @@ class linear3d_class(object):
                     # window[wi,wj] = self.P[0,global_x,global_y]
 
         return window
-    
+
     def calculate_curvature(self,matrix):
         # calculate curvature based on 5x5 smoothed matrix
         I022 = matrix[0][2][2]
@@ -167,7 +167,7 @@ class linear3d_class(object):
         I322 = matrix[3][2][2]
         I332 = matrix[3][3][2]
         I422 = matrix[4][2][2]
-        
+
         I220 = matrix[2][2][0]
         I111 = matrix[1][1][1]
         I121 = matrix[1][2][1]
@@ -178,7 +178,7 @@ class linear3d_class(object):
         I311 = matrix[3][1][1]
         I321 = matrix[3][2][1]
         I331 = matrix[3][3][1]
-        
+
         I113 = matrix[1][1][3]
         I123 = matrix[1][2][3]
         I133 = matrix[1][3][3]
@@ -214,7 +214,7 @@ class linear3d_class(object):
         Iij = (Ipij-Imij)/2
         Iik = (Ipik-Imik)/2
         Ijk = (Ipjk-Imjk)/2
-        
+
         if (Ii**2 + Ij**2 + Ik**2) == 0: return 0
         return abs((Ij**2+Ik**2)*Iii + (Ik**2+Ii**2)*Ijj + (Ii**2+Ij**2)*Ikk - 2*Ii*Ij*Iij - 2*Ij*Ik*Ijk - 2*Ik*Ii*Iik) / (2*(Ii**2 + Ij**2 + Ik**2)**(1.5))
 
@@ -235,29 +235,29 @@ class linear3d_class(object):
                     i = core_c[0]
                     j = core_c[1]
                     k = core_c[2]
-    
+
                     ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
                     if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or
                          ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or
                          ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ):
-    
+
                         window = np.zeros((self.tableL_curv,self.tableL_curv,self.tableL_curv))
                         window = self.find_window(i,j,k,self.tableL_curv - 2*self.clip)
                         smoothed_matrix = myInput.output_smoothed_matrix3D(window, myInput.output_linear_smoothing_matrix3D(self.loop_times))[self.loop_times:-self.loop_times,self.loop_times:-self.loop_times,self.loop_times:-self.loop_times]
-    
+
                         # Error check for smoothed matrix
                         if (smoothed_matrix.shape != (5,5,5)):
                             print(f"The smoothed matrix is not correct: {smoothed_matrix.shape}")
-    
-    
+
+
                         # print(window)
-                        
+
                         # if i==64 and j==65:
                         #     signal = 1
                         # else:
                         #     signal=0
                         fval[i,j,k,0] = self.calculate_curvature(smoothed_matrix)
-                    
+
 
         core_etime = datetime.datetime.now()
         print("my core time is " + str((core_etime - core_stime).total_seconds()))
@@ -288,7 +288,7 @@ class linear3d_class(object):
                          ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ):
 
                         window = np.zeros((self.tableL,self.tableL,self.tableL))
-                        window = self.find_window(i,j,k)
+                        window = self.find_window(i,j,k,self.tableL - 2*self.clip)
                         # print(window)
 
                         fval[i,j,k,0] = -np.sum(window*self.smoothed_vector_i)
