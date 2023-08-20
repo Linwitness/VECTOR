@@ -76,7 +76,8 @@ class linear3d_class(object):
             ge_dx,ge_dy,ge_dz = myInput.get_grad3d(self.P,gei,gej,gek)
             self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,gek,0]+ge_dy*self.R[gei,gej,gek,1]+ge_dz*self.R[gei,gej,gek,2]),5))
 
-        self.errors_per_site = self.errors/len(ge_gbsites)
+        if len(ge_gbsites) > 0: self.errors_per_site = self.errors/len(ge_gbsites)
+        else: self.errors_per_site = 0
 
     def get_curvature_errors(self):
         gce_gbsites = self.get_gb_list()
@@ -132,6 +133,18 @@ class linear3d_class(object):
                            #and self.P[0,i,j,k]==grainID:
                         ggn_gbsites.append([i,j,k])
         return ggn_gbsites
+
+    def get_all_gb_list(self):
+        gagn_gbsites = [[] for _ in range(int(self.ng))]
+        for i in range(0,self.nx):
+            for j in range(0,self.ny):
+                for k in range(0,self.nz):
+                    ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
+                    if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or\
+                         ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or\
+                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ):
+                        gagn_gbsites[int(self.P[0,i,j,k]-1)].append([i,j,k])
+        return gagn_gbsites
 
     def find_window(self,i,j,k,fw_len):
         # fw_len = self.tableL - 2*self.clip
