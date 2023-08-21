@@ -54,7 +54,7 @@ def get_normal_vector_3d(grain_structure_figure_one):
     loop_times = 5
     P0 = grain_structure_figure_one[:,:,:,np.newaxis]
     R = np.zeros((nx,ny,nz,3))
-    smooth_class = linear3d.linear3d_class(nx,ny,nz,ng,cores,loop_times,P0,R,'p')
+    smooth_class = linear3d.linear3d_class(nx,ny,nz,ng,cores,loop_times,P0,R,'np')
 
     smooth_class.linear3d_main("inclination")
     P = smooth_class.get_P()
@@ -107,6 +107,7 @@ def get_normal_vector_slope_3d(P, sites, step, para_name):
         dy_fake = dy
         
         # Normalize
+        if math.sqrt(dy_fake**2+dx**2) < 1e-5: continue
         dy_fake_norm = dy_fake / math.sqrt(dy_fake**2+dx**2)
         dx_norm =  dx / math.sqrt(dy_fake**2+dx**2)
 
@@ -164,13 +165,13 @@ if __name__ == '__main__':
     bin_num = round((abs(x_limit[0])+abs(x_limit[1]))/bin_width)
     size_coordination = np.linspace((x_limit[0]+bin_width/2),(x_limit[1]-bin_width/2),bin_num)
     grain_size_distribution_ave = np.zeros(bin_num)
-    special_step_distribution_ave = 2
+    special_step_distribution_ave = 60
     grain_size_distribution_min = np.zeros(bin_num)
-    special_step_distribution_min = 2
+    special_step_distribution_min = 60
     grain_size_distribution_sum = np.zeros(bin_num)
-    special_step_distribution_sum = 3
+    special_step_distribution_sum = 60
     grain_size_distribution_iso = np.zeros(bin_num)
-    special_step_distribution_iso = 2
+    special_step_distribution_iso = 60
 
     
     # Start polar figure
@@ -190,70 +191,64 @@ if __name__ == '__main__':
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
     
-    for i in tqdm(range(2,4)):
+    # Aniso - ave
+    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
+    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    if os.path.exists(current_path + data_file_name_P):
+        P = np.load(current_path + data_file_name_P)
+        sites = np.load(current_path + data_file_name_sites)
+    else:
+        newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+        P, sites = get_normal_vector_3d(newplace)
+        np.save(current_path + data_file_name_P, P)
+        np.save(current_path + data_file_name_sites, sites)
+    
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave case")
         
-        # Aniso - ave
-        if i == special_step_distribution_ave:
-            data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_ave_P_step{i}.npy'
-            data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_ave_sites_step{i}.npy'
-            if os.path.exists(current_path + data_file_name_P):
-                P = np.load(current_path + data_file_name_P)
-                sites = np.load(current_path + data_file_name_sites)
-            else:
-                newplace = np.rot90(npy_file_aniso_ave[i,:,:,:], 1, (0,1))
-                P, sites = get_normal_vector_3d(newplace)
-                np.save(current_path + data_file_name_P, P)
-                np.save(current_path + data_file_name_sites, sites)
-            
-            slope_list = get_normal_vector_slope_3d(P, sites, i, "Ave case")
-            
-        # Aniso - min
-        if i == special_step_distribution_min:
-            data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min_P_step{i}.npy'
-            data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min_P_sites_step{i}.npy'
-            if os.path.exists(current_path + data_file_name_P):
-                P = np.load(current_path + data_file_name_P)
-                sites = np.load(current_path + data_file_name_sites)
-            else:
-                newplace = np.rot90(npy_file_aniso_min[i,:,:,:], 1, (0,1))
-                P, sites = get_normal_vector_3d(newplace)
-                np.save(current_path + data_file_name_P, P)
-                np.save(current_path + data_file_name_sites, sites)
-            
-            slope_list = get_normal_vector_slope_3d(P, sites, i, "min case")
-            
-        # Aniso - sum
-        if i == special_step_distribution_sum:
-            data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_sum_P_step{i}.npy'
-            data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_sum_sites_step{i}.npy'
-            if os.path.exists(current_path + data_file_name_P):
-                P = np.load(current_path + data_file_name_P)
-                sites = np.load(current_path + data_file_name_sites)
-            else:
-                newplace = np.rot90(npy_file_aniso_sum[i,:,:,:], 1, (0,1))
-                P, sites = get_normal_vector_3d(newplace)
-                np.save(current_path + data_file_name_P, P)
-                np.save(current_path + data_file_name_sites, sites)
-            
-            slope_list = get_normal_vector_slope_3d(P, sites, i, "Sum case")
-            
-        # Aniso - iso
-        if i == special_step_distribution_iso:
-            data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_iso_P_step{i}.npy'
-            data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_iso_sites_step{i}.npy'
-            if os.path.exists(current_path + data_file_name_P):
-                P = np.load(current_path + data_file_name_P)
-                sites = np.load(current_path + data_file_name_sites)
-            else:
-                newplace = np.rot90(npy_file_iso[i,:,:,:], 1, (0,1))
-                P, sites = get_normal_vector_3d(newplace)
-                np.save(current_path + data_file_name_P, P)
-                np.save(current_path + data_file_name_sites, sites)
-            
-            slope_list = get_normal_vector_slope_3d(P, sites, i, "Iso case")
+    # Aniso - min
+    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
+    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
+    if os.path.exists(current_path + data_file_name_P):
+        P = np.load(current_path + data_file_name_P)
+        sites = np.load(current_path + data_file_name_sites)
+    else:
+        newplace = np.rot90(npy_file_aniso_min[special_step_distribution_min,:,:,:], 1, (0,1))
+        P, sites = get_normal_vector_3d(newplace)
+        np.save(current_path + data_file_name_P, P)
+        np.save(current_path + data_file_name_sites, sites)
+    
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min, "min case")
+        
+    # Aniso - sum
+    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_sum_P_step{special_step_distribution_sum}.npy'
+    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_sum_sites_step{special_step_distribution_sum}.npy'
+    if os.path.exists(current_path + data_file_name_P):
+        P = np.load(current_path + data_file_name_P)
+        sites = np.load(current_path + data_file_name_sites)
+    else:
+        newplace = np.rot90(npy_file_aniso_sum[special_step_distribution_sum,:,:,:], 1, (0,1))
+        P, sites = get_normal_vector_3d(newplace)
+        np.save(current_path + data_file_name_P, P)
+        np.save(current_path + data_file_name_sites, sites)
+    
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_sum, "Sum case")
+        
+    # Aniso - iso
+    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
+    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_iso_sites_step{special_step_distribution_iso}.npy'
+    if os.path.exists(current_path + data_file_name_P):
+        P = np.load(current_path + data_file_name_P)
+        sites = np.load(current_path + data_file_name_sites)
+    else:
+        newplace = np.rot90(npy_file_iso[special_step_distribution_iso,:,:,:], 1, (0,1))
+        P, sites = get_normal_vector_3d(newplace)
+        np.save(current_path + data_file_name_P, P)
+        np.save(current_path + data_file_name_sites, sites)
+    
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_iso, "Iso case")
             
     plt.legend(loc=(0.22,-0.1),fontsize=14)
-    # plt.savefig(current_path + "/figures/normal_distribution.png", dpi=400,bbox_inches='tight')
+    # plt.savefig(current_path + "/figures/normal_distribution_3d.png", dpi=400,bbox_inches='tight')
     
     
     
