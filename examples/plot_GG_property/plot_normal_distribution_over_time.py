@@ -82,7 +82,7 @@ def get_normal_vector_slope(P, sites, step, para_name):
     
     # ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     # ax.set_axisbelow('True')
-    plt.plot(xCor/180*math.pi, freqArray, linewidth=2, label=para_name)
+    plt.plot(np.append(xCor,xCor[0])/180*math.pi, np.append(freqArray,freqArray[0]), linewidth=2, label=para_name)
 
     # fitting
     fit_coeff = np.polyfit(xCor, freqArray, 1)

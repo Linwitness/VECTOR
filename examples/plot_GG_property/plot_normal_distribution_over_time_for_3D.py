@@ -92,7 +92,7 @@ def get_normal_vector_slope(P, sites, step, para_name):
 
     return 0
 
-def get_normal_vector_slope_3d(P, sites, step, para_name):
+def get_normal_vector_slope_3d(P, sites, step, para_name, angle_index=0):
     xLim = [0, 360]
     binValue = 10.01
     binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
@@ -100,24 +100,36 @@ def get_normal_vector_slope_3d(P, sites, step, para_name):
 
     freqArray = np.zeros(binNum)
     degree = []
+    # degree_shadow = []
     for sitei in sites:
         [i,j,k] = sitei
         dx,dy,dz = myInput.get_grad3d(P,i,j,k)
         # dy_fake = math.sqrt(dy**2 + dz**2)
-        dy_fake = dy
+        if angle_index == 0:
+            dx_fake = dx
+            dy_fake = dy
+        elif angle_index == 1:
+            dx_fake = dx
+            dy_fake = dz
+        elif angle_index == 2:
+            dx_fake = dy
+            dy_fake = dz
         
         # Normalize
-        if math.sqrt(dy_fake**2+dx**2) < 1e-5: continue
-        dy_fake_norm = dy_fake / math.sqrt(dy_fake**2+dx**2)
-        dx_norm =  dx / math.sqrt(dy_fake**2+dx**2)
+        if math.sqrt(dy_fake**2+dx_fake**2) < 1e-5: continue
+        dy_fake_norm = dy_fake / math.sqrt(dy_fake**2+dx_fake**2)
+        dx_fake_norm = dx_fake / math.sqrt(dy_fake**2+dx_fake**2)
 
-        degree.append(math.atan2(-dy_fake_norm, dx_norm))
-    for i in range(len(degree)):
-        freqArray[int((degree[i]/math.pi*180-xLim[0])/binValue)] += 1
+        degree.append(math.atan2(-dy_fake_norm, dx_fake_norm) + math.pi)
+        # degree_shadow.append([i,j,k,dz])
+    for n in range(len(degree)):
+        freqArray[int((degree[n]/math.pi*180-xLim[0])/binValue)] += 1
+        # if int((degree[n]/math.pi*180-xLim[0])/binValue) == 0:
+        #     print(f"loc: {degree_shadow[n][0]},{degree_shadow[n][1]},{degree_shadow[n][2]} : {degree[n]/np.pi*180} and {degree_shadow[n][3]}")
     freqArray = freqArray/sum(freqArray*binValue)
 
     # Plot
-    plt.plot(xCor/180*math.pi, freqArray,linewidth=2,label=para_name)
+    plt.plot(np.append(xCor,xCor[0])/180*math.pi, np.append(freqArray,freqArray[0]),linewidth=2,label=para_name)
 
     return 0
 
@@ -165,16 +177,16 @@ if __name__ == '__main__':
     bin_num = round((abs(x_limit[0])+abs(x_limit[1]))/bin_width)
     size_coordination = np.linspace((x_limit[0]+bin_width/2),(x_limit[1]-bin_width/2),bin_num)
     grain_size_distribution_ave = np.zeros(bin_num)
-    special_step_distribution_ave = 60
+    special_step_distribution_ave = 2
     grain_size_distribution_min = np.zeros(bin_num)
-    special_step_distribution_min = 60
+    special_step_distribution_min = 2
     grain_size_distribution_sum = np.zeros(bin_num)
-    special_step_distribution_sum = 60
+    special_step_distribution_sum = 2
     grain_size_distribution_iso = np.zeros(bin_num)
-    special_step_distribution_iso = 60
+    special_step_distribution_iso = 2
 
     
-    # Start polar figure
+    # Start polar figure xy
     plt.close()
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca(projection='polar')
@@ -247,8 +259,167 @@ if __name__ == '__main__':
     
     slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_iso, "Iso case")
             
-    plt.legend(loc=(0.22,-0.1),fontsize=14)
-    # plt.savefig(current_path + "/figures/normal_distribution_3d.png", dpi=400,bbox_inches='tight')
+    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
+    plt.text(0.0, 0.0095, "x", fontsize=14)
+    plt.text(np.pi/2, 0.0095, "y", fontsize=14)
+    plt.savefig(current_path + "/figures/normal_distribution_3d_xy.png", dpi=400,bbox_inches='tight')
+    
+    # Start polar figure xz
+    plt.close()
+    fig = plt.figure(figsize=(5, 5))
+    ax = plt.gca(projection='polar')
+    
+    ax.set_thetagrids(np.arange(0.0, 360.0, 20.0),fontsize=14)
+    ax.set_thetamin(0.0)  
+    ax.set_thetamax(360.0)
+    
+    ax.set_rgrids(np.arange(0, 0.008, 0.004))
+    ax.set_rlabel_position(0.0)  # start from 0 degree
+    ax.set_rlim(0.0, 0.008)  # radiu lim range is from 0 to 0.008
+    ax.set_yticklabels(['0', '0.004'],fontsize=14)
+    
+    ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
+    ax.set_axisbelow('True')
+    
+    # Aniso - ave
+    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
+    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    if os.path.exists(current_path + data_file_name_P):
+        P = np.load(current_path + data_file_name_P)
+        sites = np.load(current_path + data_file_name_sites)
+    else:
+        newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+        P, sites = get_normal_vector_3d(newplace)
+        np.save(current_path + data_file_name_P, P)
+        np.save(current_path + data_file_name_sites, sites)
+    
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave case", 1)
+        
+    # Aniso - min
+    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
+    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
+    if os.path.exists(current_path + data_file_name_P):
+        P = np.load(current_path + data_file_name_P)
+        sites = np.load(current_path + data_file_name_sites)
+    else:
+        newplace = np.rot90(npy_file_aniso_min[special_step_distribution_min,:,:,:], 1, (0,1))
+        P, sites = get_normal_vector_3d(newplace)
+        np.save(current_path + data_file_name_P, P)
+        np.save(current_path + data_file_name_sites, sites)
+    
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min, "min case", 1)
+        
+    # Aniso - sum
+    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_sum_P_step{special_step_distribution_sum}.npy'
+    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_sum_sites_step{special_step_distribution_sum}.npy'
+    if os.path.exists(current_path + data_file_name_P):
+        P = np.load(current_path + data_file_name_P)
+        sites = np.load(current_path + data_file_name_sites)
+    else:
+        newplace = np.rot90(npy_file_aniso_sum[special_step_distribution_sum,:,:,:], 1, (0,1))
+        P, sites = get_normal_vector_3d(newplace)
+        np.save(current_path + data_file_name_P, P)
+        np.save(current_path + data_file_name_sites, sites)
+    
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_sum, "Sum case", 1)
+        
+    # Aniso - iso
+    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
+    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_iso_sites_step{special_step_distribution_iso}.npy'
+    if os.path.exists(current_path + data_file_name_P):
+        P = np.load(current_path + data_file_name_P)
+        sites = np.load(current_path + data_file_name_sites)
+    else:
+        newplace = np.rot90(npy_file_iso[special_step_distribution_iso,:,:,:], 1, (0,1))
+        P, sites = get_normal_vector_3d(newplace)
+        np.save(current_path + data_file_name_P, P)
+        np.save(current_path + data_file_name_sites, sites)
+    
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_iso, "Iso case", 1)
+            
+    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
+    plt.text(0.0, 0.0095, "x", fontsize=14)
+    plt.text(np.pi/2, 0.0095, "z", fontsize=14)
+    plt.savefig(current_path + "/figures/normal_distribution_3d_xz.png", dpi=400,bbox_inches='tight')
+    
+    
+    # Start polar figure yz
+    plt.close()
+    fig = plt.figure(figsize=(5, 5))
+    ax = plt.gca(projection='polar')
+    
+    ax.set_thetagrids(np.arange(0.0, 360.0, 20.0),fontsize=14)
+    ax.set_thetamin(0.0)  
+    ax.set_thetamax(360.0)
+    
+    ax.set_rgrids(np.arange(0, 0.008, 0.004))
+    ax.set_rlabel_position(0.0)  # start from 0 degree
+    ax.set_rlim(0.0, 0.008)  # radiu lim range is from 0 to 0.008
+    ax.set_yticklabels(['0', '0.004'],fontsize=14)
+    
+    ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
+    ax.set_axisbelow('True')
+    
+    # Aniso - ave
+    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
+    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    if os.path.exists(current_path + data_file_name_P):
+        P = np.load(current_path + data_file_name_P)
+        sites = np.load(current_path + data_file_name_sites)
+    else:
+        newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+        P, sites = get_normal_vector_3d(newplace)
+        np.save(current_path + data_file_name_P, P)
+        np.save(current_path + data_file_name_sites, sites)
+    
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave case", 2)
+        
+    # Aniso - min
+    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
+    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
+    if os.path.exists(current_path + data_file_name_P):
+        P = np.load(current_path + data_file_name_P)
+        sites = np.load(current_path + data_file_name_sites)
+    else:
+        newplace = np.rot90(npy_file_aniso_min[special_step_distribution_min,:,:,:], 1, (0,1))
+        P, sites = get_normal_vector_3d(newplace)
+        np.save(current_path + data_file_name_P, P)
+        np.save(current_path + data_file_name_sites, sites)
+    
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min, "min case", 2)
+        
+    # Aniso - sum
+    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_sum_P_step{special_step_distribution_sum}.npy'
+    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_sum_sites_step{special_step_distribution_sum}.npy'
+    if os.path.exists(current_path + data_file_name_P):
+        P = np.load(current_path + data_file_name_P)
+        sites = np.load(current_path + data_file_name_sites)
+    else:
+        newplace = np.rot90(npy_file_aniso_sum[special_step_distribution_sum,:,:,:], 1, (0,1))
+        P, sites = get_normal_vector_3d(newplace)
+        np.save(current_path + data_file_name_P, P)
+        np.save(current_path + data_file_name_sites, sites)
+    
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_sum, "Sum case", 2)
+        
+    # Aniso - iso
+    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
+    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_iso_sites_step{special_step_distribution_iso}.npy'
+    if os.path.exists(current_path + data_file_name_P):
+        P = np.load(current_path + data_file_name_P)
+        sites = np.load(current_path + data_file_name_sites)
+    else:
+        newplace = np.rot90(npy_file_iso[special_step_distribution_iso,:,:,:], 1, (0,1))
+        P, sites = get_normal_vector_3d(newplace)
+        np.save(current_path + data_file_name_P, P)
+        np.save(current_path + data_file_name_sites, sites)
+    
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_iso, "Iso case", 2)
+            
+    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
+    plt.text(0.0, 0.0095, "y", fontsize=14)
+    plt.text(np.pi/2, 0.0095, "z", fontsize=14)
+    plt.savefig(current_path + "/figures/normal_distribution_3d_yz.png", dpi=400,bbox_inches='tight')
     
     
     
