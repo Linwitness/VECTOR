@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
     npy_file_name_aniso_T025 = f"p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt025.npy"
     npy_file_name_aniso_T050 = f"p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt050.npy"
-    npy_file_name_aniso_T066 = f"p_ori_ave_aveE_20000_multiCore64_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066.npy"
+    npy_file_name_aniso_T066 = f"p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     npy_file_name_aniso_T095 = f"p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt095.npy"
 
     grain_size_data_name_T025 = f"grain_size_p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt025.npy"
