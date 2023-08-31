@@ -283,7 +283,7 @@ if __name__ == '__main__':
     plt.plot(size_coordination, grain_size_distribution_sum, label="Sum case", linewidth=2)
     plt.plot(size_coordination, grain_size_distribution_consMax, label="ConsMax case", linewidth=2)
     plt.plot(size_coordination, grain_size_distribution_max, label="Max case", linewidth=2)
-    plt.xlabel("R/$\langle$R$\rangle$", fontsize=14)
+    plt.xlabel("R/R_0", fontsize=14)
     plt.ylabel("Frequency", fontsize=14)
     plt.legend(fontsize=14)
     plt.title(f"Grain num is around 2000", fontsize=14)
