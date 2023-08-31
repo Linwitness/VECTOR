@@ -103,20 +103,20 @@ if __name__ == '__main__':
     bin_num = round((abs(x_limit[0])+abs(x_limit[1]))/bin_width)
     size_coordination = np.linspace((x_limit[0]+bin_width/2),(x_limit[1]-bin_width/2),bin_num)
     grain_size_distribution_ave = np.zeros(bin_num)
-    special_step_distribution_ave = 11#4
+    special_step_distribution_ave = 11 #to get 2000 grains
     grain_size_distribution_consMin = np.zeros(bin_num)
-    special_step_distribution_consMin = 11#4
+    special_step_distribution_consMin = 11#to get 2000 grains
     grain_size_distribution_sum = np.zeros(bin_num)
-    special_step_distribution_sum = 11#4
+    special_step_distribution_sum = 11#to get 2000 grains
     grain_size_distribution_iso = np.zeros(bin_num)
     grain_size_distribution_min = np.zeros(bin_num)
-    special_step_distribution_min = 11#4
+    special_step_distribution_min = 30#to get 2000 grains
     grain_size_distribution_max = np.zeros(bin_num)
-    special_step_distribution_max = 11#4
+    special_step_distribution_max = 15#to get 2000 grains
     grain_size_distribution_consMax = np.zeros(bin_num)
-    special_step_distribution_consMax = 11#4
+    special_step_distribution_consMax = 11#to get 2000 grains
     grain_size_distribution_iso = np.zeros(bin_num)
-    special_step_distribution_iso = 10#4
+    special_step_distribution_iso = 10#to get 2000 grains
 
 
     # Start grain size initialing

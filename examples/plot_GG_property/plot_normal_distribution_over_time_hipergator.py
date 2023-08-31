@@ -65,21 +65,21 @@ def get_normal_vector_slope(P, sites, step, para_name):
     for i in range(len(degree)):
         freqArray[int((degree[i]/math.pi*180-xLim[0])/binValue)] += 1
     freqArray = freqArray/sum(freqArray*binValue)
-    
+
     # Plot
     # plt.close()
     # fig = plt.figure(figsize=(5, 5))
     # ax = plt.gca(projection='polar')
-    
+
     # ax.set_thetagrids(np.arange(0.0, 360.0, 20.0),fontsize=14)
-    # ax.set_thetamin(0.0)  
+    # ax.set_thetamin(0.0)
     # ax.set_thetamax(360.0)
-    
+
     # ax.set_rgrids(np.arange(0, 0.008, 0.004))
     # ax.set_rlabel_position(0.0)  # 标签显示在0°
     # ax.set_rlim(0.0, 0.008)  # 标签范围为[0, 5000)
     # ax.set_yticklabels(['0', '0.004'],fontsize=14)
-    
+
     # ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     # ax.set_axisbelow('True')
     plt.plot(np.append(xCor,xCor[0])/180*math.pi, np.append(freqArray,freqArray[0]), linewidth=2, label=para_name)
@@ -97,9 +97,9 @@ if __name__ == '__main__':
     TJ_energy_type_min = "min"
     TJ_energy_type_max = "max"
     TJ_energy_type_consMax = "consMax"
-    
-    
-    
+
+
+
     npy_file_name_aniso_ave = f"p_ori_ave_{TJ_energy_type_ave}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     npy_file_name_aniso_consMin = f"p_ori_ave_{TJ_energy_type_consMin}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     npy_file_name_aniso_sum = f"p_ori_ave_{TJ_energy_type_sum}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     grain_size_data_name_max = f"grain_size_p_ori_ave_{TJ_energy_type_max}E_20000_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     grain_size_data_name_consMax = f"grain_size_p_ori_ave_{TJ_energy_type_consMax}E_20000_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     grain_size_data_name_iso = "grain_size_p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066.npy"
-    
+
     # Initial data
     npy_file_aniso_ave = np.load(npy_file_folder + npy_file_name_aniso_ave)
     npy_file_aniso_consMin = np.load(npy_file_folder + npy_file_name_aniso_consMin)
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     print(f"The consMax data size is: {npy_file_aniso_consMax.shape}")
     print(f"The iso data size is: {npy_file_iso.shape}")
     print("READING DATA DONE")
-    
+
     # Initial container
     initial_grain_num = 20000
     step_num = npy_file_aniso_ave.shape[0]
@@ -163,46 +163,47 @@ if __name__ == '__main__':
     grain_area_iso = np.zeros((step_num,initial_grain_num))
     grain_size_iso = np.zeros((step_num,initial_grain_num))
     grain_ave_size_iso = np.zeros(step_num)
-    
+
     bin_width = 0.16 # Grain size distribution
     x_limit = [-0.5, 3.5]
     bin_num = round((abs(x_limit[0])+abs(x_limit[1]))/bin_width)
     size_coordination = np.linspace((x_limit[0]+bin_width/2),(x_limit[1]-bin_width/2),bin_num)
     grain_size_distribution_ave = np.zeros(bin_num)
-    special_step_distribution_ave = 11#4
+    special_step_distribution_ave = 11 #to get 2000 grains
     grain_size_distribution_consMin = np.zeros(bin_num)
-    special_step_distribution_consMin = 11#4
+    special_step_distribution_consMin = 11#to get 2000 grains
     grain_size_distribution_sum = np.zeros(bin_num)
-    special_step_distribution_sum = 11#4
+    special_step_distribution_sum = 11#to get 2000 grains
     grain_size_distribution_iso = np.zeros(bin_num)
     grain_size_distribution_min = np.zeros(bin_num)
-    special_step_distribution_min = 11#4
+    special_step_distribution_min = 30#to get 2000 grains
     grain_size_distribution_max = np.zeros(bin_num)
-    special_step_distribution_max = 11#4
+    special_step_distribution_max = 15#to get 2000 grains
     grain_size_distribution_consMax = np.zeros(bin_num)
-    special_step_distribution_consMax = 11#4
-    special_step_distribution_iso = 10#4
+    special_step_distribution_consMax = 11#to get 2000 grains
+    grain_size_distribution_iso = np.zeros(bin_num)
+    special_step_distribution_iso = 10#to get 2000 grains
 
-    
+
     # Start polar figure
     plt.close()
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca(projection='polar')
-    
+
     ax.set_thetagrids(np.arange(0.0, 360.0, 20.0),fontsize=14)
-    ax.set_thetamin(0.0)  
+    ax.set_thetamin(0.0)
     ax.set_thetamax(360.0)
-    
+
     ax.set_rgrids(np.arange(0, 0.01, 0.004))
     ax.set_rlabel_position(0.0)  # 标签显示在0°
     ax.set_rlim(0.0, 0.01)  # 标签范围为[0, 5000)
     ax.set_yticklabels(['0', '0.004', '0.008'],fontsize=14)
-    
+
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
-    
+
     for i in tqdm(range(9,12)):
-        
+
         # Aniso - min
         if i == special_step_distribution_min:
             data_file_name_P = f'/normal_distribution_data/normal_distribution_min_P_step{i}.npy'
@@ -215,9 +216,9 @@ if __name__ == '__main__':
                 P, sites = get_normal_vector(newplace, initial_grain_num)
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
-            
+
             slope_list = get_normal_vector_slope(P, sites, i, "Min case")
-            
+
         # Aniso - max
         if i == special_step_distribution_max:
             data_file_name_P = f'/normal_distribution_data/normal_distribution_max_P_step{i}.npy'
@@ -230,9 +231,9 @@ if __name__ == '__main__':
                 P, sites = get_normal_vector(newplace, initial_grain_num)
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
-            
+
             slope_list = get_normal_vector_slope(P, sites, i, "Max case")
-        
+
         # Aniso - ave
         if i == special_step_distribution_ave:
             data_file_name_P = f'/normal_distribution_data/normal_distribution_ave_P_step{i}.npy'
@@ -245,9 +246,9 @@ if __name__ == '__main__':
                 P, sites = get_normal_vector(newplace, initial_grain_num)
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
-            
+
             slope_list = get_normal_vector_slope(P, sites, i, "Ave case")
-            
+
         # Aniso - sum
         if i == special_step_distribution_sum:
             data_file_name_P = f'/normal_distribution_data/normal_distribution_sum_P_step{i}.npy'
@@ -260,9 +261,9 @@ if __name__ == '__main__':
                 P, sites = get_normal_vector(newplace, initial_grain_num)
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
-            
+
             slope_list = get_normal_vector_slope(P, sites, i, "Sum case")
-            
+
         # Aniso - consMin
         if i == special_step_distribution_consMin:
             data_file_name_P = f'/normal_distribution_data/normal_distribution_consMin_P_step{i}.npy'
@@ -275,9 +276,9 @@ if __name__ == '__main__':
                 P, sites = get_normal_vector(newplace, initial_grain_num)
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
-            
+
             slope_list = get_normal_vector_slope(P, sites, i, "ConsMin case")
-            
+
         # Aniso - consMax
         if i == special_step_distribution_consMax:
             data_file_name_P = f'/normal_distribution_data/normal_distribution_consMax_P_step{i}.npy'
@@ -290,9 +291,9 @@ if __name__ == '__main__':
                 P, sites = get_normal_vector(newplace, initial_grain_num)
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
-            
+
             slope_list = get_normal_vector_slope(P, sites, i, "ConsMax case")
-            
+
         # Aniso - iso
         if i == special_step_distribution_iso:
             data_file_name_P = f'/normal_distribution_data/normal_distribution_iso_P_step{i}.npy'
@@ -305,19 +306,19 @@ if __name__ == '__main__':
                 P, sites = get_normal_vector(newplace, initial_grain_num)
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
-            
+
             slope_list = get_normal_vector_slope(P, sites, i, "Iso case")
-            
+
     plt.legend(loc=(-0.25,-0.3),fontsize=14,ncol=3)
     plt.savefig(current_path + "/figures/normal_distribution.png", dpi=400,bbox_inches='tight')
-    
-    
-    
-        
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
+
+
