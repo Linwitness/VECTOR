@@ -91,28 +91,32 @@ def get_normal_vector_slope(P, sites, step, para_name):
 if __name__ == '__main__':
     # File name
     npy_file_folder = "/blue/michael.tonks/lin.yang/SPPARKS-VirtualIncEnergy/2d_poly_multiCoreCompare/results/"
+    TJ_energy_type_T000 = "T000"
     TJ_energy_type_T025 = "T025"
     TJ_energy_type_T050 = "T050"
     TJ_energy_type_T066 = "T066"
     TJ_energy_type_T095 = "T095"
 
 
-
+    npy_file_name_aniso_T000 = f"p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt000.npy"
     npy_file_name_aniso_T025 = f"p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt025.npy"
     npy_file_name_aniso_T050 = f"p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt050.npy"
     npy_file_name_aniso_T066 = f"p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     npy_file_name_aniso_T095 = f"p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt095.npy"
 
+    grain_size_data_name_T000 = f"grain_size_p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt000.npy"
     grain_size_data_name_T025 = f"grain_size_p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt025.npy"
     grain_size_data_name_T050 = f"grain_size_p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt050.npy"
     grain_size_data_name_T066 = f"grain_size_p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     grain_size_data_name_T095 = f"grain_size_p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt095.npy"
 
     # Initial data
+    npy_file_aniso_T000 = np.load(npy_file_folder + npy_file_name_aniso_T000)
     npy_file_aniso_T025 = np.load(npy_file_folder + npy_file_name_aniso_T025)
     npy_file_aniso_T050 = np.load(npy_file_folder + npy_file_name_aniso_T050)
     npy_file_aniso_T066 = np.load(npy_file_folder + npy_file_name_aniso_T066)
     npy_file_aniso_T095 = np.load(npy_file_folder + npy_file_name_aniso_T095)
+    print(f"The T000 data size is: {npy_file_aniso_T000.shape}")
     print(f"The T025 data size is: {npy_file_aniso_T025.shape}")
     print(f"The T050 data size is: {npy_file_aniso_T050.shape}")
     print(f"The T066 data size is: {npy_file_aniso_T066.shape}")
@@ -121,6 +125,11 @@ if __name__ == '__main__':
 
     # Initial container
     initial_grain_num = 20000
+    step_num = npy_file_aniso_T000.shape[0]
+    grain_num_T000 = np.zeros(step_num)
+    grain_area_T000 = np.zeros((step_num,initial_grain_num))
+    grain_size_T000 = np.zeros((step_num,initial_grain_num))
+    grain_ave_size_T000 = np.zeros(step_num)
     step_num = npy_file_aniso_T025.shape[0]
     grain_num_T025 = np.zeros(step_num)
     grain_area_T025 = np.zeros((step_num,initial_grain_num))
@@ -143,12 +152,14 @@ if __name__ == '__main__':
     x_limit = [-0.5, 3.5]
     bin_num = round((abs(x_limit[0])+abs(x_limit[1]))/bin_width)
     size_coordination = np.linspace((x_limit[0]+bin_width/2),(x_limit[1]-bin_width/2),bin_num)
+    grain_size_distribution_T000 = np.zeros(bin_num)
+    special_step_distribution_T000 = 10#4
     grain_size_distribution_T025 = np.zeros(bin_num)
-    special_step_distribution_T025 = 11#4
+    special_step_distribution_T025 = 10#4
     grain_size_distribution_T050 = np.zeros(bin_num)
-    special_step_distribution_T050 = 11#4
+    special_step_distribution_T050 = 10#4
     grain_size_distribution_T066 = np.zeros(bin_num)
-    special_step_distribution_T066 = 11#4
+    special_step_distribution_T066 = 10#4
     grain_size_distribution_T095 = np.zeros(bin_num)
     special_step_distribution_T095 = 11#4
 
@@ -172,20 +183,21 @@ if __name__ == '__main__':
 
     for i in tqdm(range(9,12)):
 
-        # Aniso - T095
-        if i == special_step_distribution_T095:
-            data_file_name_P = f'/normal_distribution_data/normal_distribution_T095_P_step{i}.npy'
-            data_file_name_sites = f'/normal_distribution_data/normal_distribution_T095_sites_step{i}.npy'
+        # Aniso - T000
+        if i == special_step_distribution_T000:
+            data_file_name_P = f'/normal_distribution_data/normal_distribution_T000_P_step{i}.npy'
+            data_file_name_sites = f'/normal_distribution_data/normal_distribution_T000_sites_step{i}.npy'
             if os.path.exists(current_path + data_file_name_P):
                 P = np.load(current_path + data_file_name_P)
                 sites = np.load(current_path + data_file_name_sites)
             else:
-                newplace = np.rot90(npy_file_aniso_T095[i,:,:,:], 1, (0,1))
+                newplace = np.rot90(npy_file_aniso_T000[i,:,:,:], 1, (0,1))
                 P, sites = get_normal_vector(newplace, initial_grain_num)
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
 
-            slope_list = get_normal_vector_slope(P, sites, i, "T095 case")
+            slope_list = get_normal_vector_slope(P, sites, i, "T000 case")
+
 
         # Aniso - T025
         if i == special_step_distribution_T025:
@@ -202,6 +214,21 @@ if __name__ == '__main__':
 
             slope_list = get_normal_vector_slope(P, sites, i, "T025 case")
 
+        # Aniso - T050
+        if i == special_step_distribution_T050:
+            data_file_name_P = f'/normal_distribution_data/normal_distribution_T050_P_step{i}.npy'
+            data_file_name_sites = f'/normal_distribution_data/normal_distribution_T050_P_sites_step{i}.npy'
+            if os.path.exists(current_path + data_file_name_P):
+                P = np.load(current_path + data_file_name_P)
+                sites = np.load(current_path + data_file_name_sites)
+            else:
+                newplace = np.rot90(npy_file_aniso_T050[i,:,:,:], 1, (0,1))
+                P, sites = get_normal_vector(newplace, initial_grain_num)
+                np.save(current_path + data_file_name_P, P)
+                np.save(current_path + data_file_name_sites, sites)
+
+            slope_list = get_normal_vector_slope(P, sites, i, "T050 case")
+
         # Aniso - T066
         if i == special_step_distribution_T066:
             data_file_name_P = f'/normal_distribution_data/normal_distribution_T066_P_step{i}.npy'
@@ -217,20 +244,20 @@ if __name__ == '__main__':
 
             slope_list = get_normal_vector_slope(P, sites, i, "T066 case")
 
-        # Aniso - T050
-        if i == special_step_distribution_T050:
-            data_file_name_P = f'/normal_distribution_data/normal_distribution_T050_P_step{i}.npy'
-            data_file_name_sites = f'/normal_distribution_data/normal_distribution_T050_P_sites_step{i}.npy'
+        # Aniso - T095
+        if i == special_step_distribution_T095:
+            data_file_name_P = f'/normal_distribution_data/normal_distribution_T095_P_step{i}.npy'
+            data_file_name_sites = f'/normal_distribution_data/normal_distribution_T095_sites_step{i}.npy'
             if os.path.exists(current_path + data_file_name_P):
                 P = np.load(current_path + data_file_name_P)
                 sites = np.load(current_path + data_file_name_sites)
             else:
-                newplace = np.rot90(npy_file_aniso_T050[i,:,:,:], 1, (0,1))
+                newplace = np.rot90(npy_file_aniso_T095[i,:,:,:], 1, (0,1))
                 P, sites = get_normal_vector(newplace, initial_grain_num)
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
 
-            slope_list = get_normal_vector_slope(P, sites, i, "T050 case")
+            slope_list = get_normal_vector_slope(P, sites, i, "T095 case")
 
 
     plt.legend(loc=(-0.25,-0.3),fontsize=14,ncol=3)
