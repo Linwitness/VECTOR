@@ -202,7 +202,7 @@ if __name__ == '__main__':
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
 
-    for i in tqdm(range(9,12)):
+    for i in tqdm(range(9,31)):
 
         # Aniso - min
         if i == special_step_distribution_min:
