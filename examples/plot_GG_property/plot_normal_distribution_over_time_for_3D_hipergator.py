@@ -143,7 +143,7 @@ if __name__ == '__main__':
     npy_file_name_aniso_ave = f"p_ori_ave_{TJ_energy_type_ave}E_100_20k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     npy_file_name_aniso_min = f"p_ori_ave_{TJ_energy_type_min}E_100_20k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     npy_file_name_aniso_sum = f"p_ori_ave_{TJ_energy_type_sum}E_100_20k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
-    npy_file_name_iso = "p_ori_ave_aveE_100_300_multiCore64_delta0.0_m2_J1_refer_1_0_0_seed56689_kt195.npy"
+    npy_file_name_iso = "p_ori_ave_aveE_100_20k_multiCore64_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066.npy"
 
     # Initial data
     npy_file_aniso_ave = np.load(npy_file_folder + npy_file_name_aniso_ave)
@@ -176,13 +176,13 @@ if __name__ == '__main__':
     bin_num = round((abs(x_limit[0])+abs(x_limit[1]))/bin_width)
     size_coordination = np.linspace((x_limit[0]+bin_width/2),(x_limit[1]-bin_width/2),bin_num)
     grain_size_distribution_ave = np.zeros(bin_num)
-    special_step_distribution_ave = 2
+    special_step_distribution_ave = 60
     grain_size_distribution_min = np.zeros(bin_num)
-    special_step_distribution_min = 2
+    special_step_distribution_min = 60
     grain_size_distribution_sum = np.zeros(bin_num)
-    special_step_distribution_sum = 2
+    special_step_distribution_sum = 60
     grain_size_distribution_iso = np.zeros(bin_num)
-    special_step_distribution_iso = 4
+    special_step_distribution_iso = 60
 
 
     # Start polar figure xy
