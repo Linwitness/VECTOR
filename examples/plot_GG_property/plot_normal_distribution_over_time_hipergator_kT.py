@@ -86,7 +86,7 @@ def get_normal_vector_slope(P, sites, step, para_name):
 
     # fitting
     fit_coeff = np.polyfit(xCor, freqArray, 1)
-    return fit_coeff[0]
+    return freqArray
 
 if __name__ == '__main__':
     # File name
@@ -258,6 +258,33 @@ if __name__ == '__main__':
                 np.save(current_path + data_file_name_sites, sites)
 
             slope_list = get_normal_vector_slope(P, sites, i, "T095 case")
+
+        # Bias between circle and kT066
+        if i == special_step_distribution_T066:
+            xLim = [0, 360]
+            binValue = 10.01
+            binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
+            xCor = np.linspace((xLim[0]+binValue/2),(xLim[1]-binValue/2),binNum)
+            freqArray_circle = np.ones(binNum)
+            freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
+
+            data_file_name_P = f'/normal_distribution_data/normal_distribution_T066_P_step{i}.npy'
+            data_file_name_sites = f'/normal_distribution_data/normal_distribution_T066_sites_step{i}.npy'
+            data_file_name_bias = f'/normal_distribution_data/normal_distribution_bias_T066_sites_step{i}.npy'
+            if os.path.exists(current_path + data_file_name_P):
+                P = np.load(current_path + data_file_name_P)
+                sites = np.load(current_path + data_file_name_sites)
+            else:
+                newplace = np.rot90(npy_file_aniso_T066[i,:,:,:], 1, (0,1))
+                P, sites = get_normal_vector(newplace, initial_grain_num)
+                np.save(current_path + data_file_name_P, P)
+                np.save(current_path + data_file_name_sites, sites)
+
+            slope_list = get_normal_vector_slope(P, sites, i, "T066 case")
+
+            bias = freqArray_circle - slope_list
+            np.save(current_path + data_file_name_bias, bias)
+            print(bias)
 
 
     plt.legend(loc=(-0.25,-0.3),fontsize=14,ncol=3)
