@@ -43,8 +43,7 @@ def get_normal_vector(grain_structure_figure_one, grain_num):
     print("Total num of GB sites: " + str(len(sites_together)))
 
     return P, sites_together
-
-def get_normal_vector_slope(P, sites, step, para_name):
+def get_normal_vector_slope(P, sites, step, para_name, bias=None):
     xLim = [0, 360]
     binValue = 10.01
     binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
@@ -66,6 +65,9 @@ def get_normal_vector_slope(P, sites, step, para_name):
         freqArray[int((degree[i]/math.pi*180-xLim[0])/binValue)] += 1
     freqArray = freqArray/sum(freqArray*binValue)
 
+    if bias != None:
+        freqArray = freqArray + bias
+        freqArray = freqArray/sum(freqArray*binValue)
     # Plot
     # plt.close()
     # fig = plt.figure(figsize=(5, 5))
@@ -270,7 +272,7 @@ if __name__ == '__main__':
 
             data_file_name_P = f'/normal_distribution_data/normal_distribution_T066_P_step{i}.npy'
             data_file_name_sites = f'/normal_distribution_data/normal_distribution_T066_sites_step{i}.npy'
-            data_file_name_bias = f'/normal_distribution_data/normal_distribution_bias_T066_sites_step{i}.npy'
+            data_file_name_bias = f'/normal_distribution_data/normal_distribution_T066_bias_sites_step{i}.npy'
             if os.path.exists(current_path + data_file_name_P):
                 P = np.load(current_path + data_file_name_P)
                 sites = np.load(current_path + data_file_name_sites)
