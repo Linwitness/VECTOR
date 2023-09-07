@@ -65,7 +65,7 @@ def get_normal_vector_slope(P, sites, step, para_name, bias=None):
         freqArray[int((degree[i]/math.pi*180-xLim[0])/binValue)] += 1
     freqArray = freqArray/sum(freqArray*binValue)
 
-    if bias != None:
+    if list(bias) != None:
         freqArray = freqArray + bias
         freqArray = freqArray/sum(freqArray*binValue)
     # Plot
