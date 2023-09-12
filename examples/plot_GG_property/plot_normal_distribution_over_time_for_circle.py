@@ -471,7 +471,7 @@ if __name__ == '__main__':
     plt.xlabel("Time step", fontsize=14)
     plt.ylabel(r"$r_{offset}/r_{ave}$", fontsize=14)
     plt.legend(fontsize=14)
-    plt.savefig(current_path + "/figures/anisotropic_magnitude.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + "/figures/anisotropic_magnitude_circle.png", dpi=400,bbox_inches='tight')
 
 
 
