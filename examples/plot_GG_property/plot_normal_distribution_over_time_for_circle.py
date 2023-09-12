@@ -53,7 +53,10 @@ def get_circle_statistical_radius(micro_matrix, sites_list, step):
     center_list, ave_radius_list = get_circle_center(micro_matrix, step)
     center = center_list[1]
     ave_radius = ave_radius_list[1]
-    sites = sites_list[1]
+    if len(sites_list) < 2:
+        sites = []
+    else:
+      sites = sites_list[1]
 
     max_radius_offset = 0
     for sitei in sites:
@@ -292,7 +295,7 @@ if __name__ == '__main__':
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_095, r"$\delta=095$")
 
-    plt.legend(loc=(-0.25,-0.3),fontsize=14,ncol=3)
+    plt.legend(loc=(-0.20,-0.3),fontsize=14,ncol=3)
     plt.savefig(current_path + "/figures/normal_distribution_circle.png", dpi=400,bbox_inches='tight')
     print("Polar figure done.")
 
