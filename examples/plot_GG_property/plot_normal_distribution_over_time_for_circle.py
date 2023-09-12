@@ -23,7 +23,7 @@ sys.path.append(current_path+'/../calculate_tangent/')
 
 def get_circle_center(P, step):
     # Get the center of all non-periodic grains in matrix
-    num_grains = np.max(P[0,:])
+    num_grains = int(np.max(P[0,:]))
     center_list = np.zeros((num_grains,2))
     sites_num_list = np.zeros(num_grains)
     ave_radius_list = np.zeros(num_grains)
