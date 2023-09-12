@@ -300,47 +300,46 @@ if __name__ == '__main__':
     print("Polar figure done.")
 
     # PLot magnitude of anisotropy
-    aniso_mag_000 = np.zeros(step_num)
-    aniso_mag_020 = np.zeros(step_num)
-    aniso_mag_040 = np.zeros(step_num)
-    aniso_mag_060 = np.zeros(step_num)
-    aniso_mag_080 = np.zeros(step_num)
-    aniso_mag_095 = np.zeros(step_num)
-    for i in tqdm(range(step_num)):
-        newplace = np.rot90(npy_file_aniso_000[i,:,:,:], 1, (0,1))
-        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_000[i] = get_circle_statistical_radius(npy_file_aniso_000, sites_list, i)
-
-        newplace = np.rot90(npy_file_aniso_020[i,:,:,:], 1, (0,1))
-        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_020[i] = get_circle_statistical_radius(npy_file_aniso_020, sites_list, i)
-
-        newplace = np.rot90(npy_file_aniso_040[i,:,:,:], 1, (0,1))
-        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_040[i] = get_circle_statistical_radius(npy_file_aniso_040, sites_list, i)
-
-        newplace = np.rot90(npy_file_aniso_060[i,:,:,:], 1, (0,1))
-        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_060[i] = get_circle_statistical_radius(npy_file_aniso_060, sites_list, i)
-
-        newplace = np.rot90(npy_file_aniso_080[i,:,:,:], 1, (0,1))
-        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_080[i] = get_circle_statistical_radius(npy_file_aniso_080, sites_list, i)
-
-        newplace = np.rot90(npy_file_aniso_095[i,:,:,:], 1, (0,1))
-        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_095[i] = get_circle_statistical_radius(npy_file_aniso_095, sites_list, i)
-
-    data_file_name_aniso_mag = f'/normal_distribution_data/aniso_magnitude_delta.npy'
+    data_file_name_aniso_mag = '/normal_distribution_data/aniso_magnitude_delta.npz'
     if os.path.exists(current_path + data_file_name_aniso_mag):
         data_file_aniso_mag = np.load(current_path + data_file_name_aniso_mag)
-        aniso_mag_000=['aniso_mag_000']
-        aniso_mag_020=['aniso_mag_020']
-        aniso_mag_040=['aniso_mag_040']
-        aniso_mag_060=['aniso_mag_060']
-        aniso_mag_080=['aniso_mag_080']
-        aniso_mag_095=['aniso_mag_095']
+        aniso_mag_000=data_file_aniso_mag['aniso_mag_000']
+        aniso_mag_020=data_file_aniso_mag['aniso_mag_020']
+        aniso_mag_040=data_file_aniso_mag['aniso_mag_040']
+        aniso_mag_060=data_file_aniso_mag['aniso_mag_060']
+        aniso_mag_080=data_file_aniso_mag['aniso_mag_080']
+        aniso_mag_095=data_file_aniso_mag['aniso_mag_095']
     else:
+        aniso_mag_000 = np.zeros(step_num)
+        aniso_mag_020 = np.zeros(step_num)
+        aniso_mag_040 = np.zeros(step_num)
+        aniso_mag_060 = np.zeros(step_num)
+        aniso_mag_080 = np.zeros(step_num)
+        aniso_mag_095 = np.zeros(step_num)
+        for i in tqdm(range(step_num)):
+            newplace = np.rot90(npy_file_aniso_000[i,:,:,:], 1, (0,1))
+            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            aniso_mag_000[i] = get_circle_statistical_radius(npy_file_aniso_000, sites_list, i)
+
+            newplace = np.rot90(npy_file_aniso_020[i,:,:,:], 1, (0,1))
+            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            aniso_mag_020[i] = get_circle_statistical_radius(npy_file_aniso_020, sites_list, i)
+
+            newplace = np.rot90(npy_file_aniso_040[i,:,:,:], 1, (0,1))
+            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            aniso_mag_040[i] = get_circle_statistical_radius(npy_file_aniso_040, sites_list, i)
+
+            newplace = np.rot90(npy_file_aniso_060[i,:,:,:], 1, (0,1))
+            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            aniso_mag_060[i] = get_circle_statistical_radius(npy_file_aniso_060, sites_list, i)
+
+            newplace = np.rot90(npy_file_aniso_080[i,:,:,:], 1, (0,1))
+            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            aniso_mag_080[i] = get_circle_statistical_radius(npy_file_aniso_080, sites_list, i)
+
+            newplace = np.rot90(npy_file_aniso_095[i,:,:,:], 1, (0,1))
+            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            aniso_mag_095[i] = get_circle_statistical_radius(npy_file_aniso_095, sites_list, i)
         np.savez(current_path + data_file_name_aniso_mag, aniso_mag_000=aniso_mag_000,
                                                           aniso_mag_020=aniso_mag_020,
                                                           aniso_mag_040=aniso_mag_040,
@@ -349,12 +348,12 @@ if __name__ == '__main__':
                                                           aniso_mag_095=aniso_mag_095)
     plt.close()
     fig = plt.figure(figsize=(5, 5))
-    plt.plot(np.linspace(0,step_num), aniso_mag_000, label='delta 000', linewidth=2)
-    plt.plot(np.linspace(0,step_num), aniso_mag_020, label='delta 020', linewidth=2)
-    plt.plot(np.linspace(0,step_num), aniso_mag_040, label='delta 040', linewidth=2)
-    plt.plot(np.linspace(0,step_num), aniso_mag_060, label='delta 060', linewidth=2)
-    plt.plot(np.linspace(0,step_num), aniso_mag_080, label='delta 080', linewidth=2)
-    plt.plot(np.linspace(0,step_num), aniso_mag_095, label='delta 095', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num), aniso_mag_000, label='delta 000', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num), aniso_mag_020, label='delta 020', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num), aniso_mag_040, label='delta 040', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num), aniso_mag_060, label='delta 060', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num), aniso_mag_080, label='delta 080', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num), aniso_mag_095, label='delta 095', linewidth=2)
     plt.xlabel("Time step", fontsize=14)
     plt.ylabel("Grain Size", fontsize=14)
     plt.legend(fontsize=14)
