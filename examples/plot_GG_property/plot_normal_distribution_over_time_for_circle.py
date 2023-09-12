@@ -116,7 +116,7 @@ def get_normal_vector_slope(P, sites, step, para_name, bias=None):
         freqArray[int((degree[i]/math.pi*180-xLim[0])/binValue)] += 1
     freqArray = freqArray/sum(freqArray*binValue)
 
-    if list(bias) != None:
+    if bias is not None:
         freqArray = freqArray + bias
         freqArray = freqArray/sum(freqArray*binValue)
     # Plot
@@ -139,7 +139,7 @@ def get_normal_vector_slope(P, sites, step, para_name, bias=None):
 
     # fitting
     fit_coeff = np.polyfit(xCor, freqArray, 1)
-    return fit_coeff[0]
+    return freqArray
 
 if __name__ == '__main__':
     # File name
