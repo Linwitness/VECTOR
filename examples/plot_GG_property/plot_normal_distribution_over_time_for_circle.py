@@ -21,20 +21,20 @@ import myInput
 import PACKAGE_MP_Linear as linear2d
 sys.path.append(current_path+'/../calculate_tangent/')
 
-def get_circle_center(P, step):
+def get_circle_center(micro_matrix, step):
     # Get the center of all non-periodic grains in matrix
-    num_grains = int(np.max(P[0,:]))
+    num_grains = int(np.max(micro_matrix[0,:]))
     center_list = np.zeros((num_grains,2))
     sites_num_list = np.zeros(num_grains)
     ave_radius_list = np.zeros(num_grains)
-    coord_refer_i = np.zeros((P.shape[1], P.shape[2]))
-    coord_refer_j = np.zeros((P.shape[1], P.shape[2]))
-    for i in range(P.shape[1]):
-        for j in range(P.shape[2]):
+    coord_refer_i = np.zeros((micro_matrix.shape[1], micro_matrix.shape[2]))
+    coord_refer_j = np.zeros((micro_matrix.shape[1], micro_matrix.shape[2]))
+    for i in range(micro_matrix.shape[1]):
+        for j in range(micro_matrix.shape[2]):
             coord_refer_i[i,j] = i
             coord_refer_j[i,j] = j
 
-    table = P[step,:,:,0]
+    table = micro_matrix[step,:,:,0]
     for i in range(num_grains):
         sites_num_list[i] = np.sum(table == i+1)
 
@@ -44,9 +44,9 @@ def get_circle_center(P, step):
 
     return center_list, ave_radius_list
 
-def get_circle_statistical_radius(P, sites_list, step):
+def get_circle_statistical_radius(micro_matrix, sites_list, step):
     # Get the max offset of average radius and real radius
-    center_list, ave_radius_list = get_circle_center(P, step)
+    center_list, ave_radius_list = get_circle_center(micro_matrix, step)
     center = center_list[1]
     ave_radius = ave_radius_list[1]
     sites = sites_list[1]
@@ -299,27 +299,27 @@ if __name__ == '__main__':
     for i in tqdm(range(step_num)):
         newplace = np.rot90(npy_file_aniso_000[i,:,:,:], 1, (0,1))
         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_000[i] = get_circle_statistical_radius(P, sites_list, i)
+        aniso_mag_000[i] = get_circle_statistical_radius(npy_file_aniso_000, sites_list, i)
 
         newplace = np.rot90(npy_file_aniso_020[i,:,:,:], 1, (0,1))
         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_020[i] = get_circle_statistical_radius(P, sites_list, i)
+        aniso_mag_020[i] = get_circle_statistical_radius(npy_file_aniso_020, sites_list, i)
 
         newplace = np.rot90(npy_file_aniso_040[i,:,:,:], 1, (0,1))
         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_040[i] = get_circle_statistical_radius(P, sites_list, i)
+        aniso_mag_040[i] = get_circle_statistical_radius(npy_file_aniso_040, sites_list, i)
 
         newplace = np.rot90(npy_file_aniso_060[i,:,:,:], 1, (0,1))
         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_060[i] = get_circle_statistical_radius(P, sites_list, i)
+        aniso_mag_060[i] = get_circle_statistical_radius(npy_file_aniso_060, sites_list, i)
 
         newplace = np.rot90(npy_file_aniso_080[i,:,:,:], 1, (0,1))
         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_080[i] = get_circle_statistical_radius(P, sites_list, i)
+        aniso_mag_080[i] = get_circle_statistical_radius(npy_file_aniso_080, sites_list, i)
 
         newplace = np.rot90(npy_file_aniso_095[i,:,:,:], 1, (0,1))
         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_095[i] = get_circle_statistical_radius(P, sites_list, i)
+        aniso_mag_095[i] = get_circle_statistical_radius(npy_file_aniso_095, sites_list, i)
 
     plt.close()
     fig = plt.figure(figsize=(5, 5))
