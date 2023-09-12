@@ -56,7 +56,7 @@ def get_circle_statistical_radius(micro_matrix, sites_list, step):
     if len(sites_list) < 2:
         sites = []
     else:
-      sites = sites_list[1]
+        sites = sites_list[1]
 
     max_radius_offset = 0
     for sitei in sites:
