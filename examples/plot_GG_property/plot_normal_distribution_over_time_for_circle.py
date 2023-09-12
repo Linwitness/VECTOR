@@ -38,8 +38,8 @@ def get_circle_center(micro_matrix, step):
     for i in range(num_grains):
         sites_num_list[i] = np.sum(table == i+1)
 
-        center_list[i, 0] = np.sum(coord_refer_i(table == i+1)) / sites_num_list[i]
-        center_list[i, 1] = np.sum(coord_refer_j(table == i+1)) / sites_num_list[i]
+        center_list[i, 0] = np.sum(coord_refer_i[table == i+1]) / sites_num_list[i]
+        center_list[i, 1] = np.sum(coord_refer_j[table == i+1]) / sites_num_list[i]
     ave_radius_list = np.sqrt(sites_num_list / np.pi)
 
     return center_list, ave_radius_list
