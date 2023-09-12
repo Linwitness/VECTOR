@@ -359,7 +359,7 @@ if __name__ == '__main__':
     plt.plot(np.linspace(0,step_num), aniso_mag_080, label='delta 080', linewidth=2)
     plt.plot(np.linspace(0,step_num), aniso_mag_095, label='delta 095', linewidth=2)
     plt.xlabel("Time step", fontsize=14)
-    plt.ylabel("Grain Size", fontsize=14)
+    plt.ylabel(r"$r_{offset}/r_{ave}$", fontsize=14)
     plt.legend(fontsize=14)
     plt.savefig(current_path + "/figures/anisotropic_magnitude.png", dpi=400,bbox_inches='tight')
 
