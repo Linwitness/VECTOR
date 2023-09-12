@@ -312,27 +312,27 @@ if __name__ == '__main__':
     for i in tqdm(range(step_num)):
         newplace = np.rot90(npy_file_aniso_000[i,:,:,:], 1, (0,1))
         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_000[i] = get_circle_statistical_radius(npy_file_aniso_000, sites_list, i)
+        aniso_mag_000[i] = get_poly_statistical_radius(npy_file_aniso_000, sites_list, i)
 
         newplace = np.rot90(npy_file_aniso_020[i,:,:,:], 1, (0,1))
         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_020[i] = get_circle_statistical_radius(npy_file_aniso_020, sites_list, i)
+        aniso_mag_020[i] = get_poly_statistical_radius(npy_file_aniso_020, sites_list, i)
 
         newplace = np.rot90(npy_file_aniso_040[i,:,:,:], 1, (0,1))
         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_040[i] = get_circle_statistical_radius(npy_file_aniso_040, sites_list, i)
+        aniso_mag_040[i] = get_poly_statistical_radius(npy_file_aniso_040, sites_list, i)
 
         newplace = np.rot90(npy_file_aniso_060[i,:,:,:], 1, (0,1))
         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_060[i] = get_circle_statistical_radius(npy_file_aniso_060, sites_list, i)
+        aniso_mag_060[i] = get_poly_statistical_radius(npy_file_aniso_060, sites_list, i)
 
         newplace = np.rot90(npy_file_aniso_080[i,:,:,:], 1, (0,1))
         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_080[i] = get_circle_statistical_radius(npy_file_aniso_080, sites_list, i)
+        aniso_mag_080[i] = get_poly_statistical_radius(npy_file_aniso_080, sites_list, i)
 
         newplace = np.rot90(npy_file_aniso_095[i,:,:,:], 1, (0,1))
         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        aniso_mag_095[i] = get_circle_statistical_radius(npy_file_aniso_095, sites_list, i)
+        aniso_mag_095[i] = get_poly_statistical_radius(npy_file_aniso_095, sites_list, i)
 
     data_file_name_aniso_mag = f'/normal_distribution_data/aniso_magnitude_poly_delta.npy'
     if os.path.exists(current_path + data_file_name_aniso_mag):
