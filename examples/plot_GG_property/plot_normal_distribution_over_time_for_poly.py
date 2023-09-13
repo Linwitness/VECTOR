@@ -71,7 +71,11 @@ def get_poly_statistical_radius(micro_matrix, sites_list, step):
 
           max_radius_offset_list[n] = max_radius_offset_list[n] / ave_radius
 
-    max_radius_offset = np.average(max_radius_offset_list[max_radius_offset_list!=0])
+    # max_radius_offset = np.average(max_radius_offset_list[max_radius_offset_list!=0])
+    area_list = np.pi*ave_radius_list*ave_radius_list
+    if np.sum(area_list) == 0: max_radius_offset = 0
+    else: max_radius_offset = np.sum(max_radius_offset_list * area_list) / np.sum(area_list)
+    
     return max_radius_offset
 
 def get_normal_vector(grain_structure_figure_one, grain_num):
