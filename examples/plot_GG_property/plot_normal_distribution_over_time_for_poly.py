@@ -75,7 +75,7 @@ def get_poly_statistical_radius(micro_matrix, sites_list, step):
     area_list = np.pi*ave_radius_list*ave_radius_list
     if np.sum(area_list) == 0: max_radius_offset = 0
     else: max_radius_offset = np.sum(max_radius_offset_list * area_list) / np.sum(area_list)
-    
+
     return max_radius_offset
 
 def get_normal_vector(grain_structure_figure_one, grain_num):
@@ -314,7 +314,7 @@ if __name__ == '__main__':
 
     plt.legend(loc=(-0.14,-0.3),fontsize=14,ncol=3)
     plt.savefig(current_path + "/figures/normal_distribution_poly.png", dpi=400,bbox_inches='tight')
-    
+
     # For figure after bias
     plt.close()
     fig = plt.figure(figsize=(5, 5))
@@ -443,35 +443,79 @@ if __name__ == '__main__':
         aniso_mag_060 = np.zeros(step_num)
         aniso_mag_080 = np.zeros(step_num)
         aniso_mag_095 = np.zeros(step_num)
+        cores = 16
+        loop_times = 5
         for i in tqdm(range(step_num)):
             # newplace = np.rot90(npy_file_aniso_000[i,:,:,:], 1, (0,1))
             newplace = npy_file_aniso_000[i,:,:,:]
-            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            nx = newplace.shape[0]
+            ny = newplace.shape[1]
+            ng = np.max(newplace)
+            R = np.zeros((nx,ny,2))
+            P0 = newplace
+            smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+            sites_list = smooth_class.get_all_gb_list()
+            # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_000[i] = get_poly_statistical_radius(npy_file_aniso_000, sites_list, i)
 
             # newplace = np.rot90(npy_file_aniso_020[i,:,:,:], 1, (0,1))
             newplace = npy_file_aniso_020[i,:,:,:]
-            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            nx = newplace.shape[0]
+            ny = newplace.shape[1]
+            ng = np.max(newplace)
+            R = np.zeros((nx,ny,2))
+            P0 = newplace
+            smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+            sites_list = smooth_class.get_all_gb_list()
+            # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_020[i] = get_poly_statistical_radius(npy_file_aniso_020, sites_list, i)
 
             # newplace = np.rot90(npy_file_aniso_040[i,:,:,:], 1, (0,1))
             newplace = npy_file_aniso_040[i,:,:,:]
-            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            nx = newplace.shape[0]
+            ny = newplace.shape[1]
+            ng = np.max(newplace)
+            R = np.zeros((nx,ny,2))
+            P0 = newplace
+            smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+            sites_list = smooth_class.get_all_gb_list()
+            # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_040[i] = get_poly_statistical_radius(npy_file_aniso_040, sites_list, i)
 
             # newplace = np.rot90(npy_file_aniso_060[i,:,:,:], 1, (0,1))
             newplace = npy_file_aniso_060[i,:,:,:]
-            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            nx = newplace.shape[0]
+            ny = newplace.shape[1]
+            ng = np.max(newplace)
+            R = np.zeros((nx,ny,2))
+            P0 = newplace
+            smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+            sites_list = smooth_class.get_all_gb_list()
+            # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_060[i] = get_poly_statistical_radius(npy_file_aniso_060, sites_list, i)
 
             # newplace = np.rot90(npy_file_aniso_080[i,:,:,:], 1, (0,1))
             newplace = npy_file_aniso_080[i,:,:,:]
-            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            nx = newplace.shape[0]
+            ny = newplace.shape[1]
+            ng = np.max(newplace)
+            R = np.zeros((nx,ny,2))
+            P0 = newplace
+            smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+            sites_list = smooth_class.get_all_gb_list()
+            # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_080[i] = get_poly_statistical_radius(npy_file_aniso_080, sites_list, i)
 
             # newplace = np.rot90(npy_file_aniso_095[i,:,:,:], 1, (0,1))
             newplace = npy_file_aniso_095[i,:,:,:]
-            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            nx = newplace.shape[0]
+            ny = newplace.shape[1]
+            ng = np.max(newplace)
+            R = np.zeros((nx,ny,2))
+            P0 = newplace
+            smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+            sites_list = smooth_class.get_all_gb_list()
+            # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_095[i] = get_poly_statistical_radius(npy_file_aniso_095, sites_list, i)
         np.savez(current_path + data_file_name_aniso_mag, aniso_mag_000=aniso_mag_000,
                                                           aniso_mag_020=aniso_mag_020,

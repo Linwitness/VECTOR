@@ -323,13 +323,13 @@ if __name__ == '__main__':
         aniso_mag_consMax = np.zeros(step_num)
         cores = 16
         loop_times = 5
-        R = np.zeros((nx,ny,2))
         for i in tqdm(range(step_num)):
             # newplace = np.rot90(npy_file_aniso_min[i,:,:,:], 1, (0,1))
             newplace = npy_file_aniso_min[i,:,:,:]
             nx = newplace.shape[0]
             ny = newplace.shape[1]
             ng = np.max(newplace)
+            R = np.zeros((nx,ny,2))
             P0 = newplace
             smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
             sites_list = smooth_class.get_all_gb_list()
@@ -341,6 +341,7 @@ if __name__ == '__main__':
             nx = newplace.shape[0]
             ny = newplace.shape[1]
             ng = np.max(newplace)
+            R = np.zeros((nx,ny,2))
             P0 = newplace
             smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
             sites_list = smooth_class.get_all_gb_list()
@@ -352,6 +353,7 @@ if __name__ == '__main__':
             nx = newplace.shape[0]
             ny = newplace.shape[1]
             ng = np.max(newplace)
+            R = np.zeros((nx,ny,2))
             P0 = newplace
             smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
             sites_list = smooth_class.get_all_gb_list()
@@ -363,6 +365,7 @@ if __name__ == '__main__':
             nx = newplace.shape[0]
             ny = newplace.shape[1]
             ng = np.max(newplace)
+            R = np.zeros((nx,ny,2))
             P0 = newplace
             smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
             sites_list = smooth_class.get_all_gb_list()
@@ -374,6 +377,7 @@ if __name__ == '__main__':
             nx = newplace.shape[0]
             ny = newplace.shape[1]
             ng = np.max(newplace)
+            R = np.zeros((nx,ny,2))
             P0 = newplace
             smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
             sites_list = smooth_class.get_all_gb_list()
@@ -385,6 +389,7 @@ if __name__ == '__main__':
             nx = newplace.shape[0]
             ny = newplace.shape[1]
             ng = np.max(newplace)
+            R = np.zeros((nx,ny,2))
             P0 = newplace
             smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
             sites_list = smooth_class.get_all_gb_list()
