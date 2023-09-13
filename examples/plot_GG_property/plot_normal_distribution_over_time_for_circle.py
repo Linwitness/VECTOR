@@ -71,6 +71,35 @@ def get_circle_statistical_radius(micro_matrix, sites_list, step):
 
     return max_radius_offset
 
+def get_circle_statistical_ar(micro_matrix, step):
+    # Get the average aspect ratio
+    num_grains = int(np.max(micro_matrix[step,:]))
+    sites_num_list = np.zeros(num_grains)
+    coord_refer_i = np.zeros((micro_matrix.shape[1], micro_matrix.shape[2]))
+    coord_refer_j = np.zeros((micro_matrix.shape[1], micro_matrix.shape[2]))
+    for i in range(micro_matrix.shape[1]):
+        for j in range(micro_matrix.shape[2]):
+            coord_refer_i[i,j] = i
+            coord_refer_j[i,j] = j
+    
+    aspect_ratio_i = np.zeros(2)
+    aspect_ratio_j = np.zeros(2)
+    aspect_ratio = 0
+    table = micro_matrix[step,:,:,0]
+    for i in [1]:#range(num_grains):
+        sites_num_list = np.sum(table == i+1)
+        aspect_ratio_i[0] = len(list(set(coord_refer_i[table == i+1])))
+        aspect_ratio_j[1] = len(list(set(coord_refer_j[table == i+1])))
+        if aspect_ratio_j[1] == 0: aspect_ratio = 1
+        else: aspect_ratio = aspect_ratio_i[0] / aspect_ratio_j[1]
+            
+            
+
+    # aspect_ratio = np.average(aspect_ratio[aspect_ratio!=0])
+    # aspect_ratio = np.sum(aspect_ratio * sites_num_list) / np.sum(sites_num_list)
+
+    return aspect_ratio
+
 def get_normal_vector(grain_structure_figure_one, grain_num):
     nx = grain_structure_figure_one.shape[0]
     ny = grain_structure_figure_one.shape[1]
@@ -337,7 +366,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_000, r"$\delta=000$", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_000, r"$\delta=0.00$", slope_list_bias)
 
     # Aniso - 020
     data_file_name_P = f'/normal_distribution_data/normal_distribution_020_P_step{special_step_distribution_020}.npy'
@@ -351,7 +380,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_020, r"$\delta=020$", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_020, r"$\delta=0.20$", slope_list_bias)
 
     # Aniso - 040
     data_file_name_P = f'/normal_distribution_data/normal_distribution_040_P_step{special_step_distribution_040}.npy'
@@ -365,7 +394,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_040, r"$\delta=040$", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_040, r"$\delta=0.40$", slope_list_bias)
 
     # Aniso - 060
     data_file_name_P = f'/normal_distribution_data/normal_distribution_060_P_step{special_step_distribution_060}.npy'
@@ -379,7 +408,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_060, r"$\delta=060$", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_060, r"$\delta=0.60$", slope_list_bias)
 
     # Aniso - 080
     data_file_name_P = f'/normal_distribution_data/normal_distribution_080_P_step{special_step_distribution_080}.npy'
@@ -393,7 +422,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_080, r"$\delta=080$", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_080, r"$\delta=0.80$", slope_list_bias)
 
     # Aniso - 095
     data_file_name_P = f'/normal_distribution_data/normal_distribution_095_P_step{special_step_distribution_095}.npy'
@@ -407,7 +436,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_095, r"$\delta=095$", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_095, r"$\delta=0.95$", slope_list_bias)
 
     plt.legend(loc=(-0.14,-0.3),fontsize=14,ncol=3)
     plt.savefig(current_path + "/figures/normal_distribution_circle_after_removing_bias.png", dpi=400,bbox_inches='tight')
@@ -432,34 +461,34 @@ if __name__ == '__main__':
         aniso_mag_095 = np.zeros(step_num)
         for i in tqdm(range(step_num)):
             # newplace = np.rot90(npy_file_aniso_000[i,:,:,:], 1, (0,1))
-            newplace = npy_file_aniso_000[i,:,:,:]
-            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-            aniso_mag_000[i] = get_circle_statistical_radius(npy_file_aniso_000, sites_list, i)
+            # newplace = npy_file_aniso_000[i,:,:,:]
+            # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            aniso_mag_000[i] = get_circle_statistical_ar(npy_file_aniso_000, i)
 
             # newplace = np.rot90(npy_file_aniso_020[i,:,:,:], 1, (0,1))
-            newplace = npy_file_aniso_020[i,:,:,:]
-            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-            aniso_mag_020[i] = get_circle_statistical_radius(npy_file_aniso_020, sites_list, i)
+            # newplace = npy_file_aniso_020[i,:,:,:]
+            # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            aniso_mag_020[i] = get_circle_statistical_ar(npy_file_aniso_020, i)
 
             # newplace = np.rot90(npy_file_aniso_040[i,:,:,:], 1, (0,1))
-            newplace = npy_file_aniso_040[i,:,:,:]
-            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-            aniso_mag_040[i] = get_circle_statistical_radius(npy_file_aniso_040, sites_list, i)
+            # newplace = npy_file_aniso_040[i,:,:,:]
+            # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            aniso_mag_040[i] = get_circle_statistical_ar(npy_file_aniso_040, i)
 
             # newplace = np.rot90(npy_file_aniso_060[i,:,:,:], 1, (0,1))
-            newplace = npy_file_aniso_060[i,:,:,:]
-            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-            aniso_mag_060[i] = get_circle_statistical_radius(npy_file_aniso_060, sites_list, i)
+            # newplace = npy_file_aniso_060[i,:,:,:]
+            # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            aniso_mag_060[i] = get_circle_statistical_ar(npy_file_aniso_060, i)
 
             # newplace = np.rot90(npy_file_aniso_080[i,:,:,:], 1, (0,1))
-            newplace = npy_file_aniso_080[i,:,:,:]
-            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-            aniso_mag_080[i] = get_circle_statistical_radius(npy_file_aniso_080, sites_list, i)
+            # newplace = npy_file_aniso_080[i,:,:,:]
+            # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            aniso_mag_080[i] = get_circle_statistical_ar(npy_file_aniso_080, i)
 
             # newplace = np.rot90(npy_file_aniso_095[i,:,:,:], 1, (0,1))
-            newplace = npy_file_aniso_095[i,:,:,:]
-            P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-            aniso_mag_095[i] = get_circle_statistical_radius(npy_file_aniso_095, sites_list, i)
+            # newplace = npy_file_aniso_095[i,:,:,:]
+            # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+            aniso_mag_095[i] = get_circle_statistical_ar(npy_file_aniso_095, i)
         np.savez(current_path + data_file_name_aniso_mag, aniso_mag_000=aniso_mag_000,
                                                           aniso_mag_020=aniso_mag_020,
                                                           aniso_mag_040=aniso_mag_040,
@@ -468,16 +497,16 @@ if __name__ == '__main__':
                                                           aniso_mag_095=aniso_mag_095)
     plt.close()
     fig = plt.figure(figsize=(5, 5))
-    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_000, label='delta 000', linewidth=2)
-    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_020, label='delta 020', linewidth=2)
-    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_040, label='delta 040', linewidth=2)
-    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_060, label='delta 060', linewidth=2)
-    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_080, label='delta 080', linewidth=2)
-    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_095, label='delta 095', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_000, label=r'$\delta=0.00$', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_020, label=r'$\delta=0.20$', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_040, label=r'$\delta=0.40$', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_060, label=r'$\delta=0.60$', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_080, label=r'$\delta=0.80$', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_095, label=r'$\delta=0.95$', linewidth=2)
     plt.xlabel("Time step", fontsize=14)
-    plt.ylabel(r"$r_{offset}/r_{ave}$", fontsize=14)
+    plt.ylabel("Aspect ratio", fontsize=14)
     plt.legend(fontsize=14)
-    plt.savefig(current_path + "/figures/anisotropic_magnitude_circle.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + "/figures/anisotropic_magnitude_circle_aspect_ratio.png", dpi=400,bbox_inches='tight')
 
 
 
