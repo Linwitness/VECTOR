@@ -98,7 +98,7 @@ def get_poly_statistical_ar(micro_matrix, step):
     aspect_ratio_j_list = [[] for _ in range(int(num_grains))]
     for i in range(micro_matrix.shape[1]):
         for j in range(micro_matrix.shape[2]):
-            grain_id = int(micro_matrix[i][j]-1)
+            grain_id = int(table[i][j]-1)
             sites_num_list[grain_id] +=1
             aspect_ratio_i_list[grain_id].append(coord_refer_i[i][j])
             aspect_ratio_j_list[grain_id].append(coord_refer_j[i][j])
