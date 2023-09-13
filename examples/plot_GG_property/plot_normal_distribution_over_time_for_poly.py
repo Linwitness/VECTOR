@@ -43,7 +43,7 @@ def get_poly_center(micro_matrix, step):
            (np.max(coord_refer_j[table == i+1]) - np.min(coord_refer_j[table == i+1]) == micro_matrix.shape[2]): # grains on bc are ignored
           center_list[i, 0] = 0
           center_list[i, 1] = 0
-          sites_num_list[i] == 0
+          sites_num_list[i] = 0
         else:
           center_list[i, 0] = np.sum(coord_refer_i[table == i+1]) / sites_num_list[i]
           center_list[i, 1] = np.sum(coord_refer_j[table == i+1]) / sites_num_list[i]
@@ -354,7 +354,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_020, r"$\delta=020$")
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_020, r"$\delta=020$", slope_list_bias)
 
     # Aniso - 040
     data_file_name_P = f'/normal_distribution_data/normal_distribution_poly_040_P_step{special_step_distribution_040}.npy'
@@ -417,6 +417,12 @@ if __name__ == '__main__':
     print("Polar figure done.")
 
     # PLot magnitude of anisotropy
+    # aniso_mag_000 = np.zeros(step_num)
+    # for i in [0]:#tqdm(range(step_num)):
+    #     # newplace = np.rot90(npy_file_aniso_000[i,:,:,:], 1, (0,1))
+    #     newplace = npy_file_aniso_000[i,:,:,:]
+    #     P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+    #     aniso_mag_000[i], center_list, ave_radius_list, sites_list = get_poly_statistical_radius(npy_file_aniso_000, sites_list, i)
     data_file_name_aniso_mag = f'/normal_distribution_data/aniso_magnitude_poly_delta.npz'
     if os.path.exists(current_path + data_file_name_aniso_mag):
         data_file_aniso_mag = np.load(current_path + data_file_name_aniso_mag)
@@ -434,27 +440,33 @@ if __name__ == '__main__':
         aniso_mag_080 = np.zeros(step_num)
         aniso_mag_095 = np.zeros(step_num)
         for i in tqdm(range(step_num)):
-            newplace = np.rot90(npy_file_aniso_000[i,:,:,:], 1, (0,1))
+            # newplace = np.rot90(npy_file_aniso_000[i,:,:,:], 1, (0,1))
+            newplace = npy_file_aniso_000[i,:,:,:]
             P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_000[i] = get_poly_statistical_radius(npy_file_aniso_000, sites_list, i)
 
-            newplace = np.rot90(npy_file_aniso_020[i,:,:,:], 1, (0,1))
+            # newplace = np.rot90(npy_file_aniso_020[i,:,:,:], 1, (0,1))
+            newplace = npy_file_aniso_020[i,:,:,:]
             P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_020[i] = get_poly_statistical_radius(npy_file_aniso_020, sites_list, i)
 
-            newplace = np.rot90(npy_file_aniso_040[i,:,:,:], 1, (0,1))
+            # newplace = np.rot90(npy_file_aniso_040[i,:,:,:], 1, (0,1))
+            newplace = npy_file_aniso_040[i,:,:,:]
             P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_040[i] = get_poly_statistical_radius(npy_file_aniso_040, sites_list, i)
 
-            newplace = np.rot90(npy_file_aniso_060[i,:,:,:], 1, (0,1))
+            # newplace = np.rot90(npy_file_aniso_060[i,:,:,:], 1, (0,1))
+            newplace = npy_file_aniso_060[i,:,:,:]
             P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_060[i] = get_poly_statistical_radius(npy_file_aniso_060, sites_list, i)
 
-            newplace = np.rot90(npy_file_aniso_080[i,:,:,:], 1, (0,1))
+            # newplace = np.rot90(npy_file_aniso_080[i,:,:,:], 1, (0,1))
+            newplace = npy_file_aniso_080[i,:,:,:]
             P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_080[i] = get_poly_statistical_radius(npy_file_aniso_080, sites_list, i)
 
-            newplace = np.rot90(npy_file_aniso_095[i,:,:,:], 1, (0,1))
+            # newplace = np.rot90(npy_file_aniso_095[i,:,:,:], 1, (0,1))
+            newplace = npy_file_aniso_095[i,:,:,:]
             P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_095[i] = get_poly_statistical_radius(npy_file_aniso_095, sites_list, i)
         np.savez(current_path + data_file_name_aniso_mag, aniso_mag_000=aniso_mag_000,
@@ -465,16 +477,16 @@ if __name__ == '__main__':
                                                           aniso_mag_095=aniso_mag_095)
     plt.close()
     fig = plt.figure(figsize=(5, 5))
-    plt.plot(np.linspace(0,step_num), aniso_mag_000, label='delta 000', linewidth=2)
-    plt.plot(np.linspace(0,step_num), aniso_mag_020, label='delta 020', linewidth=2)
-    plt.plot(np.linspace(0,step_num), aniso_mag_040, label='delta 040', linewidth=2)
-    plt.plot(np.linspace(0,step_num), aniso_mag_060, label='delta 060', linewidth=2)
-    plt.plot(np.linspace(0,step_num), aniso_mag_080, label='delta 080', linewidth=2)
-    plt.plot(np.linspace(0,step_num), aniso_mag_095, label='delta 095', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_000, label='delta 000', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_020, label='delta 020', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_040, label='delta 040', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_060, label='delta 060', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_080, label='delta 080', linewidth=2)
+    plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_095, label='delta 095', linewidth=2)
     plt.xlabel("Time step", fontsize=14)
     plt.ylabel(r"$r_{offset}/r_{ave}$", fontsize=14)
     plt.legend(fontsize=14)
-    plt.savefig(current_path + "/figures/anisotropic_poly_magnitude.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + "/figures/anisotropic_magnitude_poly.png", dpi=400,bbox_inches='tight')
 
 
 
