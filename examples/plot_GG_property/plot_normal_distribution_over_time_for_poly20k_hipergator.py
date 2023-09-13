@@ -226,7 +226,7 @@ if __name__ == '__main__':
         sites = np.load(current_path + data_file_name_sites)
     else:
         newplace = np.rot90(npy_file_aniso_min[special_step_distribution_min,:,:,:], 1, (0,1))
-        P, sites = get_normal_vector(newplace, initial_grain_num)
+        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
@@ -240,7 +240,7 @@ if __name__ == '__main__':
         sites = np.load(current_path + data_file_name_sites)
     else:
         newplace = np.rot90(npy_file_aniso_max[special_step_distribution_max,:,:,:], 1, (0,1))
-        P, sites = get_normal_vector(newplace, initial_grain_num)
+        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
@@ -254,7 +254,7 @@ if __name__ == '__main__':
         sites = np.load(current_path + data_file_name_sites)
     else:
         newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
-        P, sites = get_normal_vector(newplace, initial_grain_num)
+        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
@@ -268,7 +268,7 @@ if __name__ == '__main__':
         sites = np.load(current_path + data_file_name_sites)
     else:
         newplace = np.rot90(npy_file_aniso_sum[special_step_distribution_sum,:,:,:], 1, (0,1))
-        P, sites = get_normal_vector(newplace, initial_grain_num)
+        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
@@ -282,7 +282,7 @@ if __name__ == '__main__':
         sites = np.load(current_path + data_file_name_sites)
     else:
         newplace = np.rot90(npy_file_aniso_consMin[special_step_distribution_consMin,:,:,:], 1, (0,1))
-        P, sites = get_normal_vector(newplace, initial_grain_num)
+        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
@@ -296,7 +296,7 @@ if __name__ == '__main__':
         sites = np.load(current_path + data_file_name_sites)
     else:
         newplace = np.rot90(npy_file_aniso_consMax[special_step_distribution_consMax,:,:,:], 1, (0,1))
-        P, sites = get_normal_vector(newplace, initial_grain_num)
+        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
