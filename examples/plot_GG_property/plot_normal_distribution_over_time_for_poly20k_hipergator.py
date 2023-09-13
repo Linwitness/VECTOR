@@ -78,7 +78,7 @@ def get_normal_vector(grain_structure_figure_one, grain_num):
     nx = grain_structure_figure_one.shape[0]
     ny = grain_structure_figure_one.shape[1]
     ng = np.max(grain_structure_figure_one)
-    cores = 8
+    cores = 32
     loop_times = 5
     P0 = grain_structure_figure_one
     R = np.zeros((nx,ny,2))
@@ -95,7 +95,7 @@ def get_normal_vector(grain_structure_figure_one, grain_num):
     for id in range(len(sites)): sites_together += sites[id]
     print("Total num of GB sites: " + str(len(sites_together)))
 
-    return P, sites_together
+    return P, sites_together, sites
 
 def get_normal_vector_slope(P, sites, step, para_name, bias=None):
     xLim = [0, 360]
