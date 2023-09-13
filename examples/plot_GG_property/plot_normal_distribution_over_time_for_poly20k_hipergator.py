@@ -323,27 +323,33 @@ if __name__ == '__main__':
         aniso_mag_consMin = np.zeros(step_num)
         aniso_mag_consMax = np.zeros(step_num)
         for i in tqdm(range(step_num)):
-            newplace = np.rot90(npy_file_aniso_min[i,:,:,:], 1, (0,1))
+            # newplace = np.rot90(npy_file_aniso_min[i,:,:,:], 1, (0,1))
+            newplace = npy_file_aniso_min[i,:,:,:]
             P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_min[i] = get_poly_statistical_radius(npy_file_aniso_min, sites_list, i)
 
-            newplace = np.rot90(npy_file_aniso_max[i,:,:,:], 1, (0,1))
+            # newplace = np.rot90(npy_file_aniso_max[i,:,:,:], 1, (0,1))
+            newplace = npy_file_aniso_max[i,:,:,:]
             P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_max[i] = get_poly_statistical_radius(npy_file_aniso_max, sites_list, i)
 
-            newplace = np.rot90(npy_file_aniso_ave[i,:,:,:], 1, (0,1))
+            # newplace = np.rot90(npy_file_aniso_ave[i,:,:,:], 1, (0,1))
+            newplace = npy_file_aniso_ave[i,:,:,:]
             P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_ave[i] = get_poly_statistical_radius(npy_file_aniso_ave, sites_list, i)
 
-            newplace = np.rot90(npy_file_aniso_sum[i,:,:,:], 1, (0,1))
+            # newplace = np.rot90(npy_file_aniso_sum[i,:,:,:], 1, (0,1))
+            newplace = npy_file_aniso_sum[i,:,:,:]
             P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_sum[i] = get_poly_statistical_radius(npy_file_aniso_sum, sites_list, i)
 
-            newplace = np.rot90(npy_file_aniso_consMin[i,:,:,:], 1, (0,1))
+            # newplace = np.rot90(npy_file_aniso_consMin[i,:,:,:], 1, (0,1))
+            newplace = npy_file_aniso_consMin[i,:,:,:]
             P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_consMin[i] = get_poly_statistical_radius(npy_file_aniso_consMin, sites_list, i)
 
-            newplace = np.rot90(npy_file_aniso_consMax[i,:,:,:], 1, (0,1))
+            # newplace = np.rot90(npy_file_aniso_consMax[i,:,:,:], 1, (0,1))
+            newplace = npy_file_aniso_consMax[i,:,:,:]
             P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
             aniso_mag_consMax[i] = get_poly_statistical_radius(npy_file_aniso_consMax, sites_list, i)
         np.savez(current_path + data_file_name_aniso_mag, aniso_mag_min=aniso_mag_min,
