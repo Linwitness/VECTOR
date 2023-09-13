@@ -38,7 +38,7 @@ def get_poly_center(micro_matrix, step):
     for i in range(num_grains):
         sites_num_list[i] = np.sum(table == i+1)
 
-        if (sites_num_list[i] == 0) or \
+        if (sites_num_list[i] < 500) or \
            (np.max(coord_refer_i[table == i+1]) - np.min(coord_refer_i[table == i+1]) == micro_matrix.shape[1]) or \
            (np.max(coord_refer_j[table == i+1]) - np.min(coord_refer_j[table == i+1]) == micro_matrix.shape[2]): # grains on bc are ignored
           center_list[i, 0] = 0
@@ -72,6 +72,10 @@ def get_poly_statistical_radius(micro_matrix, sites_list, step):
           max_radius_offset_list[n] = max_radius_offset_list[n] / ave_radius
 
     max_radius_offset = np.average(max_radius_offset_list[max_radius_offset_list!=0])
+    area_list = np.pi*ave_radius_list*ave_radius_list
+    if np.sum(area_list) == 0: max_radius_offset = 0
+    else: max_radius_offset = np.sum(max_radius_offset_list * area_list) / np.sum(area_list)
+
     return max_radius_offset
 
 def get_normal_vector(grain_structure_figure_one, grain_num):
@@ -324,7 +328,7 @@ if __name__ == '__main__':
         aniso_mag_consMax = np.zeros(step_num)
         cores = 16
         loop_times = 5
-        for i in tqdm(range(step_num)):
+        for i in tqdm(range(350,step_num)):
             # newplace = np.rot90(npy_file_aniso_min[i,:,:,:], 1, (0,1))
             newplace = npy_file_aniso_min[i,:,:,:]
             nx = newplace.shape[0]
