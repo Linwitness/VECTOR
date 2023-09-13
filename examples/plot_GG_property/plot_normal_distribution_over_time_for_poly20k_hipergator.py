@@ -109,13 +109,6 @@ def get_poly_statistical_ar(micro_matrix, step):
         if aspect_ratio_j[i, 1] == 0: aspect_ratio[i] = 0
         else: aspect_ratio[i] = aspect_ratio_i[i, 0] / aspect_ratio_j[i, 1]
 
-    # for i in range(num_grains):
-    #     sites_num_list[i] = np.sum(table == i+1)
-    #     aspect_ratio_i[i, 0] = len(list(set(coord_refer_i[table == i+1])))
-    #     aspect_ratio_j[i, 1] = len(list(set(coord_refer_j[table == i+1])))
-    #     if aspect_ratio_j[i, 1] == 0: aspect_ratio[i] = 0
-    #     else: aspect_ratio[i] = aspect_ratio_i[i, 0] / aspect_ratio_j[i, 1]
-
     # aspect_ratio = np.average(aspect_ratio[aspect_ratio!=0])
     aspect_ratio = np.sum(aspect_ratio * sites_num_list) / np.sum(sites_num_list)
 
