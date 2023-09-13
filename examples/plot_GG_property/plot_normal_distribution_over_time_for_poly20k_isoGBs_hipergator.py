@@ -78,7 +78,7 @@ def get_normal_vector(grain_structure_figure_one, grain_num):
     nx = grain_structure_figure_one.shape[0]
     ny = grain_structure_figure_one.shape[1]
     ng = np.max(grain_structure_figure_one)
-    cores = 32
+    cores = 16
     loop_times = 5
     P0 = grain_structure_figure_one
     R = np.zeros((nx,ny,2))
