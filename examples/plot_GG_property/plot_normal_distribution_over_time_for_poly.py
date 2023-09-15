@@ -21,6 +21,25 @@ import myInput
 import PACKAGE_MP_Linear as linear2d
 sys.path.append(current_path+'/../calculate_tangent/')
 
+def find_fittingEllipse2(array): #failure
+    K_mat = []
+    Y_mat = []
+
+    # Get the self-variable
+    X = array[:,0]
+    Y = array[:,1]
+
+    K_mat = np.hstack([X**2, X*Y, Y**2, X, Y])
+    Y_mat = np.ones_like(X)
+
+    X_mat = np.linalg.lstsq(K_mat, Y_mat)[0].squeeze()
+    # X_mat = (K_mat.T*K_mat).I * K_mat.T * Y_mat
+
+    print('The ellipse is given by {0:.3}x^2 + {1:.3}xy+{2:.3}y^2+{3:.3}x+{4:.3}y = 1'.format(X_mat[0], X_mat[1], X_mat[2], X_mat[3], X_mat[4]))
+    print(X_mat)
+
+    return X_mat
+
 def get_poly_center(micro_matrix, step):
     # Get the center of all non-periodic grains in matrix
     num_grains = int(np.max(micro_matrix[step,:]))
@@ -89,7 +108,7 @@ def get_poly_statistical_ar(micro_matrix, step):
         for j in range(micro_matrix.shape[2]):
             coord_refer_i[i,j] = i
             coord_refer_j[i,j] = j
-    
+
     aspect_ratio_i = np.zeros((num_grains,2))
     aspect_ratio_j = np.zeros((num_grains,2))
     aspect_ratio = np.zeros(num_grains)
@@ -100,8 +119,8 @@ def get_poly_statistical_ar(micro_matrix, step):
         aspect_ratio_j[i, 1] = len(list(set(coord_refer_j[table == i+1])))
         if aspect_ratio_j[i, 1] == 0: aspect_ratio[i] = 0
         else: aspect_ratio[i] = aspect_ratio_i[i, 0] / aspect_ratio_j[i, 1]
-            
-            
+
+
 
     # aspect_ratio = np.average(aspect_ratio[aspect_ratio!=0])
     aspect_ratio = np.sum(aspect_ratio * sites_num_list) / np.sum(sites_num_list)

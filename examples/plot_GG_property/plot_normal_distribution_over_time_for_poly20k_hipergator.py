@@ -21,6 +21,25 @@ import myInput
 import PACKAGE_MP_Linear as linear2d
 sys.path.append(current_path+'/../calculate_tangent/')
 
+def find_fittingEllipse2(array): #failure
+    K_mat = []
+    Y_mat = []
+
+    # Get the self-variable
+    X = array[:,0]
+    Y = array[:,1]
+
+    K_mat = np.hstack([X**2, X*Y, Y**2, X, Y])
+    Y_mat = np.ones_like(X)
+
+    X_mat = np.linalg.lstsq(K_mat, Y_mat)[0].squeeze()
+    # X_mat = (K_mat.T*K_mat).I * K_mat.T * Y_mat
+
+    print('The ellipse is given by {0:.3}x^2 + {1:.3}xy+{2:.3}y^2+{3:.3}x+{4:.3}y = 1'.format(X_mat[0], X_mat[1], X_mat[2], X_mat[3], X_mat[4]))
+    print(X_mat)
+
+    return X_mat
+
 def get_poly_center(micro_matrix, step):
     # Get the center of all non-periodic grains in matrix
     num_grains = int(np.max(micro_matrix[step,:]))
