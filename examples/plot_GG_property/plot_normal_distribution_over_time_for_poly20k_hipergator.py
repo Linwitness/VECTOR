@@ -505,7 +505,7 @@ if __name__ == '__main__':
     plt.ylabel("Magnitude", fontsize=14)
     plt.xticks([0,1,2,3,4,5],label_list)
     plt.legend(fontsize=14)
-    plt.ylim([0.3,1.5])
+    plt.ylim([0.0,1.0])
     plt.savefig(current_path + "/figures/anisotropic_poly_20k_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
 
 
