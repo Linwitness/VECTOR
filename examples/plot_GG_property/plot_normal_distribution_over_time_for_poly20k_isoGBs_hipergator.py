@@ -30,10 +30,10 @@ def simple_magnitude(freqArray):
     coeff_high = abs(np.cos((xCor-90)/180*np.pi))
     coeff_low = abs(np.cos((xCor)/180*np.pi))
     
-    if np.sum(freqArray * coeff_high) > np.sum(freqArray * coeff_low):
-        return np.sum(freqArray * coeff_high)/np.sum(freqArray * coeff_low)
-    else:
-        return np.sum(freqArray * coeff_low)/np.sum(freqArray * coeff_high)
+    #if np.sum(freqArray * coeff_high) > np.sum(freqArray * coeff_low):
+    return np.sum(freqArray * coeff_high)/np.sum(freqArray * coeff_low)
+    #else:
+    #    return np.sum(freqArray * coeff_low)/np.sum(freqArray * coeff_high)
 
 
 def get_poly_center(micro_matrix, step):
@@ -197,7 +197,7 @@ def get_normal_vector_slope(P, sites, step, para_name, bias=None):
 
     # fitting
     fit_coeff = np.polyfit(xCor, freqArray, 1)
-    return fit_coeff[0]
+    return freqArray
 
 if __name__ == '__main__':
     # File name
@@ -477,11 +477,12 @@ if __name__ == '__main__':
     # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_consMin, label='ConsMin case', linewidth=2)
     # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_consMax, label='ConsMax case', linewidth=2)
     label_list = ["Min", "Max", "Ave", "Sum", "ConsMin", "ConsMax"]
-    plt.plot(np.linspace(0,len(label_list)-1,len(label_list)), aniso_mag, '.-', markersize=8, label='number of grains around 2000', linewidth=2)
-    plt.xlabel(r"$\delta$", fontsize=14)
+    plt.plot(np.linspace(0,len(label_list)-1,len(label_list)), aniso_mag, '.-', markersize=8, label='around 2000 grains', linewidth=2)
+    plt.xlabel("Energy type", fontsize=14)
     plt.ylabel("Magnitude", fontsize=14)
-    plt.yticks([0,1,2,3,4,5],label_list)
+    plt.xticks([0,1,2,3,4,5],label_list)
     plt.legend(fontsize=14)
+    plt.ylim([0.3,1.5])
     plt.savefig(current_path + "/figures/anisotropic_poly_20k_isoGBs_magnitude_sapect_ratio.png", dpi=400,bbox_inches='tight')
 
 
