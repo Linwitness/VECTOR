@@ -27,13 +27,17 @@ def simple_magnitude(freqArray):
     binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
     xCor = np.linspace((xLim[0]+binValue/2),(xLim[1]-binValue/2),binNum)
     
-    coeff_high = abs(np.cos((xCor-90)/180*np.pi))
-    coeff_low = abs(np.cos((xCor)/180*np.pi))
+    freqArray_circle = np.ones(binNum)
+    freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
     
-    #if np.sum(freqArray * coeff_high) > np.sum(freqArray * coeff_low):
-    return np.sum(freqArray * coeff_high)/np.sum(freqArray * coeff_low)
-    #else:
-    #    return np.sum(freqArray * coeff_low)/np.sum(freqArray * coeff_high)
+    magnitude_max = np.max(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
+    magnitude_ave = np.average(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
+    
+    return magnitude_ave, magnitude_max
+    
+    # coeff_high = abs(np.cos((xCor-90)/180*np.pi))
+    # coeff_low = abs(np.cos((xCor)/180*np.pi))
+    # return np.sum(freqArray * coeff_high)/np.sum(freqArray * coeff_low)
 
 
 def get_poly_center(micro_matrix, step):
@@ -291,7 +295,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_min, "Min case", slope_list_bias)
-    aniso_mag[0] = simple_magnitude(slope_list)
+    aniso_mag[0] = simple_magnitude(slope_list)[0]
 
     # Aniso - max
     data_file_name_P = f'/normal_distribution_data/normal_distribution_max_P_20k_isoGBs_step{special_step_distribution_max}.npy'
@@ -306,7 +310,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_max, "Max case", slope_list_bias)
-    aniso_mag[1] = simple_magnitude(slope_list)
+    aniso_mag[1] = simple_magnitude(slope_list)[0]
 
     # Aniso - ave
     data_file_name_P = f'/normal_distribution_data/normal_distribution_ave_P_20k_isoGBs_step{special_step_distribution_ave}.npy'
@@ -321,7 +325,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_ave, "Ave case", slope_list_bias)
-    aniso_mag[2] = simple_magnitude(slope_list)
+    aniso_mag[2] = simple_magnitude(slope_list)[0]
 
     # Aniso - sum
     data_file_name_P = f'/normal_distribution_data/normal_distribution_sum_P_20k_isoGBs_step{special_step_distribution_sum}.npy'
@@ -336,7 +340,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_sum, "Sum case", slope_list_bias)
-    aniso_mag[3] = simple_magnitude(slope_list)
+    aniso_mag[3] = simple_magnitude(slope_list)[0]
 
     # Aniso - consMin
     data_file_name_P = f'/normal_distribution_data/normal_distribution_consMin_P_20k_isoGBs_step{special_step_distribution_consMin}.npy'
@@ -351,7 +355,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMin, "ConsMin case", slope_list_bias)
-    aniso_mag[4] = simple_magnitude(slope_list)
+    aniso_mag[4] = simple_magnitude(slope_list)[0]
 
     # Aniso - consMax
     data_file_name_P = f'/normal_distribution_data/normal_distribution_consMax_P_20k_isoGBs_step{special_step_distribution_consMax}.npy'
@@ -366,7 +370,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMax, "ConsMax case", slope_list_bias)
-    aniso_mag[5] = simple_magnitude(slope_list)
+    aniso_mag[5] = simple_magnitude(slope_list)[0]
 
     plt.legend(loc=(-0.25,-0.3),fontsize=14,ncol=3)
     plt.savefig(current_path + "/figures/normal_distribution_poly_20k_isoGBs_after_removing_bias.png", dpi=400,bbox_inches='tight')
@@ -483,7 +487,7 @@ if __name__ == '__main__':
     plt.xticks([0,1,2,3,4,5],label_list)
     plt.legend(fontsize=14)
     plt.ylim([0.3,1.5])
-    plt.savefig(current_path + "/figures/anisotropic_poly_20k_isoGBs_magnitude_sapect_ratio.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + "/figures/anisotropic_poly_20k_isoGBs_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
 
 
 
