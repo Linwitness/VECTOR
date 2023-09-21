@@ -33,7 +33,9 @@ def simple_magnitude(freqArray):
     magnitude_max = np.max(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
     magnitude_ave = np.average(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
     
-    return magnitude_ave, magnitude_max
+    magnitude_stan = np.sqrt(np.sum((abs(freqArray - freqArray_circle)/np.average(freqArray_circle) - magnitude_ave)**2)/binNum)
+    
+    return magnitude_ave, magnitude_stan
     
     # coeff_high = abs(np.cos((xCor-90)/180*np.pi))
     # coeff_low = abs(np.cos((xCor)/180*np.pi))
@@ -406,6 +408,7 @@ if __name__ == '__main__':
     ax.set_axisbelow('True')
 
     aniso_mag = np.zeros(6)
+    aniso_mag_stand = np.zeros(6)
     # Aniso - 000
     data_file_name_P = f'/normal_distribution_data/normal_distribution_000_P_step{special_step_distribution_000}.npy'
     data_file_name_sites = f'/normal_distribution_data/normal_distribution_000_sites_step{special_step_distribution_000}.npy'
@@ -419,7 +422,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_000, r"$\delta=0.00$", slope_list_bias)
-    aniso_mag[0] = simple_magnitude(slope_list)[0]
+    aniso_mag[0], aniso_mag_stand[0] = simple_magnitude(slope_list)
 
     # Aniso - 020
     data_file_name_P = f'/normal_distribution_data/normal_distribution_020_P_step{special_step_distribution_020}.npy'
@@ -434,7 +437,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_020, r"$\delta=0.20$", slope_list_bias)
-    aniso_mag[1] = simple_magnitude(slope_list)[0]
+    aniso_mag[1], aniso_mag_stand[1] = simple_magnitude(slope_list)
 
     # Aniso - 040
     data_file_name_P = f'/normal_distribution_data/normal_distribution_040_P_step{special_step_distribution_040}.npy'
@@ -449,7 +452,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_040, r"$\delta=0.40$", slope_list_bias)
-    aniso_mag[2] = simple_magnitude(slope_list)[0]
+    aniso_mag[2], aniso_mag_stand[2] = simple_magnitude(slope_list)
 
     # Aniso - 060
     data_file_name_P = f'/normal_distribution_data/normal_distribution_060_P_step{special_step_distribution_060}.npy'
@@ -464,7 +467,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_060, r"$\delta=0.60$", slope_list_bias)
-    aniso_mag[3] = simple_magnitude(slope_list)[0]
+    aniso_mag[3], aniso_mag_stand[3] = simple_magnitude(slope_list)
 
     # Aniso - 080
     data_file_name_P = f'/normal_distribution_data/normal_distribution_080_P_step{special_step_distribution_080}.npy'
@@ -479,7 +482,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_080, r"$\delta=0.80$", slope_list_bias)
-    aniso_mag[4] = simple_magnitude(slope_list)[0]
+    aniso_mag[4], aniso_mag_stand[4] = simple_magnitude(slope_list)
 
     # Aniso - 095
     data_file_name_P = f'/normal_distribution_data/normal_distribution_095_P_step{special_step_distribution_095}.npy'
@@ -494,7 +497,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_095, r"$\delta=0.95$", slope_list_bias)
-    aniso_mag[5] = simple_magnitude(slope_list)[0]
+    aniso_mag[5], aniso_mag_stand[5] = simple_magnitude(slope_list)
 
     plt.legend(loc=(-0.14,-0.3),fontsize=14,ncol=3)
     plt.savefig(current_path + "/figures/normal_distribution_circle_after_removing_bias.png", dpi=400,bbox_inches='tight')
@@ -611,11 +614,13 @@ if __name__ == '__main__':
     # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_080, label=r'$\delta=0.80$', linewidth=2)
     # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_095, label=r'$\delta=0.95$', linewidth=2)
     delta_value = np.array([0.0,0.2,0.4,0.6,0.8,0.95])
+    plt.errorbar(delta_value, aniso_mag, yerr=aniso_mag_stand, linestyle='None', marker='None',color='black',linewidth=1, capsize=2)
     plt.plot(delta_value, aniso_mag, '.-', markersize=8, label='time step = 900', linewidth=2)
     
     plt.xlabel(r"$\delta$", fontsize=14)
     plt.ylabel("Magnitude", fontsize=14)
     plt.legend(fontsize=14)
+    plt.ylim([-0.05,1.1])
     plt.savefig(current_path + "/figures/anisotropic_magnitude_circle_polar_ave.png", dpi=400,bbox_inches='tight')
 
 

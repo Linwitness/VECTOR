@@ -33,7 +33,9 @@ def simple_magnitude(freqArray):
     magnitude_max = np.max(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
     magnitude_ave = np.average(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
     
-    return magnitude_ave, magnitude_max
+    magnitude_stan = np.sqrt(np.sum((abs(freqArray - freqArray_circle)/np.average(freqArray_circle) - magnitude_ave)**2)/binNum)
+    
+    return magnitude_ave, magnitude_stan
     
     # coeff_high = abs(np.cos((xCor-90)/180*np.pi))
     # coeff_low = abs(np.cos((xCor)/180*np.pi))
@@ -282,6 +284,7 @@ if __name__ == '__main__':
     slope_list_bias = np.load(current_path + data_file_name_bias)
 
     aniso_mag = np.zeros(6)
+    aniso_mag_stand = np.zeros(6)
     # Aniso - min
     data_file_name_P = f'/normal_distribution_data/normal_distribution_min_P_20k_isoGBs_step{special_step_distribution_min}.npy'
     data_file_name_sites = f'/normal_distribution_data/normal_distribution_min_sites_20k_isoGBs_step{special_step_distribution_min}.npy'
@@ -295,7 +298,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_min, "Min case", slope_list_bias)
-    aniso_mag[0] = simple_magnitude(slope_list)[0]
+    aniso_mag[0], aniso_mag_stand[0] = simple_magnitude(slope_list)
 
     # Aniso - max
     data_file_name_P = f'/normal_distribution_data/normal_distribution_max_P_20k_isoGBs_step{special_step_distribution_max}.npy'
@@ -310,8 +313,8 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_max, "Max case", slope_list_bias)
-    aniso_mag[1] = simple_magnitude(slope_list)[0]
-
+    aniso_mag[1], aniso_mag_stand[1] = simple_magnitude(slope_list)
+    
     # Aniso - ave
     data_file_name_P = f'/normal_distribution_data/normal_distribution_ave_P_20k_isoGBs_step{special_step_distribution_ave}.npy'
     data_file_name_sites = f'/normal_distribution_data/normal_distribution_ave_sites_20k_isoGBs_step{special_step_distribution_ave}.npy'
@@ -325,7 +328,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_ave, "Ave case", slope_list_bias)
-    aniso_mag[2] = simple_magnitude(slope_list)[0]
+    aniso_mag[2], aniso_mag_stand[2] = simple_magnitude(slope_list)
 
     # Aniso - sum
     data_file_name_P = f'/normal_distribution_data/normal_distribution_sum_P_20k_isoGBs_step{special_step_distribution_sum}.npy'
@@ -340,7 +343,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_sum, "Sum case", slope_list_bias)
-    aniso_mag[3] = simple_magnitude(slope_list)[0]
+    aniso_mag[3], aniso_mag_stand[3] = simple_magnitude(slope_list)
 
     # Aniso - consMin
     data_file_name_P = f'/normal_distribution_data/normal_distribution_consMin_P_20k_isoGBs_step{special_step_distribution_consMin}.npy'
@@ -355,7 +358,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMin, "ConsMin case", slope_list_bias)
-    aniso_mag[4] = simple_magnitude(slope_list)[0]
+    aniso_mag[4], aniso_mag_stand[4] = simple_magnitude(slope_list)
 
     # Aniso - consMax
     data_file_name_P = f'/normal_distribution_data/normal_distribution_consMax_P_20k_isoGBs_step{special_step_distribution_consMax}.npy'
@@ -370,7 +373,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMax, "ConsMax case", slope_list_bias)
-    aniso_mag[5] = simple_magnitude(slope_list)[0]
+    aniso_mag[5], aniso_mag_stand[5] = simple_magnitude(slope_list)
 
     plt.legend(loc=(-0.25,-0.3),fontsize=14,ncol=3)
     plt.savefig(current_path + "/figures/normal_distribution_poly_20k_isoGBs_after_removing_bias.png", dpi=400,bbox_inches='tight')
@@ -481,6 +484,7 @@ if __name__ == '__main__':
     # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_consMin, label='ConsMin case', linewidth=2)
     # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_consMax, label='ConsMax case', linewidth=2)
     label_list = ["Min", "Max", "Ave", "Sum", "ConsMin", "ConsMax"]
+    plt.errorbar(np.linspace(0,len(label_list)-1,len(label_list)), aniso_mag, yerr=aniso_mag_stand, linestyle='None', marker='None',color='black',linewidth=1, capsize=2)
     plt.plot(np.linspace(0,len(label_list)-1,len(label_list)), aniso_mag, '.-', markersize=8, label='around 2000 grains', linewidth=2)
     plt.xlabel("Energy type", fontsize=14)
     plt.ylabel("Magnitude", fontsize=14)
