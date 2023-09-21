@@ -28,13 +28,18 @@ def simple_magnitude(freqArray):
     binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
     xCor = np.linspace((xLim[0]+binValue/2),(xLim[1]-binValue/2),binNum)
     
-    coeff_high = abs(np.cos((xCor-90)/180*np.pi))
-    coeff_low = abs(np.cos((xCor)/180*np.pi))
+    freqArray_circle = np.ones(binNum)
+    freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
     
-    if np.sum(freqArray * coeff_high) > np.sum(freqArray * coeff_low):
-        return np.sum(freqArray * coeff_high)/np.sum(freqArray * coeff_low)
-    else:
-        return np.sum(freqArray * coeff_low)/np.sum(freqArray * coeff_high)
+    magnitude_max = np.max(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
+    magnitude_ave = np.average(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
+    
+    return magnitude_ave, magnitude_max
+    
+    # coeff_high = abs(np.cos((xCor-90)/180*np.pi))
+    # coeff_low = abs(np.cos((xCor)/180*np.pi))
+    # return np.sum(freqArray * coeff_high)/np.sum(freqArray * coeff_low)
+    
     
 def fit_ellipse_for_poly(micro_matrix, sites_list, step): #failure
     
@@ -58,8 +63,8 @@ def fit_ellipse_for_poly(micro_matrix, sites_list, step): #failure
         grain_center = center_list[i]
         
         # Avoid the really small grains
-        rest_site_num = 7
-        if len(array) < rest_site_num or (center_list[i,0] == 0 and center_list[i,1] == 0): 
+        rest_site_num = 10
+        if len(array) < rest_site_num or (center_list[i,0] < 0.1 and center_list[i,1] < 0.1): 
             a_square_list[i] = 1
             b_square_list[i] = 1
             continue
@@ -131,7 +136,7 @@ def get_poly_center(micro_matrix, step):
     for i in range(num_grains):
         sites_num_list[i] = np.sum(table == i+1)
 
-        if (sites_num_list[i] < 10) or \
+        if (sites_num_list[i] < 5) or \
            (np.max(coord_refer_i[table == i+1]) - np.min(coord_refer_i[table == i+1]) == micro_matrix.shape[1]) or \
            (np.max(coord_refer_j[table == i+1]) - np.min(coord_refer_j[table == i+1]) == micro_matrix.shape[2]): # grains on bc are ignored
           center_list[i, 0] = 0
@@ -319,12 +324,12 @@ if __name__ == '__main__':
     bin_num = round((abs(x_limit[0])+abs(x_limit[1]))/bin_width)
     size_coordination = np.linspace((x_limit[0]+bin_width/2),(x_limit[1]-bin_width/2),bin_num)
 
-    special_step_distribution_000 = 100#4
-    special_step_distribution_020 = 100#4
-    special_step_distribution_040 = 100#4
-    special_step_distribution_060 = 100#4
-    special_step_distribution_080 = 100#4
-    special_step_distribution_095 = 100#4
+    special_step_distribution_000 = 89 # 2670/30 - 10 grains
+    special_step_distribution_020 = 75 # 2250/30 - 10 grains
+    special_step_distribution_040 = 116 # 3480/30 - 10 grains
+    special_step_distribution_060 = 106 # 3180/30 - 10 grains
+    special_step_distribution_080 = 105 # 3150/30 - 10 grains
+    special_step_distribution_095 = 64 # 1920/30 - 10 grains
 
 
     # Start polar figure
@@ -356,7 +361,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_000, r"$\delta=000$")
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_000, r"$\delta=0.00$")
     # For bias
     xLim = [0, 360]
     binValue = 10.01
@@ -377,7 +382,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_020, r"$\delta=020$")
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_020, r"$\delta=0.20$")
 
     # Aniso - 040
     data_file_name_P = f'/normal_distribution_data/normal_distribution_poly_040_P_step{special_step_distribution_040}.npy'
@@ -391,7 +396,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_040, r"$\delta=040$")
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_040, r"$\delta=0.40$")
 
     # Aniso - 060
     data_file_name_P = f'/normal_distribution_data/normal_distribution_poly_060_P_step{special_step_distribution_060}.npy'
@@ -405,7 +410,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_060, r"$\delta=060$")
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_060, r"$\delta=0.60$")
 
     # Aniso - 080
     data_file_name_P = f'/normal_distribution_data/normal_distribution_poly_080_P_step{special_step_distribution_080}.npy'
@@ -419,7 +424,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_080, r"$\delta=080$")
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_080, r"$\delta=0.80$")
 
     # Aniso - 095
     data_file_name_P = f'/normal_distribution_data/normal_distribution_poly_095_P_step{special_step_distribution_095}.npy'
@@ -433,7 +438,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_095, r"$\delta=095$")
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_095, r"$\delta=0.95$")
 
     plt.legend(loc=(-0.14,-0.3),fontsize=14,ncol=3)
     plt.savefig(current_path + "/figures/normal_distribution_poly.png", dpi=400,bbox_inches='tight')
@@ -469,7 +474,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_000, r"$\delta=0.00$", slope_list_bias)
-    aniso_mag[0] = simple_magnitude(slope_list)
+    aniso_mag[0] = simple_magnitude(slope_list)[0]
 
     # Aniso - 020
     data_file_name_P = f'/normal_distribution_data/normal_distribution_poly_020_P_step{special_step_distribution_020}.npy'
@@ -484,7 +489,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_020, r"$\delta=0.20$", slope_list_bias)
-    aniso_mag[1] = simple_magnitude(slope_list)
+    aniso_mag[1] = simple_magnitude(slope_list)[0]
 
     # Aniso - 040
     data_file_name_P = f'/normal_distribution_data/normal_distribution_poly_040_P_step{special_step_distribution_040}.npy'
@@ -499,7 +504,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_040, r"$\delta=0.40$", slope_list_bias)
-    aniso_mag[2] = simple_magnitude(slope_list)
+    aniso_mag[2] = simple_magnitude(slope_list)[0]
 
     # Aniso - 060
     data_file_name_P = f'/normal_distribution_data/normal_distribution_poly_060_P_step{special_step_distribution_060}.npy'
@@ -514,7 +519,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_060, r"$\delta=0.60$", slope_list_bias)
-    aniso_mag[3] = simple_magnitude(slope_list)
+    aniso_mag[3] = simple_magnitude(slope_list)[0]
 
     # Aniso - 080
     data_file_name_P = f'/normal_distribution_data/normal_distribution_poly_080_P_step{special_step_distribution_080}.npy'
@@ -529,7 +534,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_080, r"$\delta=0.80$", slope_list_bias)
-    aniso_mag[4] = simple_magnitude(slope_list)
+    aniso_mag[4] = simple_magnitude(slope_list)[0]
 
     # Aniso - 095
     data_file_name_P = f'/normal_distribution_data/normal_distribution_poly_095_P_step{special_step_distribution_095}.npy'
@@ -544,108 +549,108 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_sites, sites)
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_095, r"$\delta=0.95$", slope_list_bias)
-    aniso_mag[5] = simple_magnitude(slope_list)
+    aniso_mag[5] = simple_magnitude(slope_list)[0]
 
     plt.legend(loc=(-0.14,-0.3),fontsize=14,ncol=3)
     plt.savefig(current_path + "/figures/normal_distribution_poly_after_removing_bias.png", dpi=400,bbox_inches='tight')
     print("Polar figure done.")
 
-    # PLot magnitude of anisotropy
-    num_step_magni = 100
-    data_file_name_aniso_mag = f'/normal_distribution_data/aniso_magnitude_poly_delta_fit.npz'
-    if os.path.exists(current_path + data_file_name_aniso_mag):
-        data_file_aniso_mag = np.load(current_path + data_file_name_aniso_mag)
-        # aniso_mag_000=data_file_aniso_mag['aniso_mag_000']
-        # aniso_mag_020=data_file_aniso_mag['aniso_mag_020']
-        # aniso_mag_040=data_file_aniso_mag['aniso_mag_040']
-        # aniso_mag_060=data_file_aniso_mag['aniso_mag_060']
-        # aniso_mag_080=data_file_aniso_mag['aniso_mag_080']
-        # aniso_mag_095=data_file_aniso_mag['aniso_mag_095']
-        aniso_mag_fit = data_file_aniso_mag['aniso_mag_fit']
-    else:
-        # aniso_mag_000 = np.zeros(step_num)
-        # aniso_mag_020 = np.zeros(step_num)
-        # aniso_mag_040 = np.zeros(step_num)
-        # aniso_mag_060 = np.zeros(step_num)
-        # aniso_mag_080 = np.zeros(step_num)
-        # aniso_mag_095 = np.zeros(step_num)
-        aniso_mag_fit = np.zeros(6)
-        cores = 16
-        loop_times = 5
-        for i in [num_step_magni]:#tqdm(range(step_num)):
-            # newplace = np.rot90(npy_file_aniso_000[i,:,:,:], 1, (0,1))
-            newplace = npy_file_aniso_000[i,:,:,:]
-            nx = newplace.shape[0]
-            ny = newplace.shape[1]
-            ng = np.max(newplace)
-            R = np.zeros((nx,ny,2))
-            P0 = newplace
-            smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-            sites_list = smooth_class.get_all_gb_list()
-            aniso_mag_fit[0] = fit_ellipse_for_poly(npy_file_aniso_000, sites_list, i)
+    # # PLot magnitude of anisotropy
+    # num_step_magni = 100
+    # data_file_name_aniso_mag = f'/normal_distribution_data/aniso_magnitude_poly_delta_fit.npz'
+    # if os.path.exists(current_path + data_file_name_aniso_mag):
+    #     data_file_aniso_mag = np.load(current_path + data_file_name_aniso_mag)
+    #     # aniso_mag_000=data_file_aniso_mag['aniso_mag_000']
+    #     # aniso_mag_020=data_file_aniso_mag['aniso_mag_020']
+    #     # aniso_mag_040=data_file_aniso_mag['aniso_mag_040']
+    #     # aniso_mag_060=data_file_aniso_mag['aniso_mag_060']
+    #     # aniso_mag_080=data_file_aniso_mag['aniso_mag_080']
+    #     # aniso_mag_095=data_file_aniso_mag['aniso_mag_095']
+    #     aniso_mag_fit = data_file_aniso_mag['aniso_mag_fit']
+    # else:
+    #     # aniso_mag_000 = np.zeros(step_num)
+    #     # aniso_mag_020 = np.zeros(step_num)
+    #     # aniso_mag_040 = np.zeros(step_num)
+    #     # aniso_mag_060 = np.zeros(step_num)
+    #     # aniso_mag_080 = np.zeros(step_num)
+    #     # aniso_mag_095 = np.zeros(step_num)
+    #     aniso_mag_fit = np.zeros(6)
+    #     cores = 16
+    #     loop_times = 5
+    #     for i in [num_step_magni]:#tqdm(range(step_num)):
+    #         # newplace = np.rot90(npy_file_aniso_000[i,:,:,:], 1, (0,1))
+    #         newplace = npy_file_aniso_000[i,:,:,:]
+    #         nx = newplace.shape[0]
+    #         ny = newplace.shape[1]
+    #         ng = np.max(newplace)
+    #         R = np.zeros((nx,ny,2))
+    #         P0 = newplace
+    #         smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+    #         sites_list = smooth_class.get_all_gb_list()
+    #         aniso_mag_fit[0] = fit_ellipse_for_poly(npy_file_aniso_000, sites_list, i)
 
-            # newplace = np.rot90(npy_file_aniso_020[i,:,:,:], 1, (0,1))
-            newplace = npy_file_aniso_020[i,:,:,:]
-            nx = newplace.shape[0]
-            ny = newplace.shape[1]
-            ng = np.max(newplace)
-            R = np.zeros((nx,ny,2))
-            P0 = newplace
-            smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-            sites_list = smooth_class.get_all_gb_list()
-            aniso_mag_fit[1] = fit_ellipse_for_poly(npy_file_aniso_020, sites_list, i)
+    #         # newplace = np.rot90(npy_file_aniso_020[i,:,:,:], 1, (0,1))
+    #         newplace = npy_file_aniso_020[i,:,:,:]
+    #         nx = newplace.shape[0]
+    #         ny = newplace.shape[1]
+    #         ng = np.max(newplace)
+    #         R = np.zeros((nx,ny,2))
+    #         P0 = newplace
+    #         smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+    #         sites_list = smooth_class.get_all_gb_list()
+    #         aniso_mag_fit[1] = fit_ellipse_for_poly(npy_file_aniso_020, sites_list, i)
 
-            # newplace = np.rot90(npy_file_aniso_040[i,:,:,:], 1, (0,1))
-            newplace = npy_file_aniso_040[i,:,:,:]
-            nx = newplace.shape[0]
-            ny = newplace.shape[1]
-            ng = np.max(newplace)
-            R = np.zeros((nx,ny,2))
-            P0 = newplace
-            smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-            sites_list = smooth_class.get_all_gb_list()
-            aniso_mag_fit[2] = fit_ellipse_for_poly(npy_file_aniso_040, sites_list, i)
+    #         # newplace = np.rot90(npy_file_aniso_040[i,:,:,:], 1, (0,1))
+    #         newplace = npy_file_aniso_040[i,:,:,:]
+    #         nx = newplace.shape[0]
+    #         ny = newplace.shape[1]
+    #         ng = np.max(newplace)
+    #         R = np.zeros((nx,ny,2))
+    #         P0 = newplace
+    #         smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+    #         sites_list = smooth_class.get_all_gb_list()
+    #         aniso_mag_fit[2] = fit_ellipse_for_poly(npy_file_aniso_040, sites_list, i)
 
-            # newplace = np.rot90(npy_file_aniso_060[i,:,:,:], 1, (0,1))
-            newplace = npy_file_aniso_060[i,:,:,:]
-            nx = newplace.shape[0]
-            ny = newplace.shape[1]
-            ng = np.max(newplace)
-            R = np.zeros((nx,ny,2))
-            P0 = newplace
-            smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-            sites_list = smooth_class.get_all_gb_list()
-            aniso_mag_fit[3] = fit_ellipse_for_poly(npy_file_aniso_060, sites_list, i)
+    #         # newplace = np.rot90(npy_file_aniso_060[i,:,:,:], 1, (0,1))
+    #         newplace = npy_file_aniso_060[i,:,:,:]
+    #         nx = newplace.shape[0]
+    #         ny = newplace.shape[1]
+    #         ng = np.max(newplace)
+    #         R = np.zeros((nx,ny,2))
+    #         P0 = newplace
+    #         smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+    #         sites_list = smooth_class.get_all_gb_list()
+    #         aniso_mag_fit[3] = fit_ellipse_for_poly(npy_file_aniso_060, sites_list, i)
 
-            # newplace = np.rot90(npy_file_aniso_080[i,:,:,:], 1, (0,1))
-            newplace = npy_file_aniso_080[i,:,:,:]
-            nx = newplace.shape[0]
-            ny = newplace.shape[1]
-            ng = np.max(newplace)
-            R = np.zeros((nx,ny,2))
-            P0 = newplace
-            smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-            sites_list = smooth_class.get_all_gb_list()
-            aniso_mag_fit[4] = fit_ellipse_for_poly(npy_file_aniso_080, sites_list, i)
+    #         # newplace = np.rot90(npy_file_aniso_080[i,:,:,:], 1, (0,1))
+    #         newplace = npy_file_aniso_080[i,:,:,:]
+    #         nx = newplace.shape[0]
+    #         ny = newplace.shape[1]
+    #         ng = np.max(newplace)
+    #         R = np.zeros((nx,ny,2))
+    #         P0 = newplace
+    #         smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+    #         sites_list = smooth_class.get_all_gb_list()
+    #         aniso_mag_fit[4] = fit_ellipse_for_poly(npy_file_aniso_080, sites_list, i)
 
-            # newplace = np.rot90(npy_file_aniso_095[i,:,:,:], 1, (0,1))
-            newplace = npy_file_aniso_095[i,:,:,:]
-            nx = newplace.shape[0]
-            ny = newplace.shape[1]
-            ng = np.max(newplace)
-            R = np.zeros((nx,ny,2))
-            P0 = newplace
-            smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-            sites_list = smooth_class.get_all_gb_list()
-            aniso_mag_fit[5] = fit_ellipse_for_poly(npy_file_aniso_095, sites_list, i)
+    #         # newplace = np.rot90(npy_file_aniso_095[i,:,:,:], 1, (0,1))
+    #         newplace = npy_file_aniso_095[i,:,:,:]
+    #         nx = newplace.shape[0]
+    #         ny = newplace.shape[1]
+    #         ng = np.max(newplace)
+    #         R = np.zeros((nx,ny,2))
+    #         P0 = newplace
+    #         smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+    #         sites_list = smooth_class.get_all_gb_list()
+    #         aniso_mag_fit[5] = fit_ellipse_for_poly(npy_file_aniso_095, sites_list, i)
             
-        # np.savez(current_path + data_file_name_aniso_mag, aniso_mag_000=aniso_mag_000,
-        #                                                   aniso_mag_020=aniso_mag_020,
-        #                                                   aniso_mag_040=aniso_mag_040,
-        #                                                   aniso_mag_060=aniso_mag_060,
-        #                                                   aniso_mag_080=aniso_mag_080,
-        #                                                   aniso_mag_095=aniso_mag_095)
-        np.savez(current_path + data_file_name_aniso_mag, aniso_mag_fit=aniso_mag_fit)
+    #     # np.savez(current_path + data_file_name_aniso_mag, aniso_mag_000=aniso_mag_000,
+    #     #                                                   aniso_mag_020=aniso_mag_020,
+    #     #                                                   aniso_mag_040=aniso_mag_040,
+    #     #                                                   aniso_mag_060=aniso_mag_060,
+    #     #                                                   aniso_mag_080=aniso_mag_080,
+    #     #                                                   aniso_mag_095=aniso_mag_095)
+    #     np.savez(current_path + data_file_name_aniso_mag, aniso_mag_fit=aniso_mag_fit)
     plt.close()
     fig = plt.figure(figsize=(5, 5))
     # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_000, label=r'$\delta=0.00$', linewidth=2)
@@ -655,12 +660,12 @@ if __name__ == '__main__':
     # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_080, label=r'$\delta=0.80$', linewidth=2)
     # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_095, label=r'$\delta=0.95$', linewidth=2)
     delta_value = np.array([0.0,0.2,0.4,0.6,0.8,0.95])
-    plt.plot(delta_value, aniso_mag_fit, '.-', markersize=8, label='time step = 3000', linewidth=2)
+    plt.plot(delta_value, aniso_mag, '.-', markersize=8, label='10 grains', linewidth=2)
     
     plt.xlabel(r"$\delta$", fontsize=14)
     plt.ylabel("Magnitude", fontsize=14)
     plt.legend(fontsize=14)
-    plt.savefig(current_path + "/figures/anisotropic_magnitude_poly_aspect_ratio_fit2.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + "/figures/anisotropic_magnitude_poly_polar_ave.png", dpi=400,bbox_inches='tight')
 
 
 
