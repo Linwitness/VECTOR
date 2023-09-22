@@ -30,7 +30,7 @@ def plot_structure_figure(step, structure_figure, figure_path):
     cv_initial = np.squeeze(structure_figure[0])
     cv0 = np.squeeze(structure_figure[step])
     cv0 = np.rot90(cv0,1)
-    im = ax.imshow(cv0,vmin=np.min(cv_initial),vmax=np.max(cv_initial),cmap='rainbow',interpolation='none') #jet rainbow plasma
+    im = ax.imshow(cv0,vmin=np.min(cv_initial),vmax=np.max(cv_initial),cmap='gray_r',interpolation='none') #jet rainbow plasma
     cb = fig.colorbar(im)
     cb.ax.tick_params(labelsize=14)
     ax.axes.get_xaxis().set_ticks([])
