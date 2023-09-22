@@ -49,6 +49,14 @@ if __name__ == '__main__':
     circle_energy_060 = "0.6"
     circle_energy_080 = "0.8"
     circle_energy_095 = "0.95"
+    circle_energy_080_087 = "_0.87_0.5_0"
+    circle_energy_080_071 = "_0.71_0.71_0"
+    circle_energy_080_050 = "_0.5_0.87_0"
+    circle_energy_080_100 = "_0_1_0"
+
+    circle_energy_095_m4 = "4"
+    circle_energy_095_m6 = "6"
+
 
 
     npy_file_name_aniso_000 = f"c_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_000}_m2_refer_1_0_0.npy"
@@ -58,6 +66,14 @@ if __name__ == '__main__':
     npy_file_name_aniso_080 = f"cT_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_080}_m2_refer_1_0_0.npy"
     npy_file_name_aniso_095 = f"cT_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer_1_0_0.npy"
 
+    npy_file_name_aniso_080_087 = f"c_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer{circle_energy_080_087}.npy"
+    npy_file_name_aniso_080_071 = f"c_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer{circle_energy_080_071}.npy"
+    npy_file_name_aniso_080_050 = f"c_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer{circle_energy_080_050}.npy"
+    npy_file_name_aniso_080_100 = f"c_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer{circle_energy_080_100}.npy"
+
+    npy_file_name_aniso_095_m4 = f"c_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m{circle_energy_095_m4}_refer_1_0_0.npy"
+    npy_file_name_aniso_095_m6 = f"c_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m{circle_energy_095_m6}_refer_1_0_0.npy"
+
     # Initial data
     npy_file_aniso_000 = np.load(npy_file_folder + npy_file_name_aniso_000)
     npy_file_aniso_020 = np.load(npy_file_folder + npy_file_name_aniso_020)
@@ -65,6 +81,12 @@ if __name__ == '__main__':
     npy_file_aniso_060 = np.load(npy_file_folder + npy_file_name_aniso_060)
     npy_file_aniso_080 = np.load(npy_file_folder + npy_file_name_aniso_080)
     npy_file_aniso_095 = np.load(npy_file_folder + npy_file_name_aniso_095)
+    npy_file_aniso_080_087 = np.load(npy_file_folder + npy_file_name_aniso_080_087)
+    npy_file_aniso_080_071 = np.load(npy_file_folder + npy_file_name_aniso_080_071)
+    npy_file_aniso_080_050 = np.load(npy_file_folder + npy_file_name_aniso_080_050)
+    npy_file_aniso_080_100 = np.load(npy_file_folder + npy_file_name_aniso_080_100)
+    npy_file_aniso_095_m4 = np.load(npy_file_folder + npy_file_name_aniso_095_m4)
+    npy_file_aniso_095_m6 = np.load(npy_file_folder + npy_file_name_aniso_095_m6)
     print(f"The 000 data size is: {npy_file_aniso_000.shape}")
     print(f"The 020 data size is: {npy_file_aniso_020.shape}")
     print(f"The 040 data size is: {npy_file_aniso_040.shape}")
@@ -84,6 +106,16 @@ if __name__ == '__main__':
     special_step_distribution_080 = 30#4
     special_step_distribution_095 = 30#4
 
+    special_step_distribution_080_000 = 28#4
+    special_step_distribution_080_087 = 28#4
+    special_step_distribution_080_071 = 28#4
+    special_step_distribution_080_050 = 28#4
+    special_step_distribution_080_100 = 28#4
+
+    special_step_distribution_095_m2 = 14
+    special_step_distribution_095_m4 = 14
+    special_step_distribution_095_m6 = 14
+
 
     # Start microstructure figure
     figure_path = current_path + "/figures/microstructure_circle"
@@ -93,6 +125,18 @@ if __name__ == '__main__':
     plot_structure_figure(special_step_distribution_060, npy_file_aniso_060[:,:,:,0], figure_path + "_060")
     plot_structure_figure(special_step_distribution_080, npy_file_aniso_080[:,:,:,0], figure_path + "_080")
     plot_structure_figure(special_step_distribution_095, npy_file_aniso_095[:,:,:,0], figure_path + "_095")
+
+    plot_structure_figure(special_step_distribution_080_000, npy_file_aniso_095[:,:,:,0], figure_path + "_095_000")
+    plot_structure_figure(special_step_distribution_080_087, npy_file_aniso_080_087[:,:,:,0], figure_path + "_095_087")
+    plot_structure_figure(special_step_distribution_080_071, npy_file_aniso_080_071[:,:,:,0], figure_path + "_095_071")
+    plot_structure_figure(special_step_distribution_080_050, npy_file_aniso_080_050[:,:,:,0], figure_path + "_095_050")
+    plot_structure_figure(special_step_distribution_080_100, npy_file_aniso_080_100[:,:,:,0], figure_path + "_095_100")
+
+    plot_structure_figure(special_step_distribution_095_m2, npy_file_aniso_095[:,:,:,0], figure_path + "_095_m2")
+    plot_structure_figure(special_step_distribution_095_m4, npy_file_aniso_095_m4[:,:,:,0], figure_path + "_095_m4")
+    plot_structure_figure(special_step_distribution_095_m6, npy_file_aniso_095_m6[:,:,:,0], figure_path + "_095_m6")
+
+
 
 
 
