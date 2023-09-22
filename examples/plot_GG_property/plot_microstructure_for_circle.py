@@ -66,13 +66,13 @@ if __name__ == '__main__':
     npy_file_name_aniso_080 = f"cT_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_080}_m2_refer_1_0_0.npy"
     npy_file_name_aniso_095 = f"cT_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer_1_0_0.npy"
 
-    npy_file_name_aniso_080_087 = f"c_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer{circle_energy_080_087}.npy"
-    npy_file_name_aniso_080_071 = f"c_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer{circle_energy_080_071}.npy"
-    npy_file_name_aniso_080_050 = f"c_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer{circle_energy_080_050}.npy"
-    npy_file_name_aniso_080_100 = f"c_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer{circle_energy_080_100}.npy"
+    npy_file_name_aniso_080_087 = f"cT_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer{circle_energy_080_087}.npy"
+    npy_file_name_aniso_080_071 = f"cT_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer{circle_energy_080_071}.npy"
+    npy_file_name_aniso_080_050 = f"cT_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer{circle_energy_080_050}.npy"
+    npy_file_name_aniso_080_100 = f"cT_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m2_refer{circle_energy_080_100}.npy"
 
-    npy_file_name_aniso_095_m4 = f"c_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m{circle_energy_095_m4}_refer_1_0_0.npy"
-    npy_file_name_aniso_095_m6 = f"c_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m{circle_energy_095_m6}_refer_1_0_0.npy"
+    npy_file_name_aniso_095_m4 = f"cT_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m{circle_energy_095_m4}_refer_1_0_0.npy"
+    npy_file_name_aniso_095_m6 = f"cT_ori_aveE_000_000_multiCore16_kt066_seed56689_scale1_delta{circle_energy_095}_m{circle_energy_095_m6}_refer_1_0_0.npy"
 
     # Initial data
     npy_file_aniso_000 = np.load(npy_file_folder + npy_file_name_aniso_000)
