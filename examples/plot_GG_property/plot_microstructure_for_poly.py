@@ -27,14 +27,17 @@ def plot_structure_figure(step, structure_figure, figure_path):
     plt.close()
     fig, ax = plt.subplots()
 
+    cv_initial = np.squeeze(structure_figure[0])
     cv0 = np.squeeze(structure_figure[step])
     cv0 = np.rot90(cv0,1)
-    im = ax.imshow(cv0,vmin=np.min(cv0),vmax=np.max(cv0),cmap='rainbow',interpolation='none') #jet rainbow plasma
+    im = ax.imshow(cv0,vmin=np.min(cv_initial),vmax=np.max(cv_initial),cmap='rainbow',interpolation='none') #jet rainbow plasma
     cb = fig.colorbar(im)
-    plt.setp(ax.spines.values(), alpha = 0)
+    cb.ax.tick_params(labelsize=14)
+    ax.axes.get_xaxis().set_ticks([])
+    ax.axes.get_yaxis().set_ticks([])
     ax.tick_params(which = 'both', size = 0, labelsize = 0)
 
-    plt.savefig(figure_path + f"_ts{step}.png", dpi=400,bbox_inches='tight')
+    plt.savefig(figure_path + f"_ts{step*30}.png", dpi=400,bbox_inches='tight')
 
 
 if __name__ == '__main__':
