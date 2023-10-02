@@ -265,7 +265,7 @@ if __name__ == '__main__':
     plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
     plt.text(0.0, 0.0095, "x", fontsize=14)
     plt.text(np.pi/2, 0.0095, "y", fontsize=14)
-    plt.savefig(current_path + "/figures/normal_distribution_3d_xy.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + f"/figures/normal_distribution_3d_xy_{expected_grain_num}grains.png", dpi=400,bbox_inches='tight')
 
     # Start polar figure xz
     plt.close()
@@ -329,7 +329,7 @@ if __name__ == '__main__':
     plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
     plt.text(0.0, 0.0095, "x", fontsize=14)
     plt.text(np.pi/2, 0.0095, "z", fontsize=14)
-    plt.savefig(current_path + "/figures/normal_distribution_3d_xz.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + f"/figures/normal_distribution_3d_xz_{expected_grain_num}grains.png", dpi=400,bbox_inches='tight')
 
 
     # Start polar figure yz
@@ -394,7 +394,7 @@ if __name__ == '__main__':
     plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
     plt.text(0.0, 0.0095, "y", fontsize=14)
     plt.text(np.pi/2, 0.0095, "z", fontsize=14)
-    plt.savefig(current_path + "/figures/normal_distribution_3d_yz.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + f"/figures/normal_distribution_3d_yz_{expected_grain_num}grains.png", dpi=400,bbox_inches='tight')
 
 
 
@@ -461,7 +461,7 @@ if __name__ == '__main__':
     plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
     plt.text(0.0, 0.0095, "x", fontsize=14)
     plt.text(np.pi/2, 0.0095, "y", fontsize=14)
-    plt.savefig(current_path + "/figures/normal_distribution_3d_xy_after_removing_bias.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + f"/figures/normal_distribution_3d_xy_{expected_grain_num}grains_after_removing_bias.png", dpi=400,bbox_inches='tight')
 
     # Start polar figure xz
     plt.close()
@@ -525,7 +525,7 @@ if __name__ == '__main__':
     plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
     plt.text(0.0, 0.0095, "x", fontsize=14)
     plt.text(np.pi/2, 0.0095, "z", fontsize=14)
-    plt.savefig(current_path + "/figures/normal_distribution_3d_xz_after_removing_bias.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + f"/figures/normal_distribution_3d_xz_{expected_grain_num}grains_after_removing_bias.png", dpi=400,bbox_inches='tight')
 
 
     # Start polar figure yz
@@ -590,7 +590,7 @@ if __name__ == '__main__':
     plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
     plt.text(0.0, 0.0095, "y", fontsize=14)
     plt.text(np.pi/2, 0.0095, "z", fontsize=14)
-    plt.savefig(current_path + "/figures/normal_distribution_3d_yz_after_removing_bias.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + f"/figures/normal_distribution_3d_yz_{expected_grain_num}grains_after_removing_bias.png", dpi=400,bbox_inches='tight')
 
 
 
