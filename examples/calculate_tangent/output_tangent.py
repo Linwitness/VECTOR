@@ -11,6 +11,8 @@ from numpy import seterr
 seterr(all='raise')
 import math
 import myInput
+from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 def find_window(P,i,j,iteration,refer_id):
     # Find the windows around the voxel i,j, the size depend on iteration
@@ -188,27 +190,59 @@ def calculate_tangent(triple_map,iteration=5):
 
 
 if __name__ == '__main__':
-    filename = "slice3_complete.txt"
-    nx, ny = 500, 500
     
-    iteration=5
+    file_path = "/Users/lin/Dropbox (UFL)/UFdata/Dihedral_angle/IC/"
+    npy_file_name = "h_ori_ave_aveE_hex_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066_angle.npy"
+
+    # Joseph resuults
+    file_path_joseph = "/Users/lin/Dropbox (UFL)/UFdata/Dihedral_angle/output/"    
+    npy_file_name_joseph = "hex_dihedrals.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
+    triple_results = np.load(file_path_joseph + npy_file_name_joseph)
     
-    # Read the 2D input file
-    # triple_map = read_2d_input(filename,nx,ny)
+    # Necessary parameters
+    iteration = 5
+    num_grain_initial = 48
     
-    # Read from other npy file
-    triple_map = np.load("Input/HexIC.npy")
-    triple_map = triple_map[:,:,0]
+    # Read from microstructure npy file
+    triple_map = np.load(file_path + npy_file_name)
+    triple_map = triple_map[:,:,:,0]
     
     # Calculate the tanget for corresponding triple junction
-    triple_coord, triple_angle, triple_grain = calculate_tangent(triple_map, iteration)
+    # triple_coord, triple_angle, triple_grain = calculate_tangent(triple_map, iteration)
     # The triple_coord is the coordination of the triple junction(left-upper voxel), axis 0 is the index of triple, axis 1 is the coordination (i,j)
     # The triple_angle saves the three dihedral angle for corresponding triple junction, 
     #   axis 0 is the index of triple, 
     #   axis 1 is the three dihedral angle
-    # The triple_grain saves the sequence of three grains for corresponding triplr point
+    # The triple_grain saves the sequence of three grains for corresponding triple point
     #   axis 0 is the index of the triple,
     #   axis 1 is the three grains
+    
+    num_steps = triple_map.shape[0]
+    error_list = np.zeros(num_steps)
+    error_list_joseph = np.zeros(num_steps)
+    for i in tqdm(range(num_steps)):
+        triple_map_step = triple_map[i,:,:]
+        num_grains = len(list(set(list(triple_map_step.reshape(-1)))))
+        if num_grains < num_grain_initial: break
+    
+        triple_coord, triple_angle, triple_grain = calculate_tangent(triple_map_step, iteration)
+        error_list[i] = np.mean(abs((triple_angle) - 120))
+        
+        # From Joseph
+        triple_results_step = triple_results[i,3:6,:]
+        triple_results_step = triple_results_step[:,~np.isnan(triple_results_step[0,:])]
+        print(f"The number in Joseph is {len(triple_results_step[0,:])}")
+        error_list_joseph[i] = np.mean(abs((triple_results_step) - 120))
+        
+        
+    plt.close()
+    plt.plot(np.linspace(0,num_steps-1,num_steps), error_list, linewidth = 2, label='Linear algorithm error')
+    plt.plot(np.linspace(0,num_steps-1,num_steps), error_list_joseph, linewidth = 2, label='Joseph algorithm error')
+    plt.xlabel("Time step", fontsize=20)
+    plt.ylabel(r"angle error ($^\circ$)", fontsize=20)
+    plt.legend(fontsize=20)
+    plt.show()
+    
     
 
 

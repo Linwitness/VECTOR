@@ -141,9 +141,6 @@ if __name__ == '__main__':
         print(f"\nStart {energy_type} energy type:")
         npy_file_name = f"h_ori_ave_{energy_type}E_hex_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066_angle.npy"
         energy_npy_file_name = f"h_ori_ave_{energy_type}E_hex_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066_angle_energy.npy"
-        P0_list = np.load(npy_file_folder + npy_file_name)
-        P0_energy_list = np.load(npy_file_folder + energy_npy_file_name)
-        print("IC is read as matrix")
         
         base_name = f"dihedral_results/hex_{energy_type}_"
         energy_base_name = f"energy_results/hex_{energy_type}_"
@@ -159,6 +156,9 @@ if __name__ == '__main__':
             for timestep in range(step_equalibrium_end):
                 print(f"\nCalculation for time step {timestep}")
                 # Initial setting
+                P0_list = np.load(npy_file_folder + npy_file_name)
+                P0_energy_list = np.load(npy_file_folder + energy_npy_file_name)
+                print("IC is read as matrix")
                 P0 = P0_list[timestep,:,:,0]
                 P0_energy = P0_energy_list[timestep,:,:,0]
                 
@@ -219,7 +219,7 @@ if __name__ == '__main__':
         
     dihedral_siteEnergy_cases_figure_name = "energy_results/hex_aveDihedral_aveEnergy_" + "figure.png"
     plt.clf()
-    plt.plot(average_TJtype_energy, average_TJtype_dihedral_angle, 'o', markersize=4, label = "average angle in energy type cases")
+    plt.plot(average_TJtype_energy, average_TJtype_dihedral_angle, 'o', markersize=4, label = "average angle in energy types")
     
     # Fitting
     a = max(average_TJtype_dihedral_angle)-min(average_TJtype_dihedral_angle)
@@ -244,8 +244,10 @@ if __name__ == '__main__':
     plt.ylim([120,160])
     plt.xlim([0,4])
     plt.legend(fontsize=14, loc='lower center')
-    plt.xlabel("Average TJ site energy (-)", fontsize=14)
-    plt.ylabel("Angle (degree)", fontsize=14)
+    plt.xlabel("Coupled energy", fontsize=14)
+    plt.ylabel(r"Angle ($^\circ$)", fontsize=14)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
     plt.savefig(npy_file_folder + dihedral_siteEnergy_cases_figure_name, bbox_inches='tight', format='png', dpi=400)
         
         

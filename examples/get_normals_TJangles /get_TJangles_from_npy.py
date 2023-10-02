@@ -127,7 +127,7 @@ def data_smooth(data_array, smooth_level=2):
 if __name__ == '__main__':
     
     npy_file_folder = "/Users/lin/projects/SPPARKS-AGG/examples/Test_SimplifyIncE/2d_hex_for_TJE/results/"
-    TJ_energy_type_cases = ["consTest"] #["ave", "sum", "consMin", "consMax"]
+    TJ_energy_type_cases = ["consTest","ave", "sum", "consMin", "consMax"]
     
     
     
@@ -226,10 +226,14 @@ if __name__ == '__main__':
         plt.plot(np.linspace(0,160*100,161), dihedral_over_time_smooth, '-', linewidth=2, label = "smoothed results")
         plt.plot(np.linspace(0,160*100,161), [145.46]*161, '--', linewidth=2, label = "expected angle results") # Max-100
         # plt.plot(np.linspace(0,160*100,161), [45.95]*161, '--', linewidth=2, label = "expected angle results") # Min-010
-        plt.ylim([120,160])
-        plt.legend(fontsize=14, loc='lower center')
-        plt.xlabel("Time step (-)", fontsize=14)
-        plt.ylabel("Angle (degree)", fontsize=14)
+        plt.ylim([115,155])
+        plt.xlim([0,16000])
+        plt.legend(fontsize=20, loc='lower center')
+        plt.xlabel("Time step", fontsize=20)
+        plt.ylabel(r"Angle ($\degree$)", fontsize=20)
+        plt.xticks(fontsize=16)
+        plt.yticks(fontsize=16)
+        plt.xticks([0, 4000, 8000, 12000, 16000])
         plt.savefig(npy_file_folder + dihedral_over_time_figure_name, bbox_inches='tight', format='png', dpi=400)
         
         
