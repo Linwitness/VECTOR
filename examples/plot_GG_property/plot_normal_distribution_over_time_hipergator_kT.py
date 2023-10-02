@@ -65,7 +65,7 @@ def get_normal_vector_slope(P, sites, step, para_name, bias=None):
         freqArray[int((degree[i]/math.pi*180-xLim[0])/binValue)] += 1
     freqArray = freqArray/sum(freqArray*binValue)
 
-    if list(bias) != None:
+    if bias is not None:
         freqArray = freqArray + bias
         freqArray = freqArray/sum(freqArray*binValue)
     # Plot
@@ -198,7 +198,7 @@ if __name__ == '__main__':
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
 
-            slope_list = get_normal_vector_slope(P, sites, i, "T000 case")
+            slope_list = get_normal_vector_slope(P, sites, i, r"$kT=0.00$")
 
 
         # Aniso - T025
@@ -214,7 +214,7 @@ if __name__ == '__main__':
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
 
-            slope_list = get_normal_vector_slope(P, sites, i, "T025 case")
+            slope_list = get_normal_vector_slope(P, sites, i, r"$kT=0.25$")
 
         # Aniso - T050
         if i == special_step_distribution_T050:
@@ -229,7 +229,7 @@ if __name__ == '__main__':
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
 
-            slope_list = get_normal_vector_slope(P, sites, i, "T050 case")
+            slope_list = get_normal_vector_slope(P, sites, i, r"$kT=0.50$")
 
         # Aniso - T066
         if i == special_step_distribution_T066:
@@ -244,7 +244,7 @@ if __name__ == '__main__':
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
 
-            slope_list = get_normal_vector_slope(P, sites, i, "T066 case")
+            slope_list = get_normal_vector_slope(P, sites, i, r"$kT=0.66$")
 
         # Aniso - T095
         if i == special_step_distribution_T095:
@@ -259,7 +259,7 @@ if __name__ == '__main__':
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
 
-            slope_list = get_normal_vector_slope(P, sites, i, "T095 case")
+            slope_list = get_normal_vector_slope(P, sites, i, r"$kT=0.95$")
 
         # Bias between circle and kT066
         if i == special_step_distribution_T066:
@@ -282,11 +282,11 @@ if __name__ == '__main__':
                 np.save(current_path + data_file_name_P, P)
                 np.save(current_path + data_file_name_sites, sites)
 
-            slope_list = get_normal_vector_slope(P, sites, i, "T066 case")
+            #slope_list = get_normal_vector_slope(P, sites, i, "T066 case")
 
-            bias = freqArray_circle - slope_list
-            np.save(current_path + data_file_name_bias, bias)
-            print(bias)
+            #bias = freqArray_circle - slope_list
+            #np.save(current_path + data_file_name_bias, bias)
+            #print(bias)
 
 
     plt.legend(loc=(-0.25,-0.3),fontsize=14,ncol=3)

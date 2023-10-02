@@ -266,14 +266,14 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca(projection='polar')
 
-    ax.set_thetagrids(np.arange(0.0, 360.0, 20.0),fontsize=14)
+    ax.set_thetagrids(np.arange(0.0, 360.0, 45.0),fontsize=16)
     ax.set_thetamin(0.0)
     ax.set_thetamax(360.0)
 
     ax.set_rgrids(np.arange(0, 0.01, 0.004))
     ax.set_rlabel_position(0.0)  # 标签显示在0°
     ax.set_rlim(0.0, 0.01)  # 标签范围为[0, 5000)
-    ax.set_yticklabels(['0', '0.004', '0.008'],fontsize=14)
+    ax.set_yticklabels(['0', '0.004', '0.008'],fontsize=16)
 
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
@@ -297,7 +297,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_min, "Min case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_min, "Min case")
     aniso_mag[0], aniso_mag_stand[0] = simple_magnitude(slope_list)
 
     # Aniso - max
@@ -312,7 +312,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_max, "Max case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_max, "Max case")
     aniso_mag[1], aniso_mag_stand[1] = simple_magnitude(slope_list)
     
     # Aniso - ave
@@ -327,7 +327,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_ave, "Ave case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_ave, "Ave case")
     aniso_mag[2], aniso_mag_stand[2] = simple_magnitude(slope_list)
 
     # Aniso - sum
@@ -342,7 +342,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_sum, "Sum case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_sum, "Sum case")
     aniso_mag[3], aniso_mag_stand[3] = simple_magnitude(slope_list)
 
     # Aniso - consMin
@@ -357,7 +357,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMin, "ConsMin case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMin, "ConsMin case")
     aniso_mag[4], aniso_mag_stand[4] = simple_magnitude(slope_list)
 
     # Aniso - consMax
@@ -372,11 +372,11 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMax, "ConsMax case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMax, "ConsMax case")
     aniso_mag[5], aniso_mag_stand[5] = simple_magnitude(slope_list)
 
-    plt.legend(loc=(-0.25,-0.3),fontsize=14,ncol=3)
-    plt.savefig(current_path + "/figures/normal_distribution_poly_20k_isoGBs_after_removing_bias.png", dpi=400,bbox_inches='tight')
+    plt.legend(loc=(-0.25,-0.42),fontsize=20,ncol=2)
+    plt.savefig(current_path + "/figures/normal_distribution_poly_20k_isoGBs.png", dpi=400,bbox_inches='tight')
 
     # PLot magnitude of anisotropy
     # data_file_name_aniso_mag = f'/normal_distribution_data/aniso_magnitude_poly_20k_isoGBs_energy_type.npz'
@@ -483,15 +483,17 @@ if __name__ == '__main__':
     # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_sum, label='Sum case', linewidth=2)
     # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_consMin, label='ConsMin case', linewidth=2)
     # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_consMax, label='ConsMax case', linewidth=2)
-    label_list = ["Min", "Max", "Ave", "Sum", "ConsMin", "ConsMax"]
+    label_list = ["Min", "Max", "Ave", "Sum", "CMin", "CMax"]
     plt.errorbar(np.linspace(0,len(label_list)-1,len(label_list)), aniso_mag, yerr=aniso_mag_stand, linestyle='None', marker='None',color='black',linewidth=1, capsize=2)
     plt.plot(np.linspace(0,len(label_list)-1,len(label_list)), aniso_mag, '.-', markersize=8, label='around 2000 grains', linewidth=2)
-    plt.xlabel("Energy type", fontsize=14)
-    plt.ylabel("Magnitude", fontsize=14)
+    plt.xlabel("Energy type", fontsize=20)
+    plt.ylabel("Magnitude", fontsize=20)
     plt.xticks([0,1,2,3,4,5],label_list)
     plt.legend(fontsize=14)
     plt.ylim([-0.05,1.8])
-    plt.savefig(current_path + "/figures/anisotropic_poly_20k_isoGBs_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    #plt.savefig(current_path + "/figures/anisotropic_poly_20k_isoGBs_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
 
 
 

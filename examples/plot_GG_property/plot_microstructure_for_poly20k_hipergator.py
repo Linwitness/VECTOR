@@ -32,7 +32,9 @@ def plot_structure_figure(step, structure_figure, figure_path):
     cv0 = np.rot90(cv0,1)
     im = ax.imshow(cv0,vmin=np.min(cv_initial),vmax=np.max(cv_initial),cmap='rainbow',interpolation='none') #jet rainbow plasma
     cb = fig.colorbar(im)
-    cb.ax.tick_params(labelsize=14)
+    cb.set_ticks([10000,20000])
+    cb.set_ticklabels([ '1e4', '2e4'])
+    cb.ax.tick_params(labelsize=20)
     ax.axes.get_xaxis().set_ticks([])
     ax.axes.get_yaxis().set_ticks([])
     ax.tick_params(which = 'both', size = 0, labelsize = 0)
@@ -83,12 +85,12 @@ if __name__ == '__main__':
     special_step_distribution_max = 15     #to get 2000 grains
     special_step_distribution_consMax = 11 #to get 2000 grains
 
-    # special_step_distribution_ave = 334     # clear figure
-    # special_step_distribution_consMin = 334 # clear figure
-    # special_step_distribution_sum = 334     # clear figure
-    # special_step_distribution_min = 334     # clear figure
-    # special_step_distribution_max = 334     # clear figure
-    # special_step_distribution_consMax = 334 # clear figure
+    #special_step_distribution_ave = 334     # clear figure
+    #special_step_distribution_consMin = 334 # clear figure
+    #special_step_distribution_sum = 334     # clear figure
+    #special_step_distribution_min = 334     # clear figure
+    #special_step_distribution_max = 334     # clear figure
+    #special_step_distribution_consMax = 334 # clear figure
 
 
     # Start microstructure figure
