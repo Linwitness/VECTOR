@@ -144,10 +144,10 @@ if __name__ == '__main__':
     TJ_energy_type_min = "min"
     TJ_energy_type_sum = "sum"
 
-    npy_file_name_aniso_ave = f"p_ori_ave_{TJ_energy_type_ave}E_150_1k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
-    npy_file_name_aniso_min = f"p_ori_ave_{TJ_energy_type_min}E_150_1k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
-    npy_file_name_aniso_sum = f"p_ori_ave_{TJ_energy_type_sum}E_150_1k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
-    npy_file_name_iso = "p_ori_ave_aveE_150_1k_multiCore64_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066.npy"
+    npy_file_name_aniso_ave = f"p_ori_ave_{TJ_energy_type_ave}E_150_1k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt195.npy"
+    npy_file_name_aniso_min = f"p_ori_ave_{TJ_energy_type_min}E_150_1k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt195.npy"
+    npy_file_name_aniso_sum = f"p_ori_ave_{TJ_energy_type_sum}E_150_1k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt195.npy"
+    npy_file_name_iso = "p_ori_ave_aveE_150_1k_multiCore64_delta0.0_m2_J1_refer_1_0_0_seed56689_kt195.npy"
 
     # Initial data
     npy_file_aniso_ave = np.load(npy_file_folder + npy_file_name_aniso_ave)
