@@ -193,7 +193,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_iso, "Isotropy")
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_iso, "Isotropy")
     # For bias
     xLim = [0, 360]
     binValue = 10.01
