@@ -112,17 +112,22 @@ def get_circle_statistical_radius(micro_matrix, sites_list, step):
         sites = sites_list[1]
 
     max_radius_offset = 0
-    for sitei in sites:
+    ave_radius_offset_list = np.zeros(len(sites))
+    for index, sitei in enumerate(sites):
         [i,j] = sitei
         current_radius = np.sqrt((i - center[0])**2 + (j - center[1])**2)
         radius_offset = abs(current_radius - ave_radius)
+        ave_radius_offset_list[index] = radius_offset
         if radius_offset > max_radius_offset: max_radius_offset = radius_offset
     if ave_radius == 0:
         max_radius_offset = 0
+        ave_radius_offset = 0
     else:
         max_radius_offset = max_radius_offset / ave_radius
+        ave_radius_offset = np.average(ave_radius_offset_list) / ave_radius
+        magnitude_stan = np.sqrt(np.sum((ave_radius_offset_list/ave_radius - ave_radius_offset)**2)/len(sites))
 
-    return max_radius_offset
+    return ave_radius_offset, magnitude_stan
 
 def get_circle_statistical_ar(micro_matrix, step):
     # Get the average aspect ratio
@@ -284,14 +289,14 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca(projection='polar')
 
-    ax.set_thetagrids(np.arange(0.0, 360.0, 20.0),fontsize=14)
+    ax.set_thetagrids(np.arange(0.0, 360.0, 45.0),fontsize=16)
     ax.set_thetamin(0.0)
     ax.set_thetamax(360.0)
 
     ax.set_rgrids(np.arange(0, 0.008, 0.004))
     ax.set_rlabel_position(0.0)  # 标签显示在0°
     ax.set_rlim(0.0, 0.008)  # 标签范围为[0, 5000)
-    ax.set_yticklabels(['0', '0.004'],fontsize=14)
+    ax.set_yticklabels(['0', '0.004'],fontsize=16)
 
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
@@ -387,7 +392,7 @@ if __name__ == '__main__':
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_095, r"$\delta=0.95$")
 
-    plt.legend(loc=(-0.14,-0.3),fontsize=14,ncol=3)
+    plt.legend(loc=(-0.14,-0.42),fontsize=20,ncol=2)
     plt.savefig(current_path + "/figures/normal_distribution_circle.png", dpi=400,bbox_inches='tight')
 
     # For figure after bias
@@ -395,14 +400,14 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca(projection='polar')
 
-    ax.set_thetagrids(np.arange(0.0, 360.0, 20.0),fontsize=14)
+    ax.set_thetagrids(np.arange(0.0, 360.0, 45.0),fontsize=16)
     ax.set_thetamin(0.0)
     ax.set_thetamax(360.0)
 
     ax.set_rgrids(np.arange(0, 0.008, 0.004))
     ax.set_rlabel_position(0.0)  # 标签显示在0°
     ax.set_rlim(0.0, 0.008)  # 标签范围为[0, 5000)
-    ax.set_yticklabels(['0', '0.004'],fontsize=14)
+    ax.set_yticklabels(['0', '0.004'],fontsize=16)
 
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
@@ -499,111 +504,89 @@ if __name__ == '__main__':
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_095, r"$\delta=0.95$", slope_list_bias)
     aniso_mag[5], aniso_mag_stand[5] = simple_magnitude(slope_list)
 
-    plt.legend(loc=(-0.14,-0.3),fontsize=14,ncol=3)
+    plt.legend(loc=(-0.14,-0.42),fontsize=20,ncol=2)
     plt.savefig(current_path + "/figures/normal_distribution_circle_after_removing_bias.png", dpi=400,bbox_inches='tight')
     print("Polar figure done.")
 
     # PLot magnitude of anisotropy
-    # num_step_magni = 30
-    # data_file_name_aniso_mag = '/normal_distribution_data/aniso_magnitude_delta.npz'
-    # if os.path.exists(current_path + data_file_name_aniso_mag):
-    #     data_file_aniso_mag = np.load(current_path + data_file_name_aniso_mag)
-    #     # aniso_mag_000=data_file_aniso_mag['aniso_mag_000']
-    #     # aniso_mag_020=data_file_aniso_mag['aniso_mag_020']
-    #     # aniso_mag_040=data_file_aniso_mag['aniso_mag_040']
-    #     # aniso_mag_060=data_file_aniso_mag['aniso_mag_060']
-    #     # aniso_mag_080=data_file_aniso_mag['aniso_mag_080']
-    #     # aniso_mag_095=data_file_aniso_mag['aniso_mag_095']
-    #     aniso_mag = data_file_aniso_mag['aniso_mag']
-    # else:
-    #     # aniso_mag_000 = np.zeros(step_num)
-    #     # aniso_mag_020 = np.zeros(step_num)
-    #     # aniso_mag_040 = np.zeros(step_num)
-    #     # aniso_mag_060 = np.zeros(step_num)
-    #     # aniso_mag_080 = np.zeros(step_num)
-    #     # aniso_mag_095 = np.zeros(step_num)
-    #     aniso_mag = np.zeros(6)
-    #     cores = 16
-    #     loop_times = 5
-    #     for i in [num_step_magni]:#tqdm(range(step_num)):
-    #         # newplace = np.rot90(npy_file_aniso_000[i,:,:,:], 1, (0,1))
-    #         newplace = npy_file_aniso_000[i,:,:,:]
-    #         nx = newplace.shape[0]
-    #         ny = newplace.shape[1]
-    #         ng = np.max(newplace)
-    #         R = np.zeros((nx,ny,2))
-    #         P0 = newplace
-    #         smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-    #         sites_list = smooth_class.get_all_gb_list()
-    #         aniso_mag[0] = fit_ellipse_for_circle(sites_list)
-    #         # aniso_mag_000[i] = get_circle_statistical_ar(npy_file_aniso_000, i)
+    num_step_magni = 30
 
-    #         # newplace = np.rot90(npy_file_aniso_020[i,:,:,:], 1, (0,1))
-    #         newplace = npy_file_aniso_020[i,:,:,:]
-    #         nx = newplace.shape[0]
-    #         ny = newplace.shape[1]
-    #         ng = np.max(newplace)
-    #         R = np.zeros((nx,ny,2))
-    #         P0 = newplace
-    #         smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-    #         sites_list = smooth_class.get_all_gb_list()
-    #         aniso_mag[1] = fit_ellipse_for_circle(sites_list)
-    #         # aniso_mag_020[i] = get_circle_statistical_ar(npy_file_aniso_020, i)
+    aniso_mag2 = np.zeros(6)
+    aniso_mag_stand2 = np.zeros(6)
+    cores = 16
+    loop_times = 5
+    for i in [num_step_magni]:#tqdm(range(step_num)):
+        # newplace = np.rot90(npy_file_aniso_000[i,:,:,:], 1, (0,1))
+        newplace = npy_file_aniso_000[i,:,:,:]
+        nx = newplace.shape[0]
+        ny = newplace.shape[1]
+        ng = np.max(newplace)
+        R = np.zeros((nx,ny,2))
+        P0 = newplace
+        smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+        sites_list = smooth_class.get_all_gb_list()
+        aniso_mag2[0], aniso_mag_stand2[0] = get_circle_statistical_radius(npy_file_aniso_000, sites_list, i)
+        # aniso_mag_000[i] = get_circle_statistical_ar(npy_file_aniso_000, i)
 
-    #         # newplace = np.rot90(npy_file_aniso_040[i,:,:,:], 1, (0,1))
-    #         newplace = npy_file_aniso_040[i,:,:,:]
-    #         nx = newplace.shape[0]
-    #         ny = newplace.shape[1]
-    #         ng = np.max(newplace)
-    #         R = np.zeros((nx,ny,2))
-    #         P0 = newplace
-    #         smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-    #         sites_list = smooth_class.get_all_gb_list()
-    #         aniso_mag[2] = fit_ellipse_for_circle(sites_list)
-    #         # aniso_mag_040[i] = get_circle_statistical_ar(npy_file_aniso_040, i)
+        # newplace = np.rot90(npy_file_aniso_020[i,:,:,:], 1, (0,1))
+        newplace = npy_file_aniso_020[i,:,:,:]
+        nx = newplace.shape[0]
+        ny = newplace.shape[1]
+        ng = np.max(newplace)
+        R = np.zeros((nx,ny,2))
+        P0 = newplace
+        smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+        sites_list = smooth_class.get_all_gb_list()
+        aniso_mag2[1], aniso_mag_stand2[1] = get_circle_statistical_radius(npy_file_aniso_000, sites_list, i)
+        # aniso_mag_020[i] = get_circle_statistical_ar(npy_file_aniso_020, i)
 
-    #         # newplace = np.rot90(npy_file_aniso_060[i,:,:,:], 1, (0,1))
-    #         newplace = npy_file_aniso_060[i,:,:,:]
-    #         nx = newplace.shape[0]
-    #         ny = newplace.shape[1]
-    #         ng = np.max(newplace)
-    #         R = np.zeros((nx,ny,2))
-    #         P0 = newplace
-    #         smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-    #         sites_list = smooth_class.get_all_gb_list()
-    #         aniso_mag[3] = fit_ellipse_for_circle(sites_list)
-    #         # aniso_mag_060[i] = get_circle_statistical_ar(npy_file_aniso_060, i)
+        # newplace = np.rot90(npy_file_aniso_040[i,:,:,:], 1, (0,1))
+        newplace = npy_file_aniso_040[i,:,:,:]
+        nx = newplace.shape[0]
+        ny = newplace.shape[1]
+        ng = np.max(newplace)
+        R = np.zeros((nx,ny,2))
+        P0 = newplace
+        smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+        sites_list = smooth_class.get_all_gb_list()
+        aniso_mag2[2], aniso_mag_stand2[2] = get_circle_statistical_radius(npy_file_aniso_000, sites_list, i)
+        # aniso_mag_040[i] = get_circle_statistical_ar(npy_file_aniso_040, i)
 
-    #         # newplace = np.rot90(npy_file_aniso_080[i,:,:,:], 1, (0,1))
-    #         newplace = npy_file_aniso_080[i,:,:,:]
-    #         nx = newplace.shape[0]
-    #         ny = newplace.shape[1]
-    #         ng = np.max(newplace)
-    #         R = np.zeros((nx,ny,2))
-    #         P0 = newplace
-    #         smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-    #         sites_list = smooth_class.get_all_gb_list()
-    #         aniso_mag[4] = fit_ellipse_for_circle(sites_list)
-    #         # aniso_mag_080[i] = get_circle_statistical_ar(npy_file_aniso_080, i)
+        # newplace = np.rot90(npy_file_aniso_060[i,:,:,:], 1, (0,1))
+        newplace = npy_file_aniso_060[i,:,:,:]
+        nx = newplace.shape[0]
+        ny = newplace.shape[1]
+        ng = np.max(newplace)
+        R = np.zeros((nx,ny,2))
+        P0 = newplace
+        smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+        sites_list = smooth_class.get_all_gb_list()
+        aniso_mag2[3], aniso_mag_stand2[3] = get_circle_statistical_radius(npy_file_aniso_000, sites_list, i)
+        # aniso_mag_060[i] = get_circle_statistical_ar(npy_file_aniso_060, i)
 
-    #         # newplace = np.rot90(npy_file_aniso_095[i,:,:,:], 1, (0,1))
-    #         newplace = npy_file_aniso_095[i,:,:,:]
-    #         nx = newplace.shape[0]
-    #         ny = newplace.shape[1]
-    #         ng = np.max(newplace)
-    #         R = np.zeros((nx,ny,2))
-    #         P0 = newplace
-    #         smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-    #         sites_list = smooth_class.get_all_gb_list()
-    #         aniso_mag[5] = fit_ellipse_for_circle(sites_list)
-    #         # aniso_mag_095[i] = get_circle_statistical_ar(npy_file_aniso_095, i)
-    #     # np.savez(current_path + data_file_name_aniso_mag, aniso_mag_000=aniso_mag_000,
-    #     #                                                   aniso_mag_020=aniso_mag_020,
-    #     #                                                   aniso_mag_040=aniso_mag_040,
-    #     #                                                   aniso_mag_060=aniso_mag_060,
-    #     #                                                   aniso_mag_080=aniso_mag_080,
-    #     #                                                   aniso_mag_095=aniso_mag_095)
-    #     np.savez(current_path + data_file_name_aniso_mag, aniso_mag=aniso_mag)
+        # newplace = np.rot90(npy_file_aniso_080[i,:,:,:], 1, (0,1))
+        newplace = npy_file_aniso_080[i,:,:,:]
+        nx = newplace.shape[0]
+        ny = newplace.shape[1]
+        ng = np.max(newplace)
+        R = np.zeros((nx,ny,2))
+        P0 = newplace
+        smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+        sites_list = smooth_class.get_all_gb_list()
+        aniso_mag2[4], aniso_mag_stand2[4] = get_circle_statistical_radius(npy_file_aniso_000, sites_list, i)
+        # aniso_mag_080[i] = get_circle_statistical_ar(npy_file_aniso_080, i)
+
+        # newplace = np.rot90(npy_file_aniso_095[i,:,:,:], 1, (0,1))
+        newplace = npy_file_aniso_095[i,:,:,:]
+        nx = newplace.shape[0]
+        ny = newplace.shape[1]
+        ng = np.max(newplace)
+        R = np.zeros((nx,ny,2))
+        P0 = newplace
+        smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+        sites_list = smooth_class.get_all_gb_list()
+        aniso_mag2[5], aniso_mag_stand2[5] = get_circle_statistical_radius(npy_file_aniso_000, sites_list, i)
+        # aniso_mag_095[i] = get_circle_statistical_ar(npy_file_aniso_095, i)
         
     plt.close()
     fig = plt.figure(figsize=(5, 5))
@@ -617,11 +600,33 @@ if __name__ == '__main__':
     plt.errorbar(delta_value, aniso_mag, yerr=aniso_mag_stand, linestyle='None', marker='None',color='black',linewidth=1, capsize=2)
     plt.plot(delta_value, aniso_mag, '.-', markersize=8, label='time step = 900', linewidth=2)
     
-    plt.xlabel(r"$\delta$", fontsize=14)
-    plt.ylabel("Magnitude", fontsize=14)
-    plt.legend(fontsize=14)
+    plt.xlabel(r"$\delta$", fontsize=20)
+    plt.ylabel("Magnitude", fontsize=20)
+    plt.legend(fontsize=20)
     plt.ylim([-0.05,1.1])
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
     plt.savefig(current_path + "/figures/anisotropic_magnitude_circle_polar_ave.png", dpi=400,bbox_inches='tight')
+    
+    plt.close()
+    fig = plt.figure(figsize=(5, 5))
+    # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_000, label=r'$\delta=0.00$', linewidth=2)
+    # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_020, label=r'$\delta=0.20$', linewidth=2)
+    # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_040, label=r'$\delta=0.40$', linewidth=2)
+    # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_060, label=r'$\delta=0.60$', linewidth=2)
+    # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_080, label=r'$\delta=0.80$', linewidth=2)
+    # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_095, label=r'$\delta=0.95$', linewidth=2)
+    delta_value = np.array([0.0,0.2,0.4,0.6,0.8,0.95])
+    plt.errorbar(delta_value, aniso_mag2, yerr=aniso_mag_stand2, linestyle='None', marker='None',color='black',linewidth=1, capsize=2)
+    plt.plot(delta_value, aniso_mag2, '.-', markersize=8, label='time step = 900', linewidth=2)
+    
+    plt.xlabel(r"$\delta$", fontsize=20)
+    plt.ylabel("Magnitude", fontsize=20)
+    plt.legend(fontsize=20)
+    plt.ylim([-0.05,1.1])
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.savefig(current_path + "/figures/anisotropic_magnitude_circle_radius.png", dpi=400,bbox_inches='tight')
 
 
 
