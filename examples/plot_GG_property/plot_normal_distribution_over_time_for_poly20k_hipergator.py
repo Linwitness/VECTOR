@@ -292,7 +292,7 @@ if __name__ == '__main__':
     ax.set_rgrids(np.arange(0, 0.01, 0.004))
     ax.set_rlabel_position(0.0)  # 标签显示在0°
     ax.set_rlim(0.0, 0.01)  # 标签范围为[0, 5000)
-    ax.set_yticklabels(['0', '0.004', '0.008'],fontsize=20)
+    ax.set_yticklabels(['0', '4e-3', '8e-3'],fontsize=20)
 
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
@@ -394,7 +394,7 @@ if __name__ == '__main__':
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMax, "ConsMax case", slope_list_bias)
     aniso_mag[5], aniso_mag_stand[5] = simple_magnitude(slope_list)
 
-    plt.legend(loc=(-0.25,-0.18),fontsize=20,ncol=2)
+    plt.legend(loc=(-0.25,-0.15),fontsize=20,ncol=2)
     plt.savefig(current_path + "/figures/normal_distribution_poly_20k_after_removing_bias.png", dpi=400,bbox_inches='tight')
 
     # PLot magnitude of anisotropy
@@ -512,7 +512,7 @@ if __name__ == '__main__':
     plt.ylim([-0.05,1.8])
     plt.xticks(fontsize=20)
     plt.yticks(fontsize=20)
-    plt.savefig(current_path + "/figures/anisotropic_poly_20k_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
+    # plt.savefig(current_path + "/figures/anisotropic_poly_20k_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
 
 
 
