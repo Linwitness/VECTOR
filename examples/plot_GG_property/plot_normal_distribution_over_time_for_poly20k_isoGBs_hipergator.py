@@ -493,7 +493,7 @@ if __name__ == '__main__':
     plt.ylim([-0.05,1.8])
     plt.xticks(fontsize=20)
     plt.yticks(fontsize=20)
-    #plt.savefig(current_path + "/figures/anisotropic_poly_20k_isoGBs_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + "/figures/anisotropic_poly_20k_isoGBs_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
 
 
 
