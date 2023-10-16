@@ -289,14 +289,14 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca(projection='polar')
 
-    ax.set_thetagrids(np.arange(0.0, 360.0, 45.0),fontsize=16)
+    ax.set_thetagrids(np.arange(0.0, 360.0, 45.0),fontsize=20)
     ax.set_thetamin(0.0)
     ax.set_thetamax(360.0)
 
     ax.set_rgrids(np.arange(0, 0.008, 0.004))
     ax.set_rlabel_position(0.0)  # 标签显示在0°
     ax.set_rlim(0.0, 0.008)  # 标签范围为[0, 5000)
-    ax.set_yticklabels(['0', '0.004'],fontsize=16)
+    ax.set_yticklabels(['0', '0.004'],fontsize=20)
 
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
@@ -392,7 +392,7 @@ if __name__ == '__main__':
 
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_095, r"$\delta=0.95$")
 
-    plt.legend(loc=(-0.14,-0.42),fontsize=20,ncol=2)
+    plt.legend(loc=(-0.14,-0.18),fontsize=20,ncol=2)
     plt.savefig(current_path + "/figures/normal_distribution_circle.png", dpi=400,bbox_inches='tight')
 
     # For figure after bias
@@ -400,14 +400,14 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca(projection='polar')
 
-    ax.set_thetagrids(np.arange(0.0, 360.0, 45.0),fontsize=16)
+    ax.set_thetagrids(np.arange(0.0, 360.0, 45.0),fontsize=20)
     ax.set_thetamin(0.0)
     ax.set_thetamax(360.0)
 
     ax.set_rgrids(np.arange(0, 0.008, 0.004))
     ax.set_rlabel_position(0.0)  # 标签显示在0°
     ax.set_rlim(0.0, 0.008)  # 标签范围为[0, 5000)
-    ax.set_yticklabels(['0', '0.004'],fontsize=16)
+    ax.set_yticklabels(['0', '0.004'],fontsize=20)
 
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
@@ -504,7 +504,7 @@ if __name__ == '__main__':
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_095, r"$\delta=0.95$", slope_list_bias)
     aniso_mag[5], aniso_mag_stand[5] = simple_magnitude(slope_list)
 
-    plt.legend(loc=(-0.14,-0.42),fontsize=20,ncol=2)
+    plt.legend(loc=(-0.14,-0.18),fontsize=20,ncol=2)
     plt.savefig(current_path + "/figures/normal_distribution_circle_after_removing_bias.png", dpi=400,bbox_inches='tight')
     print("Polar figure done.")
 
@@ -604,8 +604,8 @@ if __name__ == '__main__':
     plt.ylabel("Magnitude", fontsize=20)
     plt.legend(fontsize=20)
     plt.ylim([-0.05,1.1])
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
     plt.savefig(current_path + "/figures/anisotropic_magnitude_circle_polar_ave.png", dpi=400,bbox_inches='tight')
     
     plt.close()
@@ -624,8 +624,8 @@ if __name__ == '__main__':
     plt.ylabel("Magnitude", fontsize=20)
     plt.legend(fontsize=20)
     plt.ylim([-0.05,1.1])
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
     plt.savefig(current_path + "/figures/anisotropic_magnitude_circle_radius.png", dpi=400,bbox_inches='tight')
 
 
