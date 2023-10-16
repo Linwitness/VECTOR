@@ -316,7 +316,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_min, "Min case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_min, "Min case")
     aniso_mag[0], aniso_mag_stand[0] = simple_magnitude(slope_list)
 
     # Aniso - max
@@ -331,7 +331,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_max, "Max case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_max, "Max case")
     aniso_mag[1], aniso_mag_stand[1] = simple_magnitude(slope_list)
 
     # Aniso - ave
@@ -346,7 +346,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_ave, "Ave case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_ave, "Ave case")
     aniso_mag[2], aniso_mag_stand[2] = simple_magnitude(slope_list)
 
     # Aniso - sum
@@ -361,7 +361,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_sum, "Sum case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_sum, "Sum case")
     aniso_mag[3], aniso_mag_stand[3] = simple_magnitude(slope_list)
 
     # Aniso - consMin
@@ -376,7 +376,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMin, "ConsMin case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMin, "ConsMin case")
     aniso_mag[4], aniso_mag_stand[4] = simple_magnitude(slope_list)
 
     # Aniso - consMax
@@ -391,11 +391,11 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMax, "ConsMax case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMax, "ConsMax case")
     aniso_mag[5], aniso_mag_stand[5] = simple_magnitude(slope_list)
 
     plt.legend(loc=(-0.25,-0.15),fontsize=20,ncol=2)
-    plt.savefig(current_path + "/figures/normal_distribution_poly_20k_after_removing_bias.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + "/figures/normal_distribution_poly_20k.png", dpi=400,bbox_inches='tight')
 
     # PLot magnitude of anisotropy
     # data_file_name_aniso_mag = f'/normal_distribution_data/aniso_magnitude_poly_20k_energy_type.npz'
