@@ -175,7 +175,7 @@ if __name__ == '__main__':
         # grain_num_aniso_sum[i] = len(set(npy_file_aniso_sum[i,:].flatten()))
         grain_num_iso[i] = len(set(npy_file_iso[i,:].flatten()))
 
-    expected_grain_num = 500
+    expected_grain_num = 10
     special_step_distribution_ave = int(np.argmin(abs(grain_num_aniso_ave - expected_grain_num)))
     special_step_distribution_min = int(np.argmin(abs(grain_num_aniso_min - expected_grain_num)))
     # special_step_distribution_sum = int(np.argmin(abs(grain_num_aniso_sum - expected_grain_num)))

@@ -235,7 +235,7 @@ if __name__ == '__main__':
 
 
 
-    npy_file_name_aniso_ave = f"p_ori_ave_{TJ_energy_type_ave}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
+    npy_file_name_aniso_ave = f"pT_ori_ave_{TJ_energy_type_ave}E_20000_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     npy_file_name_aniso_consMin = f"p_ori_ave_{TJ_energy_type_consMin}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     npy_file_name_aniso_sum = f"p_ori_ave_{TJ_energy_type_sum}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     npy_file_name_aniso_min = f"p_ori_ave_{TJ_energy_type_min}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
@@ -335,8 +335,8 @@ if __name__ == '__main__':
     aniso_mag[1], aniso_mag_stand[1] = simple_magnitude(slope_list)
 
     # Aniso - ave
-    data_file_name_P = f'/normal_distribution_data/normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
-    data_file_name_sites = f'/normal_distribution_data/normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    data_file_name_P = f'/normal_distribution_data/normal_distribution_aveUpdate_P_step{special_step_distribution_ave}.npy'
+    data_file_name_sites = f'/normal_distribution_data/normal_distribution_aveUpdate_sites_step{special_step_distribution_ave}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
@@ -395,7 +395,7 @@ if __name__ == '__main__':
     aniso_mag[5], aniso_mag_stand[5] = simple_magnitude(slope_list)
 
     plt.legend(loc=(-0.25,-0.42),fontsize=20,ncol=2)
-    plt.savefig(current_path + "/figures/normal_distribution_poly_20k.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + "/figures/normal_distribution_poly_20k_aveUpdate.png", dpi=400,bbox_inches='tight')
 
     # PLot magnitude of anisotropy
     # data_file_name_aniso_mag = f'/normal_distribution_data/aniso_magnitude_poly_20k_energy_type.npz'
@@ -512,7 +512,7 @@ if __name__ == '__main__':
     plt.ylim([-0.05,1.8])
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-    #plt.savefig(current_path + "/figures/anisotropic_poly_20k_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + "/figures/anisotropic_poly_20k_aveUpdate_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
 
 
 
