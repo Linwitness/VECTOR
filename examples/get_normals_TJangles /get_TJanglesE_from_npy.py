@@ -248,6 +248,6 @@ if __name__ == '__main__':
     plt.ylabel(r"Angle ($^\circ$)", fontsize=14)
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)
-    plt.savefig(npy_file_folder + dihedral_siteEnergy_cases_figure_name, bbox_inches='tight', format='png', dpi=400)
+    # plt.savefig(npy_file_folder + dihedral_siteEnergy_cases_figure_name, bbox_inches='tight', format='png', dpi=400)
         
         

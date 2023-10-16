@@ -14,6 +14,12 @@ import myInput
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
+from scipy.optimize import curve_fit
+
+
+def func(x, a, b, c):
+    return a * np.exp(-x / b) + c
+
 def find_window(P,i,j,iteration,refer_id):
     # Find the windows around the voxel i,j, the size depend on iteration
     nx,ny=P.shape
@@ -191,65 +197,110 @@ def calculate_tangent(triple_map,iteration=5):
 
 if __name__ == '__main__':
     
-    file_path = "/Users/lin/Dropbox (UFL)/UFdata/Dihedral_angle/IC/"
-    npy_file_name = "h_ori_ave_aveE_hex_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066_angle.npy"
-
+    average_coupled_energy = np.array([0.99858999, 3.05656703, 0.40040934, 1.59915988, 0.55020987])
     # Joseph resuults
     file_path_joseph = "/Users/lin/Dropbox (UFL)/UFdata/Dihedral_angle/output/"    
-    npy_file_name_joseph = "hex_dihedrals.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
-    triple_results = np.load(file_path_joseph + npy_file_name_joseph)
+    npy_file_name_joseph_ave = "hex_dihedrals1.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
+    npy_file_name_joseph_sum = "hex_dihedrals5.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
+    npy_file_name_joseph_consmin = "hex_dihedrals3.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
+    npy_file_name_joseph_consmax = "hex_dihedrals2.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
+    npy_file_name_joseph_constest = "hex_dihedrals4.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
+    triple_results_ave = np.load(file_path_joseph + npy_file_name_joseph_ave)
+    triple_results_sum = np.load(file_path_joseph + npy_file_name_joseph_sum)
+    triple_results_consmin = np.load(file_path_joseph + npy_file_name_joseph_consmin)
+    triple_results_consmax = np.load(file_path_joseph + npy_file_name_joseph_consmax)
+    triple_results_constest = np.load(file_path_joseph + npy_file_name_joseph_constest)
     
     # Necessary parameters
-    iteration = 5
     num_grain_initial = 48
     
-    # Read from microstructure npy file
-    triple_map = np.load(file_path + npy_file_name)
-    triple_map = triple_map[:,:,:,0]
-    
-    # Calculate the tanget for corresponding triple junction
-    # triple_coord, triple_angle, triple_grain = calculate_tangent(triple_map, iteration)
-    # The triple_coord is the coordination of the triple junction(left-upper voxel), axis 0 is the index of triple, axis 1 is the coordination (i,j)
-    # The triple_angle saves the three dihedral angle for corresponding triple junction, 
-    #   axis 0 is the index of triple, 
-    #   axis 1 is the three dihedral angle
-    # The triple_grain saves the sequence of three grains for corresponding triple point
-    #   axis 0 is the index of the triple,
-    #   axis 1 is the three grains
-    
-    num_steps = triple_map.shape[0]
-    error_list = np.zeros(num_steps)
-    error_list_joseph = np.zeros(num_steps)
-    angle_list = np.zeros(num_steps)
-    angle_list_joseph = np.zeros(num_steps)
+    num_steps = 80
+    max_dihedral_ave_list = np.zeros(num_steps)
+    max_dihedral_sum_list = np.zeros(num_steps)
+    max_dihedral_consmin_list = np.zeros(num_steps)
+    max_dihedral_consmax_list = np.zeros(num_steps)
+    max_dihedral_constest_list = np.zeros(num_steps)
     for i in tqdm(range(num_steps)):
-        triple_map_step = triple_map[i,:,:]
-        num_grains = len(list(set(list(triple_map_step.reshape(-1)))))
-        if num_grains < num_grain_initial: break
-    
-        triple_coord, triple_angle, triple_grain = calculate_tangent(triple_map_step, iteration)
-        error_list[i] = np.mean(abs((triple_angle) - 120))
-        angle_list[i] = np.mean(triple_angle[:,0])
+        # From Joseph algorithm
+        triple_results_step_ave = triple_results_ave[i,3:6,:]
+        triple_results_step_sum = triple_results_sum[i,3:6,:]
+        triple_results_step_consmin = triple_results_consmin[i,3:6,:]
+        triple_results_step_consmax = triple_results_consmax[i,3:6,:]
+        triple_results_step_constest = triple_results_constest[i,3:6,:]
         
-        # From Joseph
-        triple_results_step = triple_results[i,3:6,:]
-        triple_results_step = triple_results_step[:,~np.isnan(triple_results_step[0,:])]
-        print(f"The number in Joseph is {len(triple_results_step[0,:])}")
-        error_list_joseph[i] = np.mean(abs((triple_results_step) - 120))
-        angle_list_joseph[i] = np.mean(triple_results_step[0,:])
+        triple_results_step_ave = triple_results_step_ave[:,~np.isnan(triple_results_step_ave[0,:])]
+        triple_results_step_sum = triple_results_step_sum[:,~np.isnan(triple_results_step_sum[0,:])]
+        triple_results_step_consmin = triple_results_step_consmin[:,~np.isnan(triple_results_step_consmin[0,:])]
+        triple_results_step_consmax = triple_results_step_consmax[:,~np.isnan(triple_results_step_consmax[0,:])]
+        triple_results_step_constest = triple_results_step_constest[:,~np.isnan(triple_results_step_constest[0,:])]
+        print(f"The number in ave is {len(triple_results_step_ave[0,:])}")
+        print(f"The number in sum is {len(triple_results_step_sum[0,:])}")
+        print(f"The number in consmin is {len(triple_results_step_consmin[0,:])}")
+        print(f"The number in consmax is {len(triple_results_step_consmax[0,:])}")
+        print(f"The number in constest is {len(triple_results_step_constest[0,:])}")
+        max_dihedral_ave_list[i] = np.mean(np.max(triple_results_step_ave,0))
+        max_dihedral_sum_list[i]= np.mean(np.max(triple_results_step_sum,0))
+        max_dihedral_consmin_list[i] = np.mean(np.max(triple_results_step_consmin,0))
+        max_dihedral_consmax_list[i] = np.mean(np.max(triple_results_step_consmax,0))
+        max_dihedral_constest_list[i] = np.mean(np.max(triple_results_step_constest,0))
+        
+    # average the max dihedral angle for all time steps
+    max_dihedral_ave = np.mean(max_dihedral_ave_list)
+    max_dihedral_sum = np.mean(max_dihedral_sum_list)
+    max_dihedral_consmin = np.mean(max_dihedral_consmin_list)
+    max_dihedral_consmax = np.mean(max_dihedral_consmax_list)
+    max_dihedral_constest = np.mean(max_dihedral_constest_list)
+    
+    max_dihedral_list = np.array([max_dihedral_ave, max_dihedral_sum, max_dihedral_consmin, max_dihedral_consmax, max_dihedral_constest])
         
         
-    plt.close()
-    plt.plot(np.linspace(0,num_steps-1,num_steps), error_list, linewidth = 2, label='Linear algorithm error')
-    plt.plot(np.linspace(0,num_steps-1,num_steps), error_list_joseph, linewidth = 2, label='Joseph algorithm error')
-    plt.xlabel("Time step", fontsize=20)
-    plt.ylabel(r"angle error ($^\circ$)", fontsize=20)
-    plt.legend(fontsize=20)
-    plt.show()
+    dihedral_siteEnergy_cases_figure_name = "energy_results/hex_aveDihedral_aveEnergy_" + "figure.png"
+    plt.clf()
+    plt.plot(average_coupled_energy, max_dihedral_list, 'o', markersize=4, label = "average angle")
     
-    print(r"Analytical result is 120$^\circ$")
-    print(f"Linear result is {np.mean(angle_list[:80])}, Joseph result is {np.mean(angle_list_joseph[:80])}.")
+    # Fitting
+    a = max(max_dihedral_list)-min(max_dihedral_list)
+    b = max_dihedral_list[round(len(max_dihedral_list)/2)]
+    c = min(max_dihedral_list)
+    p0 = [a,b,c]
+    popt, pcov = curve_fit(func, average_coupled_energy, max_dihedral_list,p0=p0)
+    print(f"The equation to dit the relationship is {round(popt[0],2)} * exp(-x * {round(popt[1],2)}) + {round(popt[2],2)}")
+    y_fit = [func(i,popt[0], popt[1], popt[2]) for i in np.linspace(0, 4, 50)]
+    plt.plot(np.linspace(0, 4, 50), y_fit, '-', linewidth=2, label = "fitting results")
+    # Find the exact result
+    exact_list = np.linspace(0.2, 1.0, 101)
+    min_level = 10
+    expect_site_energy = 0
+    for m in exact_list: 
+        if min_level > abs(func(m, popt[0], popt[1], popt[2]) - 145.46):
+            min_level = abs(func(m, popt[0], popt[1], popt[2]) - 145.46)
+            expect_site_energy = m
+    print(f"The expected average TJ site energy is {expect_site_energy}")
     
+    plt.plot(np.linspace(0,4,24), [145.46]*24, '--', linewidth=2, label = "expected angle results") # Max-100
+    
+    # My algorithm
+    npy_file_folder = "/Users/lin/projects/SPPARKS-AGG/examples/Test_SimplifyIncE/2d_hex_for_TJE/results/"
+    
+    # Get the average dihedral angle
+    # cases=5
+    # cases_name = ["ave", "sum", "consMin", "consMax", "consTest"]
+    # max_dihedral_angle_lin = np.zeros(cases)
+    # for i in range(cases):
+    #     energy_type = cases_name[i]
+    #     base_name = f"dihedral_results/hex_{energy_type}_"
+    #     dihedral_over_time = np.load(npy_file_folder + base_name + "data.npy")
+    #     max_dihedral_angle_lin[i] = np.average(dihedral_over_time[:num_steps])
+    # plt.plot(average_coupled_energy, max_dihedral_angle_lin, 'o', markersize=4, label = "average angle (Lin)")
+    plt.ylim([110,155])
+    plt.xlim([0,4])
+    plt.legend(fontsize=14, loc='lower center')
+    plt.xlabel("Coupled energy", fontsize=14)
+    plt.ylabel(r"Angle ($^\circ$)", fontsize=14)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    
+    plt.savefig(npy_file_folder + dihedral_siteEnergy_cases_figure_name, bbox_inches='tight', format='png', dpi=400)
     
 
 
