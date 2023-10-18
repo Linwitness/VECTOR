@@ -268,7 +268,7 @@ if __name__ == '__main__':
     y_fit = [func(i,popt[0], popt[1], popt[2]) for i in np.linspace(0, 4, 50)]
     plt.plot(np.linspace(0, 4, 50), y_fit, '-', linewidth=2, label = "fitting results")
     # Find the exact result
-    exact_list = np.linspace(0.2, 1.0, 101)
+    exact_list = np.linspace(0.0, 0.5, 1001)
     min_level = 10
     expect_site_energy = 0
     for m in exact_list: 
@@ -295,7 +295,7 @@ if __name__ == '__main__':
     plt.ylim([110,155])
     plt.xlim([0,4])
     plt.legend(fontsize=14, loc='lower center')
-    plt.xlabel("Coupled energy", fontsize=14)
+    plt.xlabel("Coupled energy (J/MCU)", fontsize=14)
     plt.ylabel(r"Angle ($^\circ$)", fontsize=14)
     plt.xticks(fontsize=14)
     plt.yticks(fontsize=14)

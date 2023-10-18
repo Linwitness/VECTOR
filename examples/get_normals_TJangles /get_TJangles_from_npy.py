@@ -21,6 +21,7 @@ import myInput
 import PACKAGE_MP_Linear as linear2d
 sys.path.append(current_path+'/../calculate_tangent/')
 import output_tangent
+from tqdm import tqdm 
 
 
 
@@ -129,9 +130,12 @@ if __name__ == '__main__':
     npy_file_folder = "/Users/lin/projects/SPPARKS-AGG/examples/Test_SimplifyIncE/2d_hex_for_TJE/results/"
     TJ_energy_type_cases = ["consTest","ave", "sum", "consMin", "consMax"]
     
+    # Joseph method
+    file_path_joseph = "/Users/lin/Dropbox (UFL)/UFdata/Dihedral_angle/output/"    
+    TJ_energy_type_cases_joseph = ["hex_dihedrals4.npy", "hex_dihedrals1.npy", "hex_dihedrals5.npy", "hex_dihedrals3.npy", "hex_dihedrals2.npy"]
     
     
-    for energy_type in TJ_energy_type_cases:
+    for index, energy_type in enumerate(TJ_energy_type_cases):
         print(f"\nStart {energy_type} energy type:")
         npy_file_name = f"h_ori_ave_{energy_type}E_hex_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066_angle.npy"
         P0_list = np.load(npy_file_folder + npy_file_name)
@@ -139,13 +143,27 @@ if __name__ == '__main__':
         
         base_name = f"dihedral_results/hex_{energy_type}_"
         dihedral_over_time_data_name = base_name + "data.npy"
-        dihedral_over_time_figure_name = base_name + "figure.png"
+        dihedral_over_time_figure_name = "max_hex_dihedral_over_time_" + energy_type + ".png"
         dihedral_over_time = np.zeros(len(P0_list))
         
         # If the data file exist , just read the data dile instead of recalculate it
         if os.path.exists(npy_file_folder + dihedral_over_time_data_name):
-            dihedral_over_time = np.load(npy_file_folder + dihedral_over_time_data_name)
-            print("Dihedral angle readed")
+            # dihedral_over_time = np.load(npy_file_folder + dihedral_over_time_data_name)
+            # print("Dihedral angle readed")
+            
+            # Get data from Joseph method
+            triple_results_joseph = np.load(file_path_joseph + TJ_energy_type_cases_joseph[index])
+            num_steps = 101
+            max_dihedral_list_joseph = np.zeros(num_steps)
+            
+            for i in tqdm(range(num_steps)):
+                # From Joseph algorithm
+                triple_results_step_joseph = triple_results_joseph[i,3:6,:]
+                
+                triple_results_step_joseph = triple_results_step_joseph[:,~np.isnan(triple_results_step_joseph[0,:])]
+                print(f"The number in current case is {len(triple_results_step_joseph[0,:])}")
+                max_dihedral_list_joseph[i] = np.mean(np.max(triple_results_step_joseph,0))
+            
         else:
             for timestep in range(len(P0_list)):
                 print(f"\nCalculation for time step {timestep}")
@@ -171,10 +189,6 @@ if __name__ == '__main__':
                 print('total_errors = %.2f' % test1.errors)
                 print('per_errors = %.3f' % test1.errors_per_site)
                 print("Inclinatin calculation done")
-                
-                # norm_list1, site_list1 = norm_list(ng, P)
-                # output_inclination(npy_file_folder + output_inclination_name, norm_list1, site_list1)
-                # print("Inclination outputted")
                 
                 
                 # Calculate the tanget for corresponding triple junction
@@ -205,35 +219,26 @@ if __name__ == '__main__':
                 print(f"The average max dihedral angle is {average_max_dihedral}")
                 print("Average dihedral angle obtained")
                 dihedral_over_time[timestep] = average_max_dihedral
-                # # For minimal dihedral
-                # for i in range(len(triple_angle)):
-                #     if (np.sum(triple_angle[i]) - 360) > 5: continue
-                #     if np.max(triple_angle[i]) > 180: continue
-                #     sum_grain_dihedral += np.min(triple_angle[i])
-                #     sum_dihedral_num += 1
-                # if sum_dihedral_num == 0: average_min_dihedral = 0
-                # else: average_min_dihedral = sum_grain_dihedral / sum_dihedral_num
-                # print(f"The average max dihedral angle is {average_min_dihedral}")
-                # print("Average dihedral angle obtained")
-                # dihedral_over_time[timestep] = average_min_dihedral
+
             
         # Save the data
-        np.save(npy_file_folder + dihedral_over_time_data_name, dihedral_over_time)
+        # np.save(npy_file_folder + dihedral_over_time_data_name, dihedral_over_time)
+        dihedral_over_time = max_dihedral_list_joseph
         
         dihedral_over_time_smooth = data_smooth(dihedral_over_time, 10)
         plt.clf()
-        plt.plot(np.linspace(0,160*100,161), dihedral_over_time, '.', markersize=4, label = "average angle results")
-        plt.plot(np.linspace(0,160*100,161), dihedral_over_time_smooth, '-', linewidth=2, label = "smoothed results")
-        plt.plot(np.linspace(0,160*100,161), [145.46]*161, '--', linewidth=2, label = "expected angle results") # Max-100
+        plt.plot(np.linspace(0,(num_steps-1)*100,num_steps), dihedral_over_time, '.', markersize=4, label = "average angle results")
+        plt.plot(np.linspace(0,(num_steps-1)*100,num_steps), dihedral_over_time_smooth, '-', linewidth=2, label = "smoothed results")
+        plt.plot(np.linspace(0,(num_steps-1)*100,num_steps), [145.46]*num_steps, '--', linewidth=2, label = "expected angle results") # Max-100
         # plt.plot(np.linspace(0,160*100,161), [45.95]*161, '--', linewidth=2, label = "expected angle results") # Min-010
-        plt.ylim([115,155])
-        plt.xlim([0,16000])
+        plt.ylim([100,150])
+        plt.xlim([0,10100])
         plt.legend(fontsize=20, loc='lower center')
-        plt.xlabel("Time step", fontsize=20)
+        plt.xlabel("Time step (MCS)", fontsize=20)
         plt.ylabel(r"Angle ($\degree$)", fontsize=20)
-        plt.xticks(fontsize=16)
-        plt.yticks(fontsize=16)
-        plt.xticks([0, 4000, 8000, 12000, 16000])
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
+        plt.xticks([0, 2000, 4000, 6000, 8000, 10000])
         plt.savefig(npy_file_folder + dihedral_over_time_figure_name, bbox_inches='tight', format='png', dpi=400)
         
         
