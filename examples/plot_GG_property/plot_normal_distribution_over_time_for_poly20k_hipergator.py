@@ -26,17 +26,17 @@ def simple_magnitude(freqArray):
     binValue = 10.01
     binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
     xCor = np.linspace((xLim[0]+binValue/2),(xLim[1]-binValue/2),binNum)
-    
+
     freqArray_circle = np.ones(binNum)
     freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
-    
+
     magnitude_max = np.max(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
     magnitude_ave = np.average(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
-    
+
     magnitude_stan = np.sqrt(np.sum((abs(freqArray - freqArray_circle)/np.average(freqArray_circle) - magnitude_ave)**2)/binNum)
-    
+
     return magnitude_ave, magnitude_stan
-    
+
     # coeff_high = abs(np.cos((xCor-90)/180*np.pi))
     # coeff_low = abs(np.cos((xCor)/180*np.pi))
     # return np.sum(freqArray * coeff_high)/np.sum(freqArray * coeff_low)
@@ -285,14 +285,14 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca(projection='polar')
 
-    ax.set_thetagrids(np.arange(0.0, 360.0, 45.0),fontsize=16)
+    ax.set_thetagrids(np.arange(0.0, 360.0, 45.0),fontsize=20)
     ax.set_thetamin(0.0)
     ax.set_thetamax(360.0)
 
     ax.set_rgrids(np.arange(0, 0.01, 0.004))
     ax.set_rlabel_position(0.0)  # 标签显示在0°
     ax.set_rlim(0.0, 0.01)  # 标签范围为[0, 5000)
-    ax.set_yticklabels(['0', '0.004', '0.008'],fontsize=16)
+    ax.set_yticklabels(['0', '4e-3', '8e-3'],fontsize=20)
 
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
@@ -301,7 +301,7 @@ if __name__ == '__main__':
     special_step_distribution_T066_bias = 10
     data_file_name_bias = f'/normal_distribution_data/normal_distribution_T066_bias_sites_step{special_step_distribution_T066_bias}.npy'
     slope_list_bias = np.load(current_path + data_file_name_bias)
-    
+
     aniso_mag = np.zeros(6)
     aniso_mag_stand = np.zeros(6)
     # Aniso - min
@@ -335,8 +335,8 @@ if __name__ == '__main__':
     aniso_mag[1], aniso_mag_stand[1] = simple_magnitude(slope_list)
 
     # Aniso - ave
-    data_file_name_P = f'/normal_distribution_data/normal_distribution_aveUpdate_P_step{special_step_distribution_ave}.npy'
-    data_file_name_sites = f'/normal_distribution_data/normal_distribution_aveUpdate_sites_step{special_step_distribution_ave}.npy'
+    data_file_name_P = f'/normal_distribution_data/normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
+    data_file_name_sites = f'/normal_distribution_data/normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
@@ -394,8 +394,8 @@ if __name__ == '__main__':
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMax, "ConsMax case")
     aniso_mag[5], aniso_mag_stand[5] = simple_magnitude(slope_list)
 
-    plt.legend(loc=(-0.25,-0.42),fontsize=20,ncol=2)
-    plt.savefig(current_path + "/figures/normal_distribution_poly_20k_aveUpdate.png", dpi=400,bbox_inches='tight')
+    plt.legend(loc=(-0.25,-0.15),fontsize=20,ncol=2)
+    plt.savefig(current_path + "/figures/normal_distribution_poly_20k.png", dpi=400,bbox_inches='tight')
 
     # PLot magnitude of anisotropy
     # data_file_name_aniso_mag = f'/normal_distribution_data/aniso_magnitude_poly_20k_energy_type.npz'
@@ -510,9 +510,9 @@ if __name__ == '__main__':
     plt.xticks([0,1,2,3,4,5],label_list)
     plt.legend(fontsize=20)
     plt.ylim([-0.05,1.8])
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
-    plt.savefig(current_path + "/figures/anisotropic_poly_20k_aveUpdate_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    # plt.savefig(current_path + "/figures/anisotropic_poly_20k_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
 
 
 
