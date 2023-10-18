@@ -91,8 +91,8 @@ if __name__ == '__main__':
     grain_num_MCP_iso = np.zeros(step_num)
     grain_num_MCP_ave = np.zeros(step_num)
     for i in range(step_num):
-        grain_num_MCP_iso[i] = len(list(set(npy_file_iso[i].reshape(-1))))
-        grain_num_MCP_ave[i] = len(list(set(npy_file_aniso_ave[i].reshape(-1))))
+        grain_num_MCP_iso[i] = len(list(set(npy_file_iso[i])))
+        grain_num_MCP_ave[i] = len(list(set(npy_file_aniso_ave[i])))
         
     # Plot
     scaling_parameter = 1
