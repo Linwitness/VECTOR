@@ -108,7 +108,7 @@ if __name__ == '__main__':
     plt.ylim([0,20000])
     plt.xlim([0,18000])
     plt.yscale('log')
-    plt.savefig(npy_file_folder + "/size_figure/grain_num_versus_time.png", dpi=400,bbox_inches='tight')
+    plt.savefig(npy_file_folder + "/size_figure/grain_num_MCP_PF.png", dpi=400,bbox_inches='tight')
     
     
     

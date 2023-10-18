@@ -156,7 +156,7 @@ if __name__ == '__main__':
     plt.legend(fontsize=20)
     plt.ylim([0,1.5])
     plt.xlim(x_limit)
-    plt.savefig(npy_file_folder + "/size_figure/grain_num_versus_time.png", dpi=400,bbox_inches='tight')
+    plt.savefig(npy_file_folder + "/size_figure/grain_size_distribution_MCP_PF.png", dpi=400,bbox_inches='tight')
     
     
     
