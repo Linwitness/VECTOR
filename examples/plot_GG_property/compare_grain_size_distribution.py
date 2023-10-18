@@ -39,9 +39,16 @@ if __name__ == '__main__':
     npy_file_name_aniso_max = f"p_ori_ave_{TJ_energy_type_max}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     npy_file_name_aniso_consMax = f"p_ori_ave_{TJ_energy_type_consMax}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     npy_file_name_iso = "p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066.npy"
+    grain_size_data_name_ave = f"grain_size_p_ori_ave_{TJ_energy_type_ave}E_20000_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
+    grain_size_data_name_consMin = f"grain_size_p_ori_ave_{TJ_energy_type_consMin}E_20000_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
+    grain_size_data_name_sum = f"grain_size_p_ori_ave_{TJ_energy_type_sum}E_20000_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
+    grain_size_data_name_min = f"grain_size_p_ori_ave_{TJ_energy_type_min}E_20000_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
+    grain_size_data_name_max = f"grain_size_p_ori_ave_{TJ_energy_type_max}E_20000_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
+    grain_size_data_name_consMax = f"grain_size_p_ori_ave_{TJ_energy_type_consMax}E_20000_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
+    grain_size_data_name_iso = "grain_size_p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066.npy"
     
-    csv_file_name_iso = "grain_num_iso.csv"
-    csv_file_name_aniso = "grain_num_aniso.csv"
+    csv_file_name_3705 = "grain_size_distribution_3705.csv"
+    csv_file_name_hillert = "grain_size_distribution_Hillert.csv"
     
     # Initial data
     npy_file_aniso_ave = np.load(npy_file_folder + npy_file_name_aniso_ave)
@@ -61,31 +68,30 @@ if __name__ == '__main__':
     print("READING DATA DONE")
     
     # Get PF grain num
-    csv_file_iso_step = []
-    csv_file_iso_grain_num = []
-    # tmp_folder = "/Users/lin/Downloads/"
-    with open(npy_file_folder + csv_file_name_iso, newline='') as csvfile:
+    csv_file_3705_r = []
+    csv_file_3705_frequency = []
+    npy_file_folder = "/Users/lin/Downloads/"
+    with open(npy_file_folder + csv_file_name_3705, newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
         for row in spamreader:
-            csv_file_iso_step.append(float(row[0]))
-            csv_file_iso_grain_num.append(float(row[1])*1e4)
+            csv_file_3705_r.append(float(row[0]))
+            csv_file_3705_frequency.append(float(row[1])*1e4)
             
-    csv_file_aniso_step = []
-    csv_file_aniso_grain_num = []
-    with open(npy_file_folder + csv_file_name_aniso, newline='') as csvfile:
+    csv_file_hillert_r = []
+    csv_file_hillert_frequency = []
+    with open(npy_file_folder + csv_file_name_hillert, newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
         for row in spamreader:
-            csv_file_aniso_step.append(float(row[0]))
-            csv_file_aniso_grain_num.append(float(row[1])*1e4)
+            csv_file_hillert_r.append(float(row[0]))
+            csv_file_hillert_frequency.append(float(row[1])*1e4)
             
-    csv_file_iso_step = np.array(csv_file_iso_step)
-    csv_file_iso_grain_num = np.array(csv_file_iso_grain_num)
-    csv_file_aniso_step = np.array(csv_file_aniso_step)
-    csv_file_aniso_grain_num = np.array(csv_file_aniso_grain_num)
+    csv_file_3705_r = np.array(csv_file_3705_r)
+    csv_file_3705_frequency = np.array(csv_file_3705_frequency)
+    csv_file_hillert_r = np.array(csv_file_hillert_r)
+    csv_file_hillert_frequency = np.array(csv_file_hillert_frequency)
         
     
     # Get MCP grain num
-    initial_grain_num = 20000
     step_num = npy_file_aniso_ave.shape[0]
     
     grain_num_MCP_iso = np.zeros(step_num)
@@ -94,13 +100,37 @@ if __name__ == '__main__':
         grain_num_MCP_iso[i] = len(list(set(npy_file_iso[i])))
         grain_num_MCP_ave[i] = len(list(set(npy_file_aniso_ave[i])))
         
+    special_time_step = np.argmin(abs(grain_num_MCP_ave - 3705))
+    special_time_step_grain_num = grain_num_MCP_ave[special_time_step]
+    
+    
+    # Start grain size initialing
+    if os.path.exists(npy_file_folder + grain_size_data_name_ave):
+        grain_area_ave = np.load(npy_file_folder + grain_size_data_name_ave)
+        
+    # Start grain size analysis
+    grain_size_ave = (grain_area_ave[special_time_step] / np.pi)**0.5
+    grain_ave_size_ave = np.sum(grain_size_ave) / special_time_step_grain_num # average grain size
+    
+    # Get final size dsitribution
+    bin_width = 0.16 # Grain size distribution
+    x_limit = [-0.5, 3.5]
+    bin_num = round((abs(x_limit[0])+abs(x_limit[1]))/bin_width)
+    size_coordination = np.linspace((x_limit[0]+bin_width/2),(x_limit[1]-bin_width/2),bin_num)
+    grain_size_distribution_ave = np.zeros(bin_num)
+    
+    special_size_ave = grain_size_ave[grain_size_ave != 0] # remove zero grain size
+    special_size_ave = special_size_ave/grain_ave_size_ave # normalize grain size
+    for j in range(len(special_size_ave)):
+        grain_size_distribution_ave[int((special_size_ave[j]-x_limit[0])/bin_width)] += 1 # Get frequency
+    
+    
+        
     # Plot
-    scaling_parameter = 1
     plt.clf()
-    plt.plot(csv_file_iso_step*scaling_parameter, csv_file_iso_grain_num, label="Iso - PF", linewidth=2)
-    plt.plot(csv_file_aniso_step*scaling_parameter, csv_file_aniso_grain_num, label="Aniso - PF", linewidth=2)
-    plt.plot(np.linspace(0,step_num*30,step_num+1), grain_num_MCP_iso, label="Iso - MCP", linewidth=2)
-    plt.plot(np.linspace(0,step_num*30,step_num+1), grain_num_MCP_ave, label="Aniso - MCP", linewidth=2)
+    plt.plot(csv_file_3705_r, csv_file_3705_frequency, label="3D PF - 3705 grains", linewidth=2)
+    plt.plot(csv_file_hillert_r, csv_file_hillert_frequency, label="3D Hillert", linewidth=2)
+    plt.plot(size_coordination, grain_size_distribution_ave, label=f"2D MCP - {int(special_time_step_grain_num)} grains", linewidth=2)
     
     plt.xlabel("Time step (MCS)", fontsize=20)
     plt.ylabel("Grain number (-)", fontsize=20)

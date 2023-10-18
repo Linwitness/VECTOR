@@ -99,8 +99,8 @@ if __name__ == '__main__':
     plt.clf()
     plt.plot(csv_file_iso_step*scaling_parameter, csv_file_iso_grain_num, label="Iso - PF", linewidth=2)
     plt.plot(csv_file_aniso_step*scaling_parameter, csv_file_aniso_grain_num, label="Aniso - PF", linewidth=2)
-    plt.plot(np.linspace(0,step_num*30,step_num+1), grain_num_MCP_iso, label="Iso - MCP", linewidth=2)
-    plt.plot(np.linspace(0,step_num*30,step_num+1), grain_num_MCP_ave, label="Aniso - MCP", linewidth=2)
+    plt.plot(np.linspace(0,(step_num-1)*30,step_num), grain_num_MCP_iso, label="Iso - MCP", linewidth=2)
+    plt.plot(np.linspace(0,(step_num-1)*30,step_num), grain_num_MCP_ave, label="Aniso - MCP", linewidth=2)
     
     plt.xlabel("Time step (MCS)", fontsize=20)
     plt.ylabel("Grain number (-)", fontsize=20)
