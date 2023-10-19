@@ -148,14 +148,16 @@ if __name__ == '__main__':
         
     # Plot
     plt.clf()
-    plt.plot(csv_file_3705_r, csv_file_3705_frequency, label="3D aniso PF - 3705 grains", linewidth=2)
+    plt.plot(csv_file_3705_r, csv_file_3705_frequency, label="3D aniso PF", linewidth=2)
     plt.plot(csv_file_hillert_r, csv_file_hillert_frequency, label="3D Hillert", linewidth=2)
-    plt.plot(size_coordination, grain_size_distribution_ave, label=f"2D aniso MCP - {int(special_time_step_grain_num)} grains", linewidth=2)
-    plt.plot(size_coordination, grain_size_distribution_iso, label=f"2D iso MCP - {int(special_time_step_grain_num_iso)} grains", linewidth=2)
+    plt.plot(size_coordination, grain_size_distribution_ave, label=f"2D aniso MCP", linewidth=2)
+    plt.plot(size_coordination, grain_size_distribution_iso, label=f"2D iso MCP", linewidth=2)
     
-    plt.xlabel(r"R/$\langle$R$\rangle$", fontsize=20)
-    plt.ylabel("Frequency", fontsize=20)
-    plt.legend(fontsize=20)
+    plt.xlabel(r"R/$\langle$R$\rangle$", fontsize=18)
+    plt.ylabel("Frequency", fontsize=18)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.legend(fontsize=18)
     plt.ylim([0,1.5])
     plt.xlim(x_limit)
     plt.savefig(npy_file_folder + "/size_figure/grain_size_distribution_MCP_PF.png", dpi=400,bbox_inches='tight')
