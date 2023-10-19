@@ -70,7 +70,7 @@ if __name__ == '__main__':
     # Get PF grain num
     csv_file_3705_r = []
     csv_file_3705_frequency = []
-    npy_file_folder = "/Users/lin/Downloads/"
+    # npy_file_folder = "/Users/lin/Downloads/"
     with open(npy_file_folder + csv_file_name_3705, newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
         for row in spamreader:
