@@ -137,10 +137,12 @@ if __name__ == '__main__':
     special_size_ave = special_size_ave/grain_ave_size_ave # normalize grain size
     for j in range(len(special_size_ave)):
         grain_size_distribution_ave[int((special_size_ave[j]-x_limit[0])/bin_width)] += 1 # Get frequency
+    grain_size_distribution_ave = grain_size_distribution_ave/np.sum(grain_size_distribution_ave*bin_width) # normalize frequency
     special_size_iso = grain_size_iso[grain_size_iso != 0] # remove zero grain size
     special_size_iso = special_size_iso/grain_ave_size_iso # normalize grain size
     for j in range(len(special_size_iso)):
         grain_size_distribution_iso[int((special_size_iso[j]-x_limit[0])/bin_width)] += 1 # Get frequency
+    grain_size_distribution_iso = grain_size_distribution_iso/np.sum(grain_size_distribution_iso*bin_width) # normalize frequency
     
     
         
