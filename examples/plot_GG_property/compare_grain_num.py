@@ -95,7 +95,7 @@ if __name__ == '__main__':
         grain_num_MCP_ave[i] = len(list(set(npy_file_aniso_ave[i].reshape(-1))))
         
     # Plot
-    scaling_parameter = 1
+    scaling_parameter = 0.4
     plt.clf()
     plt.plot(csv_file_iso_step*scaling_parameter, csv_file_iso_grain_num, label="Iso - PF", linewidth=2)
     plt.plot(csv_file_aniso_step*scaling_parameter, csv_file_aniso_grain_num, label="Aniso - PF", linewidth=2)
@@ -105,8 +105,8 @@ if __name__ == '__main__':
     plt.xlabel("Time step (MCS)", fontsize=20)
     plt.ylabel("Grain number (-)", fontsize=20)
     plt.legend(fontsize=20)
-    plt.ylim([0.1,20000])
-    plt.xlim([0,18000])
+    plt.ylim([10,20000])
+    plt.xlim([0,4000])
     plt.yscale('log')
     plt.savefig(npy_file_folder + "/size_figure/grain_num_MCP_PF.png", dpi=400,bbox_inches='tight')
     
