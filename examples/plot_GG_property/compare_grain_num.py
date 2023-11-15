@@ -63,7 +63,7 @@ if __name__ == '__main__':
     # Get PF grain num
     csv_file_iso_step = []
     csv_file_iso_grain_num = []
-    # tmp_folder = "/Users/lin/Downloads/"
+    # npy_file_folder = "/Users/lin/Downloads/"
     with open(npy_file_folder + csv_file_name_iso, newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
         for row in spamreader:
