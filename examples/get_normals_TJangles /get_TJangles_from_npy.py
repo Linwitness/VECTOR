@@ -132,7 +132,7 @@ if __name__ == '__main__':
     
     # Joseph method
     file_path_joseph = "/Users/lin/Dropbox (UFL)/UFdata/Dihedral_angle/output/"    
-    TJ_energy_type_cases_joseph = ["hex_dihedrals4.npy", "hex_dihedrals1.npy", "hex_dihedrals5.npy", "hex_dihedrals3.npy", "hex_dihedrals2.npy"]
+    TJ_energy_type_cases_joseph = ["hex_dihedrals_consTest2E.npy", "hex_dihedrals1.npy", "hex_dihedrals5.npy", "hex_dihedrals3.npy", "hex_dihedrals2.npy"]
     
     
     for index, energy_type in enumerate(TJ_energy_type_cases):
@@ -225,16 +225,18 @@ if __name__ == '__main__':
         # np.save(npy_file_folder + dihedral_over_time_data_name, dihedral_over_time)
         dihedral_over_time = max_dihedral_list_joseph
         
-        dihedral_over_time_smooth = data_smooth(dihedral_over_time, 10)
+        num_steps = 101
+        # dihedral_over_time_smooth = data_smooth(dihedral_over_time, 10)
+        dihedral_over_time_smooth = np.ones(len(dihedral_over_time))*np.average(dihedral_over_time) # just average it
         plt.clf()
-        plt.plot(np.linspace(0,(num_steps-1)*100,num_steps), dihedral_over_time, '.', markersize=4, label = "average angle results")
-        plt.plot(np.linspace(0,(num_steps-1)*100,num_steps), dihedral_over_time_smooth, '-', linewidth=2, label = "smoothed results")
-        plt.plot(np.linspace(0,(num_steps-1)*100,num_steps), [145.46]*num_steps, '--', linewidth=2, label = "expected angle results") # Max-100
+        plt.plot(np.linspace(0,(num_steps-1)*100,num_steps), dihedral_over_time, '.', markersize=4, label = "average angle")
+        plt.plot(np.linspace(0,(num_steps-1)*100,num_steps), dihedral_over_time_smooth, '-', linewidth=2, label = "fit")
+        # plt.plot(np.linspace(0,(num_steps-1)*100,num_steps), [145.46]*num_steps, '--', linewidth=2, label = "equilibrium from GB area") # Max-100
         # plt.plot(np.linspace(0,160*100,161), [45.95]*161, '--', linewidth=2, label = "expected angle results") # Min-010
-        plt.ylim([100,150])
+        plt.ylim([125,150])
         plt.xlim([0,10100])
-        plt.legend(fontsize=20, loc='lower center')
-        plt.xlabel("Time step (MCS)", fontsize=20)
+        plt.legend(fontsize=20, loc='upper right')
+        plt.xlabel("Timestep (MCS)", fontsize=20)
         plt.ylabel(r"Angle ($\degree$)", fontsize=20)
         plt.xticks(fontsize=20)
         plt.yticks(fontsize=20)
