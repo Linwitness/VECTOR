@@ -246,14 +246,14 @@ if __name__ == '__main__':
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca(projection='polar')
 
-    ax.set_thetagrids(np.arange(0.0, 360.0, 20.0),fontsize=14)
+    ax.set_thetagrids(np.arange(0.0, 360.0, 45.0),fontsize=16)
     ax.set_thetamin(0.0)
     ax.set_thetamax(360.0)
 
     ax.set_rgrids(np.arange(0, 0.01, 0.004))
     ax.set_rlabel_position(0.0)  # 标签显示在0°
     ax.set_rlim(0.0, 0.01)  # 标签范围为[0, 5000)
-    ax.set_yticklabels(['0', '0.004', '0.008'],fontsize=14)
+    ax.set_yticklabels(['0', '4e-3', '8e-3'],fontsize=16)
 
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
@@ -275,7 +275,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_min, "Min case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_min, "Min", slope_list_bias)
 
     # Aniso - max
     data_file_name_P = f'/normal_distribution_data/normal_distribution_max_P_step{special_step_distribution_max}.npy'
@@ -289,7 +289,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_max, "Max case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_max, "Max", slope_list_bias)
 
     # Aniso - ave
     data_file_name_P = f'/normal_distribution_data/normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
@@ -303,7 +303,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_ave, "Ave case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_ave, "Ave", slope_list_bias)
 
     # Aniso - sum
     data_file_name_P = f'/normal_distribution_data/normal_distribution_sum_P_step{special_step_distribution_sum}.npy'
@@ -317,7 +317,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_sum, "Sum case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_sum, "Sum", slope_list_bias)
 
     # Aniso - consMin
     data_file_name_P = f'/normal_distribution_data/normal_distribution_consMin_P_step{special_step_distribution_consMin}.npy'
@@ -331,7 +331,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMin, "ConsMin case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMin, "CMin", slope_list_bias)
 
     # Aniso - consMax
     data_file_name_P = f'/normal_distribution_data/normal_distribution_consMax_P_step{special_step_distribution_consMax}.npy'
@@ -345,7 +345,7 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMax, "ConsMax case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMax, "CMax", slope_list_bias)
 
     # Aniso - iso
     data_file_name_P = f'/normal_distribution_data/normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
@@ -359,10 +359,10 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_iso, "Iso case", slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_iso, "Iso", slope_list_bias)
 
-    plt.legend(loc=(-0.25,-0.3),fontsize=14,ncol=3)
-    plt.savefig(current_path + "/figures/normal_distribution.png", dpi=400,bbox_inches='tight')
+    plt.legend(loc=(-0.12,-0.35),fontsize=16,ncol=3)
+    plt.savefig(current_path + "/figures/poly_aniso_iso_compare_vector_distribution_after_removing_bias.png", dpi=400,bbox_inches='tight')
 
 
 

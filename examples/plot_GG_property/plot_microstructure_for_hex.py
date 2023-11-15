@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     # Initial data
     npy_file_hex = np.load(npy_file_folder + npy_file_name)
-    
+
     print(f"The 000 data size is: {npy_file_hex.shape}")
     print("READING DATA DONE")
 
@@ -60,12 +60,12 @@ if __name__ == '__main__':
 
     bin_width = 0.16 # Grain size distribution
 
-    special_step_distribution_hex = 0 
+    special_step_distribution_hex = 0
 
     # Start microstructure figure
     figure_path = current_path + "/figures/microstructure_hex"
     plot_structure_figure(special_step_distribution_hex, npy_file_hex[:,:,:,0], figure_path + "_initial")
-    
+
 
 
 

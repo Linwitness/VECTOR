@@ -93,20 +93,20 @@ if __name__ == '__main__':
     for i in range(step_num):
         grain_num_MCP_iso[i] = len(list(set(npy_file_iso[i].reshape(-1))))
         grain_num_MCP_ave[i] = len(list(set(npy_file_aniso_ave[i].reshape(-1))))
-        
+    
     # Plot
-    scaling_parameter = 0.4
+    scaling_parameter = 0.195
     plt.clf()
-    plt.plot(csv_file_iso_step*scaling_parameter, csv_file_iso_grain_num, label="Iso - PF", linewidth=2)
-    plt.plot(csv_file_aniso_step*scaling_parameter, csv_file_aniso_grain_num, label="Aniso - PF", linewidth=2)
+    plt.plot((csv_file_iso_step[12:]-csv_file_iso_step[12])*scaling_parameter, csv_file_iso_grain_num[12:], label="Iso - PF", linewidth=2)
+    plt.plot((csv_file_aniso_step-csv_file_iso_step[12])*scaling_parameter, csv_file_aniso_grain_num, label="Aniso - PF", linewidth=2)
     plt.plot(np.linspace(0,(step_num-1)*30,step_num), grain_num_MCP_iso, label="Iso - MCP", linewidth=2)
     plt.plot(np.linspace(0,(step_num-1)*30,step_num), grain_num_MCP_ave, label="Aniso - MCP", linewidth=2)
     
     plt.xlabel("Time step (MCS)", fontsize=20)
     plt.ylabel("Grain number (-)", fontsize=20)
-    plt.legend(fontsize=20)
-    plt.ylim([10,20000])
-    plt.xlim([0,4000])
+    plt.legend(fontsize=20,loc="upper right")
+    plt.ylim([1000,20000])
+    plt.xlim([0,500])
     plt.yscale('log')
     plt.savefig(npy_file_folder + "/size_figure/grain_num_MCP_PF.png", dpi=400,bbox_inches='tight')
     
