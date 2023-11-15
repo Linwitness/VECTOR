@@ -21,6 +21,10 @@ import myInput
 import PACKAGE_MP_Linear as linear2d
 sys.path.append(current_path+'/../calculate_tangent/')
 
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import r2_score
+
 
 if __name__ == '__main__':
     # File name
@@ -73,30 +77,37 @@ if __name__ == '__main__':
     grain_area_ave = np.zeros((step_num,initial_grain_num))
     grain_size_ave = np.zeros((step_num,initial_grain_num))
     grain_ave_size_ave = np.zeros(step_num)
+    grain_ave_area_ave = np.zeros(step_num)
     grain_num_consMin = np.zeros(step_num)
     grain_area_consMin = np.zeros((step_num,initial_grain_num))
     grain_size_consMin = np.zeros((step_num,initial_grain_num))
     grain_ave_size_consMin = np.zeros(step_num)
+    grain_ave_area_consMin = np.zeros(step_num)
     grain_num_sum = np.zeros(step_num)
     grain_area_sum = np.zeros((step_num,initial_grain_num))
     grain_size_sum = np.zeros((step_num,initial_grain_num))
     grain_ave_size_sum = np.zeros(step_num)
+    grain_ave_area_sum = np.zeros(step_num)
     grain_num_min = np.zeros(step_num)
     grain_area_min = np.zeros((step_num,initial_grain_num))
     grain_size_min = np.zeros((step_num,initial_grain_num))
     grain_ave_size_min = np.zeros(step_num)
+    grain_ave_area_min = np.zeros(step_num)
     grain_num_max = np.zeros(step_num)
     grain_area_max = np.zeros((step_num,initial_grain_num))
     grain_size_max = np.zeros((step_num,initial_grain_num))
     grain_ave_size_max = np.zeros(step_num)
+    grain_ave_area_max = np.zeros(step_num)
     grain_num_consMax = np.zeros(step_num)
     grain_area_consMax = np.zeros((step_num,initial_grain_num))
     grain_size_consMax = np.zeros((step_num,initial_grain_num))
     grain_ave_size_consMax = np.zeros(step_num)
+    grain_ave_area_consMax = np.zeros(step_num)
     grain_num_iso = np.zeros(step_num)
     grain_area_iso = np.zeros((step_num,initial_grain_num))
     grain_size_iso = np.zeros((step_num,initial_grain_num))
     grain_ave_size_iso = np.zeros(step_num)
+    grain_ave_area_iso = np.zeros(step_num)
 
     bin_width = 0.16 # Grain size distribution
     x_limit = [-0.5, 3.5]
@@ -210,6 +221,14 @@ if __name__ == '__main__':
         grain_size_iso[i] = (grain_area_iso[i] / np.pi)**0.5
         grain_ave_size_iso[i] = np.sum(grain_size_iso[i]) / grain_num_iso[i] # average grain size
 
+        grain_ave_area_ave[i] = np.sum(grain_area_ave[i]) / grain_num_ave[i] # average grain size
+        grain_ave_area_consMin[i] = np.sum(grain_area_consMin[i]) / grain_num_consMin[i] # average grain size
+        grain_ave_area_sum[i] = np.sum(grain_area_sum[i]) / grain_num_sum[i] # average grain size
+        grain_ave_area_min[i] = np.sum(grain_area_min[i]) / grain_num_min[i] # average grain size
+        grain_ave_area_consMax[i] = np.sum(grain_area_consMax[i]) / grain_num_consMax[i] # average grain size
+        grain_ave_area_max[i] = np.sum(grain_area_max[i]) / grain_num_max[i] # average grain size
+        grain_ave_area_iso[i] = np.sum(grain_area_iso[i]) / grain_num_iso[i] # average grain size
+
         if i == special_step_distribution_ave:
             # Aniso
             special_size_ave = grain_size_ave[i][grain_size_ave[i] != 0] # remove zero grain size
@@ -263,112 +282,104 @@ if __name__ == '__main__':
 
     # Start plotting
     plt.clf()
-    plt.plot(list(range(step_num)), grain_ave_size_min, label="Min case", linewidth=2)
-    plt.plot(list(range(step_num)), grain_ave_size_max, label="Max case", linewidth=2)
-    plt.plot(list(range(step_num)), grain_ave_size_ave, label="Ave case", linewidth=2)
-    plt.plot(list(range(step_num)), grain_ave_size_sum, label="Sum case", linewidth=2)
-    plt.plot(list(range(step_num)), grain_ave_size_consMin, label="ConsMin case", linewidth=2)
-    plt.plot(list(range(step_num)), grain_ave_size_consMax, label="ConsMax case", linewidth=2)
-    plt.plot(list(range(step_num)), grain_ave_size_iso, label="Iso case", linewidth=2)
+    plt.plot(np.array(range(step_num))*30, grain_ave_area_min/np.pi, label="Min", linewidth=2)
+    plt.plot(np.array(range(step_num))*30, grain_ave_area_max/np.pi, label="Max", linewidth=2)
+    plt.plot(np.array(range(step_num))*30, grain_ave_area_ave/np.pi, label="Ave", linewidth=2)
+    plt.plot(np.array(range(step_num))*30, grain_ave_area_sum/np.pi, label="Sum", linewidth=2)
+    plt.plot(np.array(range(step_num))*30, grain_ave_area_consMin/np.pi, label="CMin", linewidth=2)
+    plt.plot(np.array(range(step_num))*30, grain_ave_area_consMax/np.pi, label="CMax", linewidth=2)
+    plt.plot(np.array(range(step_num))*30, grain_ave_area_iso/np.pi, label="Iso", linewidth=2)
 
-    plt.xlabel("Time step", fontsize=14)
-    plt.ylabel("Grain Size", fontsize=14)
-    plt.legend(fontsize=14)
-    plt.savefig(current_path + "/figures/ave_grain_size_over_time.png", dpi=400,bbox_inches='tight')
+    plt.xlabel("Timestep (MCS)", fontsize=16)
+    plt.ylabel(r"$\langle$R$\rangle^2$ (MCU$^2$)", fontsize=16)
+    plt.xticks([0,5000,10000,15000],fontsize=16)
+    plt.ticklabel_format(style='sci',scilimits=(-1,2),axis='y')
+    plt.legend(fontsize=16, ncol=2)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.savefig(current_path + "/figures/ave_grain_area_over_time.png", dpi=400,bbox_inches='tight')
 
     plt.clf()
-    plt.plot(size_coordination, grain_size_distribution_min, label="Min case", linewidth=2)
-    plt.plot(size_coordination, grain_size_distribution_max, label="Max case", linewidth=2)
-    plt.plot(size_coordination, grain_size_distribution_ave, label="Ave case", linewidth=2)
-    plt.plot(size_coordination, grain_size_distribution_sum, label="Sum case", linewidth=2)
-    plt.plot(size_coordination, grain_size_distribution_consMin, label="ConsMin case", linewidth=2)
-    plt.plot(size_coordination, grain_size_distribution_consMax, label="ConsMax case", linewidth=2)
-    plt.plot(size_coordination, grain_size_distribution_iso, label="Iso case", linewidth=2)
-    plt.xlabel(r"R/$\langle$R$\rangle$", fontsize=14)
-    plt.ylabel("Frequency", fontsize=14)
-    plt.legend(fontsize=14)
-    plt.title(f"Grain num is around 2000", fontsize=14)
+    plt.plot(size_coordination, grain_size_distribution_min, label="Min", linewidth=2)
+    plt.plot(size_coordination, grain_size_distribution_max, label="Max", linewidth=2)
+    plt.plot(size_coordination, grain_size_distribution_ave, label="Ave", linewidth=2)
+    plt.plot(size_coordination, grain_size_distribution_sum, label="Sum", linewidth=2)
+    plt.plot(size_coordination, grain_size_distribution_consMin, label="CMin", linewidth=2)
+    plt.plot(size_coordination, grain_size_distribution_consMax, label="CMax", linewidth=2)
+    plt.plot(size_coordination, grain_size_distribution_iso, label="Iso", linewidth=2)
+    plt.xlabel(r"R/$\langle$R$\rangle$", fontsize=16)
+    plt.ylabel("Frequency", fontsize=16)
+    plt.legend(fontsize=16)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    # plt.title(r"Grain number $\approx$ 2000", fontsize=16)
     plt.savefig(current_path + "/figures/normalized_size_distribution.png", dpi=400,bbox_inches='tight')
 
+    # Fitting n for r^n - r0^n = k t
+    short_step_num = 200
+    n_value_list = np.linspace(0.5,3.5,301)
+    r2_score_min_list = np.zeros(len(n_value_list))
+    r2_score_max_list = np.zeros(len(n_value_list))
+    r2_score_ave_list = np.zeros(len(n_value_list))
+    r2_score_sum_list = np.zeros(len(n_value_list))
+    r2_score_consMin_list = np.zeros(len(n_value_list))
+    r2_score_consMax_list = np.zeros(len(n_value_list))
+    r2_score_iso_list = np.zeros(len(n_value_list))
 
-    # # Start find the steady state during grain growth
-    # for i in tqdm(range(200)):
-    #     grain_num_ave[i] = np.sum(grain_area_ave[i,:] != 0) # grain num
-    #     grain_num_consMin[i] = np.sum(grain_area_consMin[i,:] != 0) # grain num
-    #     grain_num_sum[i] = np.sum(grain_area_sum[i,:] != 0) # grain num
-    #     grain_num_iso[i] = np.sum(grain_area_iso[i,:] != 0) # grain num
+    for i in range(len(n_value_list)):
+        n_value = n_value_list[i]
 
-    #     grain_size_ave[i] = (grain_area_ave[i] / np.pi)**0.5
-    #     grain_ave_size_ave[i] = np.sum(grain_size_ave[i]) / grain_num_ave[i] # average grain size
-    #     grain_size_consMin[i] = (grain_area_consMin[i] / np.pi)**0.5
-    #     grain_ave_size_consMin[i] = np.sum(grain_size_consMin[i]) / grain_num_consMin[i] # average grain size
-    #     grain_size_sum[i] = (grain_area_sum[i] / np.pi)**0.5
-    #     grain_ave_size_sum[i] = np.sum(grain_size_sum[i]) / grain_num_sum[i] # average grain size
-    #     grain_size_iso[i] = (grain_area_iso[i] / np.pi)**0.5
-    #     grain_ave_size_iso[i] = np.sum(grain_size_iso[i]) / grain_num_iso[i] # average grain size
+        # ave
+        x_list = np.array(list(range(step_num)))
+        y_list = grain_ave_size_ave ** n_value - grain_ave_size_ave[0] ** n_value
+        model_ave = LinearRegression().fit(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_ave = model_ave.score(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_ave_list[i] = r2_score_ave
 
-    #     # Aniso
-    #     special_size_ave = grain_size_ave[i][grain_size_ave[i] != 0] # remove zero grain size
-    #     special_size_ave = special_size_ave/grain_ave_size_ave[i] # normalize grain size
-    #     for j in range(len(special_size_ave)):
-    #         grain_size_distribution_ave[int((special_size_ave[j]-x_limit[0])/bin_width)] += 1 # Get frequency
+        # min
+        y_list = grain_ave_size_min ** n_value - grain_ave_size_min[0] ** n_value
+        model_min = LinearRegression().fit(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_min = model_min.score(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_min_list[i] = r2_score_min
 
-    #     # Aniso
-    #     special_size_consMin = grain_size_consMin[i][grain_size_consMin[i] != 0] # remove zero grain size
-    #     special_size_consMin = special_size_consMin/grain_ave_size_consMin[i] # normalize grain size
-    #     for j in range(len(special_size_consMin)):
-    #         grain_size_distribution_consMin[int((special_size_consMin[j]-x_limit[0])/bin_width)] += 1 # Get frequency
+        # max
+        y_list = grain_ave_size_max ** n_value - grain_ave_size_max[0] ** n_value
+        model_max = LinearRegression().fit(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_max = model_max.score(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_max_list[i] = r2_score_max
 
-    #     # Aniso
-    #     special_size_sum = grain_size_sum[i][grain_size_sum[i] != 0] # remove zero grain size
-    #     special_size_sum = special_size_sum/grain_ave_size_sum[i] # normalize grain size
-    #     for j in range(len(special_size_sum)):
-    #         grain_size_distribution_sum[int((special_size_sum[j]-x_limit[0])/bin_width)] += 1 # Get frequency
+        # sum
+        y_list = grain_ave_size_sum ** n_value - grain_ave_size_sum[0] ** n_value
+        model_sum = LinearRegression().fit(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_sum = model_sum.score(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_sum_list[i] = r2_score_sum
 
-    #     # Iso
-    #     special_size_iso = grain_size_iso[i][grain_size_iso[i] != 0] # remove zero grain size
-    #     special_size_iso = special_size_iso/grain_ave_size_iso[i] # normalize grain size
-    #     for j in range(len(special_size_iso)):
-    #         grain_size_distribution_iso[int((special_size_iso[j]-x_limit[0])/bin_width)] += 1 # Get frequency
-    #     grain_size_distribution_ave = grain_size_distribution_ave/np.sum(grain_size_distribution_ave*bin_width) # normalize frequency
-    #     grain_size_distribution_consMin = grain_size_distribution_consMin/np.sum(grain_size_distribution_consMin*bin_width) # normalize frequency
-    #     grain_size_distribution_sum = grain_size_distribution_sum/np.sum(grain_size_distribution_sum*bin_width) # normalize frequency
-    #     grain_size_distribution_iso = grain_size_distribution_iso/np.sum(grain_size_distribution_iso*bin_width) # normalize frequency
+        # consMin
+        y_list = grain_ave_size_consMin ** n_value - grain_ave_size_consMin[0] ** n_value
+        model_consMin = LinearRegression().fit(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_consMin = model_consMin.score(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_consMin_list[i] = r2_score_consMin
 
-    #     # Start plotting
-    #     plt.clf()
-    #     plt.plot(size_coordination, grain_size_distribution_ave, label="Ave case", linewidth=2)
-    #     plt.xlabel(r"R/$\langle$R$\rangle$", fontsize=14)
-    #     plt.ylabel("Frequency", fontsize=14)
-    #     plt.legend(fontsize=14)
-    #     plt.ylim([0,1.2])
-    #     plt.title(f"Grain num is {grain_num_ave[i]}", fontsize=14)
-    #     plt.savefig(current_path + f"/NGSD_ave/normalized_size_distribution_{i}.png", dpi=400,bbox_inches='tight')
-    #     plt.clf()
-    #     plt.plot(size_coordination, grain_size_distribution_consMin, label="ConsMin case", linewidth=2)
-    #     plt.xlabel(r"R/$\langle$R$\rangle$", fontsize=14)
-    #     plt.ylabel("Frequency", fontsize=14)
-    #     plt.legend(fontsize=14)
-    #     plt.ylim([0,1.2])
-    #     plt.title(f"Grain num is {grain_num_consMin[i]}", fontsize=14)
-    #     plt.savefig(current_path + f"/NGSD_consMin/normalized_size_distribution_{i}.png", dpi=400,bbox_inches='tight')
-    #     plt.clf()
-    #     plt.plot(size_coordination, grain_size_distribution_sum, label="Sum case", linewidth=2)
-    #     plt.xlabel(r"R/$\langle$R$\rangle$", fontsize=14)
-    #     plt.ylabel("Frequency", fontsize=14)
-    #     plt.legend(fontsize=14)
-    #     plt.ylim([0,1.2])
-    #     plt.title(f"Grain num is {grain_num_sum[i]}", fontsize=14)
-    #     plt.savefig(current_path + f"/NGSD_sum/normalized_size_distribution_{i}.png", dpi=400,bbox_inches='tight')
-    #     plt.clf()
-    #     plt.plot(size_coordination, grain_size_distribution_iso, label="Iso case", linewidth=2)
-    #     plt.xlabel(r"R/$\langle$R$\rangle$", fontsize=14)
-    #     plt.ylabel("Frequency", fontsize=14)
-    #     plt.legend(fontsize=14)
-    #     plt.ylim([0,1.2])
-    #     plt.title(f"Grain num is {grain_num_iso[i]}", fontsize=14)
-    #     plt.savefig(current_path + f"/NGSD_iso/normalized_size_distribution_{i}.png", dpi=400,bbox_inches='tight')
-    # print("NORMALIZED GRAIN SIZE DISTRIBUTION DONE")
+        # consMax
+        y_list = grain_ave_size_consMax ** n_value - grain_ave_size_consMax[0] ** n_value
+        model_consMax = LinearRegression().fit(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_consMax = model_consMax.score(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_consMax_list[i] = r2_score_consMax
+
+        # iso
+        y_list = grain_ave_size_iso ** n_value - grain_ave_size_iso[0] ** n_value
+        model_iso = LinearRegression().fit(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_iso = model_iso.score(x_list[:short_step_num].reshape(-1,1), y_list[:short_step_num].reshape(-1,1))
+        r2_score_iso_list[i] = r2_score_iso
+
+    print(f"For iso, the n is {n_value_list[int(np.argmax(r2_score_iso_list))]}, and the r^2 is {np.max(r2_score_iso_list)}.")
+    print(f"For min, the n is {n_value_list[int(np.argmax(r2_score_min_list))]}, and the r^2 is {np.max(r2_score_min_list)}.")
+    print(f"For max, the n is {n_value_list[int(np.argmax(r2_score_max_list))]}, and the r^2 is {np.max(r2_score_max_list)}.")
+    print(f"For ave, the n is {n_value_list[int(np.argmax(r2_score_ave_list))]}, and the r^2 is {np.max(r2_score_ave_list)}.")
+    print(f"For sum, the n is {n_value_list[int(np.argmax(r2_score_sum_list))]}, and the r^2 is {np.max(r2_score_sum_list)}.")
+    print(f"For consMin, the n is {n_value_list[int(np.argmax(r2_score_consMin_list))]}, and the r^2 is {np.max(r2_score_consMin_list)}.")
+    print(f"For consMax, the n is {n_value_list[int(np.argmax(r2_score_consMax_list))]}, and the r^2 is {np.max(r2_score_consMax_list)}.")
+
 
 
 

@@ -8,6 +8,10 @@ All smoothing algorithm can work parallel.
 main.py is the place to running these smoothing algorithms.
 Input/ includes several input examples.
 Output/ includes algorithm results.
+Examples/ includes some examples about how to use the smoothing algorithms.
+
+# Paper
+https://www.sciencedirect.com/science/article/pii/S1359646222002925
 
 # Author Contact Information
 Lin Yang 
