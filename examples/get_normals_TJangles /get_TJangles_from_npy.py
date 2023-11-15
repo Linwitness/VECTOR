@@ -222,9 +222,9 @@ if __name__ == '__main__':
         
         dihedral_over_time_smooth = data_smooth(dihedral_over_time, 10)
         plt.clf()
-        plt.plot(np.linspace(0,160*100,161), dihedral_over_time, '.', markersize=4, label = "average angle results")
-        plt.plot(np.linspace(0,160*100,161), dihedral_over_time_smooth, '-', linewidth=2, label = "smoothed results")
-        plt.plot(np.linspace(0,160*100,161), [145.46]*161, '--', linewidth=2, label = "expected angle results") # Max-100
+        plt.plot(np.linspace(0,160*100,161), dihedral_over_time, '.', markersize=4, label = "average angle")
+        plt.plot(np.linspace(0,160*100,161), dihedral_over_time_smooth, '-', linewidth=2, label = "fit")
+        plt.plot(np.linspace(0,160*100,161), [145.46]*161, '--', linewidth=2, label = "expected angle") # Max-100
         # plt.plot(np.linspace(0,160*100,161), [45.95]*161, '--', linewidth=2, label = "expected angle results") # Min-010
         plt.ylim([115,155])
         plt.xlim([0,16000])

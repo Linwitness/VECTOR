@@ -15,6 +15,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 from scipy.optimize import curve_fit
+from sklearn.metrics import r2_score
 
 
 def func(x, a, b, c):
@@ -197,14 +198,14 @@ def calculate_tangent(triple_map,iteration=5):
 
 if __name__ == '__main__':
     
-    average_coupled_energy = np.array([0.99858999, 3.05656703, 0.40040934, 1.59915988, 0.55020987])
+    average_coupled_energy = np.array([0.99858999, 3.05656703, 0.4, 1.6, 0.093]) #0.55020987
     # Joseph resuults
-    file_path_joseph = "/Users/lin/Dropbox (UFL)/UFdata/Dihedral_angle/output/"    
+    file_path_joseph = "/Users/lin.yang/Dropbox (UFL)/UFdata/Dihedral_angle/output/"
     npy_file_name_joseph_ave = "hex_dihedrals1.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
     npy_file_name_joseph_sum = "hex_dihedrals5.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
     npy_file_name_joseph_consmin = "hex_dihedrals3.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
     npy_file_name_joseph_consmax = "hex_dihedrals2.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
-    npy_file_name_joseph_constest = "hex_dihedrals4.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
+    npy_file_name_joseph_constest = "hex_dihedrals_consTest2E.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
     triple_results_ave = np.load(file_path_joseph + npy_file_name_joseph_ave)
     triple_results_sum = np.load(file_path_joseph + npy_file_name_joseph_sum)
     triple_results_consmin = np.load(file_path_joseph + npy_file_name_joseph_consmin)
@@ -264,11 +265,16 @@ if __name__ == '__main__':
     c = min(max_dihedral_list)
     p0 = [a,b,c]
     popt, pcov = curve_fit(func, average_coupled_energy, max_dihedral_list,p0=p0)
-    print(f"The equation to dit the relationship is {round(popt[0],2)} * exp(-x * {round(popt[1],2)}) + {round(popt[2],2)}")
+    print(f"The equation to fit the relationship is {round(popt[0],2)} * exp(-x * {round(popt[1],2)}) + {round(popt[2],2)}")
     y_fit = [func(i,popt[0], popt[1], popt[2]) for i in np.linspace(0, 4, 50)]
-    plt.plot(np.linspace(0, 4, 50), y_fit, '-', linewidth=2, label = "fitting results")
+    plt.plot(np.linspace(0, 4, 50), y_fit, '-', linewidth=2, label = "fitting")
+    # Find the root mean square error
+    y_fit_rmse = [func(i,popt[0], popt[1], popt[2]) for i in average_coupled_energy]
+    data_rmse = (np.mean((y_fit_rmse - max_dihedral_list)**2))**0.5
+    data_r2 = r2_score(max_dihedral_list, y_fit_rmse)
+    print(rf"The RMSE is {round(data_rmse,3)}$^\circ$, the r$^2$ is {round(data_r2,4)}")
     # Find the exact result
-    exact_list = np.linspace(0.2, 1.0, 101)
+    exact_list = np.linspace(0.01, 0.5, 101)
     min_level = 10
     expect_site_energy = 0
     for m in exact_list: 
@@ -277,7 +283,7 @@ if __name__ == '__main__':
             expect_site_energy = m
     print(f"The expected average TJ site energy is {expect_site_energy}")
     
-    plt.plot(np.linspace(0,4,24), [145.46]*24, '--', linewidth=2, label = "expected angle results") # Max-100
+    plt.plot(np.linspace(0,4,24), [145.46]*24, '--', linewidth=2, label = "energy equilibrium on GB area") # Max-100
     
     # My algorithm
     npy_file_folder = "/Users/lin/projects/SPPARKS-AGG/examples/Test_SimplifyIncE/2d_hex_for_TJE/results/"
@@ -295,12 +301,12 @@ if __name__ == '__main__':
     plt.ylim([110,155])
     plt.xlim([0,4])
     plt.legend(fontsize=14, loc='lower center')
-    plt.xlabel("Coupled energy", fontsize=14)
+    plt.xlabel("Average TJ energy (J/MCU)", fontsize=14)
     plt.ylabel(r"Angle ($^\circ$)", fontsize=14)
-    plt.xticks(fontsize=14)
-    plt.yticks(fontsize=14)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
     
-    plt.savefig(npy_file_folder + dihedral_siteEnergy_cases_figure_name, bbox_inches='tight', format='png', dpi=400)
+    # plt.savefig(dihedral_siteEnergy_cases_figure_name, bbox_inches='tight', format='png', dpi=400)
     
 
 
