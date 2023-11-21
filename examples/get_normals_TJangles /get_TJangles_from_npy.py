@@ -125,121 +125,143 @@ def data_smooth(data_array, smooth_level=2):
 
     return data_array_smoothed
 
+def dihedral_angle_from_Joseph(case_path, num_steps):
+    # Get data from Joseph method
+    triple_results_joseph = np.load(case_path)
+    
+    max_dihedral_list_joseph = np.zeros(num_steps)
+    
+    for i in tqdm(range(num_steps)):
+        # From Joseph algorithm
+        triple_results_step_joseph = triple_results_joseph[i,3:6]
+
+        # triple_results_step_joseph = triple_results_step_joseph[:,~np.isnan(triple_results_step_joseph[0,:])]
+        # print(f"The number in current case is {len(triple_results_step_joseph[0,:])}")
+        max_dihedral_list_joseph[i] = triple_results_step_joseph[2]
+        
+    return max_dihedral_list_joseph
+    
+def dihedral_angle_from_Lin(npy_file_folder, base_name, energy_type, num_steps):
+    # Get data from Lin method
+    dihedral_over_time_data_name = base_name + "data.npy"
+    max_dihedral_list_lin = np.zeros(num_steps)
+    npy_file_name = f"t_{energy_type}_512x512_delta0.6_m2_refer_1_0_0_seed56689_kt066.npy"
+    P0_list = np.load(npy_file_folder + npy_file_name)
+    print("IC is read as matrix")
+    
+    # If the data file exist , just read the data dile instead of recalculate it
+    if os.path.exists(npy_file_folder + dihedral_over_time_data_name):
+        max_dihedral_list_lin = np.load(npy_file_folder + dihedral_over_time_data_name)
+        print("Dihedral angle readed")
+        
+    else:
+        for timestep in range(num_steps):
+            print(f"\nCalculation for time step {timestep}")
+            # Initial setting
+            P0 = P0_list[timestep,:,:,:]
+            output_inclination_name = base_name + "inclination.txt"
+            output_dihedral_name = base_name + "dihedral.txt"
+            nx, ny, _ = P0.shape   # Get IC (512, 512)
+            ng = 3
+            cores = 8
+            loop_times = 5
+            R = np.zeros((nx,ny,2))
+
+            # Get inclination
+            test1 = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+            test1.linear_main("inclination")
+            P = test1.get_P()
+            print('loop_times = ' + str(test1.loop_times))
+            print('running_time = %.2f' % test1.running_time)
+            print('running_core time = %.2f' % test1.running_coreTime)
+            print('total_errors = %.2f' % test1.errors)
+            print('per_errors = %.3f' % test1.errors_per_site)
+            print("Inclinatin calculation done")
+
+            # Calculate the tanget for corresponding triple junction
+            triple_coord, triple_angle, triple_grain = output_tangent.calculate_tangent(P0[:,:,0], loop_times)
+            print("tanget calculation done")
+            # The triple_coord is the coordination of the triple junction(left-upper voxel), axis 0 is the index of triple, axis 1 is the coordination (i,j,k)
+            # The triple_angle saves the three dihedral angle for corresponding triple junction,
+            #   axis 0 is the index of triple,
+            #   axis 1 is the three dihedral angle
+            # The triple_grain saves the sequence of three grains for corresponding triple point
+            #   axis 0 is the index of the triple,
+            #   axis 1 is the three grains
+            print(triple_grain)
+            print(triple_angle)
+
+            output_dihedral_angle(npy_file_folder + output_dihedral_name, triple_coord, triple_angle, triple_grain)
+            print("Dihedral angle outputted")
+
+            # Find the max/min dihedral and average them
+            sum_grain_dihedral = 0
+            sum_dihedral_num = 0
+            specific_grain = 1
+            # For max dihedral
+            for i in range(len(triple_angle)):
+                if (np.sum(triple_angle[i]) - 360) > 5: continue
+                # if np.max(triple_angle[i]) > 180: continue
+                
+                # Get the angle in grain 1 and ignore angle not in grain 1
+                print("specific angle: " + str(triple_angle[i][int(np.argwhere(triple_grain[i]==specific_grain))]))
+                try:
+                    sum_grain_dihedral += triple_angle[i][int(np.argwhere(triple_grain[i]==specific_grain))]
+                    sum_dihedral_num += 1
+                except:
+                    continue
+            if sum_dihedral_num == 0: average_max_dihedral = 0
+            else: average_max_dihedral = sum_grain_dihedral / sum_dihedral_num
+            print(f"The average dihedral angle on grain {specific_grain} is {average_max_dihedral}")
+            print("Average dihedral angle obtained")
+            max_dihedral_list_lin[timestep] = average_max_dihedral        
+    # Save the data
+    np.save(npy_file_folder + dihedral_over_time_data_name, max_dihedral_list_lin)
+    
+    return max_dihedral_list_lin
+    
+
 if __name__ == '__main__':
 
-    npy_file_folder = "/Users/lin/projects/SPPARKS-AGG/examples/Test_SimplifyIncE/2d_hex_for_TJE/results/"
-    TJ_energy_type_cases = ["consTest","ave", "sum", "consMin", "consMax"]
+    npy_file_folder = "/Users/lin/projects/SPPARKS-AGG/examples/Test_SimplifyIncE/2d_triple_for_TJE/results/"
+    TJ_energy_type_cases = ["ave", "sum", "consMin", "consMax","consTest"]
 
     # Joseph method
-    file_path_joseph = "/Users/lin/Dropbox (UFL)/UFdata/Dihedral_angle/output/"
-    TJ_energy_type_cases_joseph = ["hex_dihedrals_consTest2E.npy", "hex_dihedrals1.npy", "hex_dihedrals5.npy", "hex_dihedrals3.npy", "hex_dihedrals2.npy"]
+    file_path_joseph = "/Users/lin/Dropbox (UFL)/UFdata/Dihedral_angle/TJ_IC_11152023/Results/"
+    TJ_energy_type_cases_joseph = ["t_dihedrals_3.npy", "t_dihedrals_0.npy", "t_dihedrals_5.npy", "t_dihedrals_2.npy", "t_dihedrals_1.npy"]
 
 
     for index, energy_type in enumerate(TJ_energy_type_cases):
-        print(f"\nStart {energy_type} energy type:")
-        npy_file_name = f"h_ori_ave_{energy_type}E_hex_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066_angle.npy"
-        P0_list = np.load(npy_file_folder + npy_file_name)
-        print("IC is read as matrix")
 
-        base_name = f"dihedral_results/hex_{energy_type}_"
-        dihedral_over_time_data_name = base_name + "data.npy"
-        dihedral_over_time_figure_name = "max_hex_dihedral_over_time_" + energy_type + ".png"
-        dihedral_over_time = np.zeros(len(P0_list))
+        base_name = f"dihedral_results/triple_{energy_type}_"
+        dihedral_over_time_figure_name = "triple_dihedral_over_time_" + energy_type + ".png"
+        num_steps = 61
 
-        # If the data file exist , just read the data dile instead of recalculate it
-        if os.path.exists(npy_file_folder + dihedral_over_time_data_name):
-            # dihedral_over_time = np.load(npy_file_folder + dihedral_over_time_data_name)
-            # print("Dihedral angle readed")
+        # Get data from Joseph method
+        dihedral_over_time = dihedral_angle_from_Joseph(file_path_joseph + TJ_energy_type_cases_joseph[index], num_steps)
+        dihedral_over_time[np.isnan(dihedral_over_time[:])]=120
+        dihedral_over_time_smooth = data_smooth(dihedral_over_time, 10)
+        # dihedral_over_time_smooth = np.ones(num_steps)*np.average(dihedral_over_time_update) # just average it
 
-            # Get data from Joseph method
-            triple_results_joseph = np.load(file_path_joseph + TJ_energy_type_cases_joseph[index])
-            num_steps = 101
-            max_dihedral_list_joseph = np.zeros(num_steps)
-
-            for i in tqdm(range(num_steps)):
-                # From Joseph algorithm
-                triple_results_step_joseph = triple_results_joseph[i,3:6,:]
-
-                triple_results_step_joseph = triple_results_step_joseph[:,~np.isnan(triple_results_step_joseph[0,:])]
-                print(f"The number in current case is {len(triple_results_step_joseph[0,:])}")
-                max_dihedral_list_joseph[i] = np.mean(np.max(triple_results_step_joseph,0))
-
-        else:
-            for timestep in range(len(P0_list)):
-                print(f"\nCalculation for time step {timestep}")
-                # Initial setting
-                P0 = P0_list[timestep,:,:,:]
-                output_inclination_name = base_name + "inclination.txt"
-                output_dihedral_name = base_name + "dihedral.txt"
-
-                # Get IC (2400, 2400)
-                nx, ny, _ = P0.shape
-                ng = 50
-                cores = 8
-                loop_times = 5
-                R = np.zeros((nx,ny,2))
-
-                # Get inclination
-                test1 = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-                test1.linear_main("inclination")
-                P = test1.get_P()
-                print('loop_times = ' + str(test1.loop_times))
-                print('running_time = %.2f' % test1.running_time)
-                print('running_core time = %.2f' % test1.running_coreTime)
-                print('total_errors = %.2f' % test1.errors)
-                print('per_errors = %.3f' % test1.errors_per_site)
-                print("Inclinatin calculation done")
-
-
-                # Calculate the tanget for corresponding triple junction
-                triple_coord, triple_angle, triple_grain = output_tangent.calculate_tangent(P0[:,:,0], loop_times)
-                print("tanget calculation done")
-                # The triple_coord is the coordination of the triple junction(left-upper voxel), axis 0 is the index of triple, axis 1 is the coordination (i,j,k)
-                # The triple_angle saves the three dihedral angle for corresponding triple junction,
-                #   axis 0 is the index of triple,
-                #   axis 1 is the three dihedral angle
-                # The triple_grain saves the sequence of three grains for corresponding triple point
-                #   axis 0 is the index of the triple,
-                #   axis 1 is the three grains
-
-                output_dihedral_angle(npy_file_folder + output_dihedral_name, triple_coord, triple_angle, triple_grain)
-                print("Dihedral angle outputted")
-
-                # Find the max/min dihedral and average them
-                sum_grain_dihedral = 0
-                sum_dihedral_num = 0
-                # For max dihedral
-                for i in range(len(triple_angle)):
-                    if (np.sum(triple_angle[i]) - 360) > 5: continue
-                    if np.max(triple_angle[i]) > 180: continue
-                    sum_grain_dihedral += np.max(triple_angle[i])
-                    sum_dihedral_num += 1
-                if sum_dihedral_num == 0: average_max_dihedral = 0
-                else: average_max_dihedral = sum_grain_dihedral / sum_dihedral_num
-                print(f"The average max dihedral angle is {average_max_dihedral}")
-                print("Average dihedral angle obtained")
-                dihedral_over_time[timestep] = average_max_dihedral
-
-
-        # Save the data
-        # np.save(npy_file_folder + dihedral_over_time_data_name, dihedral_over_time)
-        dihedral_over_time = max_dihedral_list_joseph
-
-        num_steps = 101
+        # Get data from Lin method
+        # dihedral_over_time = dihedral_angle_from_Lin(npy_file_folder, base_name, energy_type, num_steps)
         # dihedral_over_time_smooth = data_smooth(dihedral_over_time, 10)
-        dihedral_over_time_smooth = np.ones(len(dihedral_over_time))*np.average(dihedral_over_time) # just average it
+        # dihedral_over_time_smooth = np.ones(num_steps)*np.average(dihedral_over_time) # just average it
+        
+
+        
         plt.clf()
-        plt.plot(np.linspace(0,(num_steps-1)*100,num_steps), dihedral_over_time, '.', markersize=4, label = "average angle")
-        plt.plot(np.linspace(0,(num_steps-1)*100,num_steps), dihedral_over_time_smooth, '-', linewidth=2, label = "fit")
+        plt.plot(np.linspace(0,(num_steps-1)*25,num_steps), dihedral_over_time, '.', markersize=4, label = "average angle")
+        plt.plot(np.linspace(0,(num_steps-1)*25,num_steps), dihedral_over_time_smooth, '-', linewidth=2, label = "fit")
         # plt.plot(np.linspace(0,(num_steps-1)*100,num_steps), [145.46]*num_steps, '--', linewidth=2, label = "equilibrium from GB area") # Max-100
         # plt.plot(np.linspace(0,160*100,161), [45.95]*161, '--', linewidth=2, label = "expected angle results") # Min-010
-        plt.ylim([125,150])
-        plt.xlim([0,10100])
+        plt.ylim([80,140])
+        plt.xlim([0,1500])
         plt.legend(fontsize=20, loc='upper right')
         plt.xlabel("Timestep (MCS)", fontsize=20)
         plt.ylabel(r"Angle ($\degree$)", fontsize=20)
         plt.xticks(fontsize=20)
         plt.yticks(fontsize=20)
-        plt.xticks([0, 2000, 4000, 6000, 8000, 10000])
+        plt.xticks([0, 300, 600, 900, 1200, 1500])
         plt.savefig(npy_file_folder + dihedral_over_time_figure_name, bbox_inches='tight', format='png', dpi=400)
 

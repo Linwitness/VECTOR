@@ -15,7 +15,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 from scipy.optimize import curve_fit
-from sklearn.metrics import r2_score
+# from sklearn.metrics import r2_score
 
 
 def func(x, a, b, c):
@@ -198,14 +198,14 @@ def calculate_tangent(triple_map,iteration=5):
 
 if __name__ == '__main__':
 
-    average_coupled_energy = np.array([0.99858999, 3.05656703, 0.4, 1.6, 0.093]) #0.55020987
+    average_coupled_energy = np.array([0.99858999, 3.05656703, 0.4, 1.6, 0.1]) #0.55020987
     # Joseph resuults
-    file_path_joseph = "/Users/lin.yang/Dropbox (UFL)/UFdata/Dihedral_angle/output/"
-    npy_file_name_joseph_ave = "hex_dihedrals1.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
-    npy_file_name_joseph_sum = "hex_dihedrals5.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
-    npy_file_name_joseph_consmin = "hex_dihedrals3.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
-    npy_file_name_joseph_consmax = "hex_dihedrals2.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
-    npy_file_name_joseph_constest = "hex_dihedrals_consTest2E.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
+    file_path_joseph = "/Users/lin/Dropbox (UFL)/UFdata/Dihedral_angle/TJ_IC_11152023/Results/"
+    npy_file_name_joseph_ave = "t_dihedrals_0.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
+    npy_file_name_joseph_sum = "t_dihedrals_5.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
+    npy_file_name_joseph_consmin = "t_dihedrals_2.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
+    npy_file_name_joseph_consmax = "t_dihedrals_1.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
+    npy_file_name_joseph_constest = "t_dihedrals_3.npy" # (161, 6, 96) grain ID's involved (first 3) and the dihedral angles (last 3)
     triple_results_ave = np.load(file_path_joseph + npy_file_name_joseph_ave)
     triple_results_sum = np.load(file_path_joseph + npy_file_name_joseph_sum)
     triple_results_consmin = np.load(file_path_joseph + npy_file_name_joseph_consmin)
@@ -213,9 +213,9 @@ if __name__ == '__main__':
     triple_results_constest = np.load(file_path_joseph + npy_file_name_joseph_constest)
 
     # Necessary parameters
-    num_grain_initial = 48
+    num_grain_initial = 3
 
-    num_steps = 80
+    num_steps = 61
     max_dihedral_ave_list = np.zeros(num_steps)
     max_dihedral_sum_list = np.zeros(num_steps)
     max_dihedral_consmin_list = np.zeros(num_steps)
@@ -223,29 +223,34 @@ if __name__ == '__main__':
     max_dihedral_constest_list = np.zeros(num_steps)
     for i in tqdm(range(num_steps)):
         # From Joseph algorithm
-        triple_results_step_ave = triple_results_ave[i,3:6,:]
-        triple_results_step_sum = triple_results_sum[i,3:6,:]
-        triple_results_step_consmin = triple_results_consmin[i,3:6,:]
-        triple_results_step_consmax = triple_results_consmax[i,3:6,:]
-        triple_results_step_constest = triple_results_constest[i,3:6,:]
+        triple_results_step_ave = triple_results_ave[i,3:6]
+        triple_results_step_sum = triple_results_sum[i,3:6]
+        triple_results_step_consmin = triple_results_consmin[i,3:6]
+        triple_results_step_consmax = triple_results_consmax[i,3:6]
+        triple_results_step_constest = triple_results_constest[i,3:6]
 
-        triple_results_step_ave = triple_results_step_ave[:,~np.isnan(triple_results_step_ave[0,:])]
-        triple_results_step_sum = triple_results_step_sum[:,~np.isnan(triple_results_step_sum[0,:])]
-        triple_results_step_consmin = triple_results_step_consmin[:,~np.isnan(triple_results_step_consmin[0,:])]
-        triple_results_step_consmax = triple_results_step_consmax[:,~np.isnan(triple_results_step_consmax[0,:])]
-        triple_results_step_constest = triple_results_step_constest[:,~np.isnan(triple_results_step_constest[0,:])]
-        print(f"The number in ave is {len(triple_results_step_ave[0,:])}")
-        print(f"The number in sum is {len(triple_results_step_sum[0,:])}")
-        print(f"The number in consmin is {len(triple_results_step_consmin[0,:])}")
-        print(f"The number in consmax is {len(triple_results_step_consmax[0,:])}")
-        print(f"The number in constest is {len(triple_results_step_constest[0,:])}")
-        max_dihedral_ave_list[i] = np.mean(np.max(triple_results_step_ave,0))
-        max_dihedral_sum_list[i]= np.mean(np.max(triple_results_step_sum,0))
-        max_dihedral_consmin_list[i] = np.mean(np.max(triple_results_step_consmin,0))
-        max_dihedral_consmax_list[i] = np.mean(np.max(triple_results_step_consmax,0))
-        max_dihedral_constest_list[i] = np.mean(np.max(triple_results_step_constest,0))
+        # triple_results_step_ave = triple_results_step_ave[:,~np.isnan(triple_results_step_ave[0,:])]
+        # triple_results_step_sum = triple_results_step_sum[:,~np.isnan(triple_results_step_sum[0,:])]
+        # triple_results_step_consmin = triple_results_step_consmin[:,~np.isnan(triple_results_step_consmin[0,:])]
+        # triple_results_step_consmax = triple_results_step_consmax[:,~np.isnan(triple_results_step_consmax[0,:])]
+        # triple_results_step_constest = triple_results_step_constest[:,~np.isnan(triple_results_step_constest[0,:])]
+        # print(f"The number in ave is {len(triple_results_step_ave[0,:])}")
+        # print(f"The number in sum is {len(triple_results_step_sum[0,:])}")
+        # print(f"The number in consmin is {len(triple_results_step_consmin[0,:])}")
+        # print(f"The number in consmax is {len(triple_results_step_consmax[0,:])}")
+        # print(f"The number in constest is {len(triple_results_step_constest[0,:])}")
+        max_dihedral_ave_list[i] = triple_results_step_ave[2]#np.mean(np.max(triple_results_step_ave,0))
+        max_dihedral_sum_list[i]= triple_results_step_sum[2]#np.mean(np.max(triple_results_step_sum,0))
+        max_dihedral_consmin_list[i] = triple_results_step_consmin[2]#np.mean(np.max(triple_results_step_consmin,0))
+        max_dihedral_consmax_list[i] = triple_results_step_consmax[2]#np.mean(np.max(triple_results_step_consmax,0))
+        max_dihedral_constest_list[i] = triple_results_step_constest[2]#np.mean(np.max(triple_results_step_constest,0))
 
     # average the max dihedral angle for all time steps
+    max_dihedral_ave_list = max_dihedral_ave_list[~np.isnan(max_dihedral_ave_list[:])]
+    max_dihedral_sum_list = max_dihedral_sum_list[~np.isnan(max_dihedral_sum_list[:])]
+    max_dihedral_consmin_list = max_dihedral_consmin_list[~np.isnan(max_dihedral_consmin_list[:])]
+    max_dihedral_consmax_list = max_dihedral_consmax_list[~np.isnan(max_dihedral_consmax_list[:])]
+    max_dihedral_constest_list = max_dihedral_constest_list[~np.isnan(max_dihedral_constest_list[:])]
     max_dihedral_ave = np.mean(max_dihedral_ave_list)
     max_dihedral_sum = np.mean(max_dihedral_sum_list)
     max_dihedral_consmin = np.mean(max_dihedral_consmin_list)
@@ -255,7 +260,7 @@ if __name__ == '__main__':
     max_dihedral_list = np.array([max_dihedral_ave, max_dihedral_sum, max_dihedral_consmin, max_dihedral_consmax, max_dihedral_constest])
 
 
-    dihedral_siteEnergy_cases_figure_name = "energy_results/hex_aveDihedral_aveEnergy_" + "figure.png"
+    dihedral_siteEnergy_cases_figure_name = "energy_results/triple_aveDihedral_aveEnergy_" + "figure.png"
     plt.clf()
     plt.plot(average_coupled_energy, max_dihedral_list, 'o', markersize=4, label = "average angle")
 
@@ -281,7 +286,7 @@ if __name__ == '__main__':
     # plt.plot(np.linspace(0,4,24), [145.46]*24, '--', linewidth=2, label = "equilibrium from GB area") # Max-100
 
     # My algorithm
-    npy_file_folder = "/Users/lin/projects/SPPARKS-AGG/examples/Test_SimplifyIncE/2d_hex_for_TJE/results/"
+    npy_file_folder = "/Users/lin/projects/SPPARKS-AGG/examples/Test_SimplifyIncE/2d_triple_for_TJE/results/"
 
     # Get the average dihedral angle
     # cases=5
@@ -293,7 +298,7 @@ if __name__ == '__main__':
     #     dihedral_over_time = np.load(npy_file_folder + base_name + "data.npy")
     #     max_dihedral_angle_lin[i] = np.average(dihedral_over_time[:num_steps])
     # plt.plot(average_coupled_energy, max_dihedral_angle_lin, 'o', markersize=4, label = "average angle (Lin)")
-    plt.ylim([125,160])
+    plt.ylim([80,140])
     plt.xlim([0,4])
     plt.legend(fontsize=20)
     plt.xlabel("Average TJ energy (J/MCU)", fontsize=20)
