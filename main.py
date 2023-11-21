@@ -16,7 +16,7 @@ from itertools import repeat
 
 import myInput
 import PACKAGE_MP_Vertex       #2D Vertex smooth algorithm
-import PACKAGE_MP_Bilinear     #2D Bilinear smooth algorithm
+import PACKAGE_MP_Linear     #2D Bilinear smooth algorithm
 import PACKAGE_MP_AllenCahn    #2D Allen-Cahn smooth algorithm
 import PACKAGE_MP_LevelSet     #2D Level Set smooth algorithm
 import PACKAGE_MP_3DVertex     #3D Vertex smooth algorithm

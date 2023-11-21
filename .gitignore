@@ -6,6 +6,7 @@ input/.DS_Store
 *.npz
 *.npy
 *.hdf5
+*.h5
 *.dream3d
 *.init
 *.txt

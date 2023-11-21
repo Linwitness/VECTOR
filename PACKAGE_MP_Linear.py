@@ -36,9 +36,13 @@ class linear_class(object):
         # convert individual grains map into one grain map
         self.P = np.zeros((3,nx,ny)) # matrix to store IC and normal vector results
         self.C = np.zeros((2,nx,ny)) # curvature result matrix
-        for i in range(0,np.shape(P0)[2]):
-            self.P[0,:,:] += P0[:,:,i]*(i+1)
-            self.C[0,:,:] += P0[:,:,i]*(i+1)
+        if len(P0.shape) == 2:
+            self.P[0,:,:] = np.array(P0)
+            self.C[0,:,:] = np.array(P0)
+        else:
+            for i in range(0,np.shape(P0)[2]):
+                self.P[0,:,:] += P0[:,:,i]*(i+1)
+                self.C[0,:,:] += P0[:,:,i]*(i+1)
 
         # data for multiprocessing
         self.cores = cores
