@@ -20,7 +20,7 @@ import multiprocessing as mp
 
 class linear_class(object):
 
-    def __init__(self,nx,ny,ng,cores,loop_times,P0,R,clip = 0):
+    def __init__(self,nx,ny,ng,cores,loop_times,P0,R,clip = 0,verification_system = True):
         # V_matrix init value; runnning time and error for the algorithm
         self.running_time = 0
         self.running_coreTime = 0
@@ -59,6 +59,7 @@ class linear_class(object):
         # some attributes
         # linear smoothing matrix
         self.smoothed_vector_i, self.smoothed_vector_j = myInput.output_linear_vector_matrix(self.loop_times, self.clip)
+        self.verification_system = verification_system
 
     #%% Functions
     def get_P(self):
@@ -208,9 +209,6 @@ class linear_class(object):
         Ijj = (Ipj-Imj)/2 #
         Iij = (Ipij-Imij)/2 #
 
-        # if signal == 1:
-        #     print(f"I02:{I02}; I1,1-3:{I11},{I12},{I13}; I2,0-4:{I20},{I21},{I22},{I23},{I24}; I3,1-3:{I31},{I32},{I33}; I42:{I42}")
-
         if (Ii**2 + Ij**2) == 0:
             return 0
 
@@ -230,7 +228,7 @@ class linear_class(object):
         corner3 = core_input[li-1,lj-1,:]
 
         core_area_cen, core_area_nei = self.check_subdomain_and_nei(corner1)
-        print(f'the processor {core_area_cen} start...')
+        if self.verification_system == True: print(f'the processor {core_area_cen} start...')
 
         test_check_read_num = 0
         test_check_max_qsize = 0
@@ -250,19 +248,12 @@ class linear_class(object):
                     if (smoothed_matrix.shape != (5,5)):
                         print(f"The smoothed matrix is not correct: {smoothed_matrix.shape}")
 
-
-                    # print(window)
-
-                    # if i==64 and j==65:
-                    #     signal = 1
-                    # else:
-                    #     signal=0
                     fval[i,j,0] = self.calculate_curvature(smoothed_matrix)
 
 
-        print(f"process{core_area_cen} read {test_check_read_num} times and max qsize {test_check_max_qsize}")
+        if self.verification_system == True: print(f"process{core_area_cen} read {test_check_read_num} times and max qsize {test_check_max_qsize}")
         core_etime = datetime.datetime.now()
-        print("my core time is " + str((core_etime - core_stime).total_seconds()))
+        if self.verification_system == True: print("my core time is " + str((core_etime - core_stime).total_seconds()))
         return (fval,(core_etime - core_stime).total_seconds())
 
     def linear_one_normal_vector_core(self,core_input):
@@ -296,7 +287,7 @@ class linear_class(object):
         corner3 = core_input[li-1,lj-1,:]
 
         core_area_cen, core_area_nei = self.check_subdomain_and_nei(corner1)
-        print(f'the processor {core_area_cen} start...')
+        if self.verification_system == True: print(f'the processor {core_area_cen} start...')
 
         test_check_read_num = 0
         test_check_max_qsize = 0
@@ -320,9 +311,9 @@ class linear_class(object):
                     fval[i,j,0] = -np.sum(window*self.smoothed_vector_i)
                     fval[i,j,1] = np.sum(window*self.smoothed_vector_j)
 
-        print(f"process{core_area_cen} read {test_check_read_num} times and max qsize {test_check_max_qsize}")
+        if self.verification_system == True: print(f"process{core_area_cen} read {test_check_read_num} times and max qsize {test_check_max_qsize}")
         core_etime = datetime.datetime.now()
-        print("my core time is " + str((core_etime - core_stime).total_seconds()))
+        if self.verification_system == True: print("my core time is " + str((core_etime - core_stime).total_seconds()))
         return (fval,(core_etime - core_stime).total_seconds())
 
     def res_back(self,back_result):
@@ -331,14 +322,14 @@ class linear_class(object):
         if core_time > self.running_coreTime:
             self.running_coreTime = core_time
 
-        print("res_back start...")
+        if self.verification_system == True: print("res_back start...")
         if fval.shape[2] == 1:
             self.C[1,:,:] += fval[:,:,0]
         elif fval.shape[2] == 2:
             self.P[1,:,:] += fval[:,:,0]
             self.P[2,:,:] += fval[:,:,1]
         res_etime = datetime.datetime.now()
-        print("my res time is " + str((res_etime - res_stime).total_seconds()))
+        if self.verification_system == True: print("my res time is " + str((res_etime - res_stime).total_seconds()))
 
     def linear_main(self, purpose="inclination"):
 
@@ -367,7 +358,7 @@ class linear_class(object):
         pool.close()
         pool.join()
 
-        print("core done!")
+        if self.verification_system == True: print("core done!")
         # print(res_list[0].get())
 
         # calculate time
