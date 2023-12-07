@@ -142,65 +142,65 @@ if __name__ == '__main__':
     npy_file_folder = "/blue/michael.tonks/lin.yang/SPPARKS-VirtualIncEnergy/3d_poly/results/"
     TJ_energy_type_ave = "ave"
     TJ_energy_type_min = "min"
-    TJ_energy_type_sum = "min195D264"
+    TJ_energy_type_max = "max"
 
-    npy_file_name_aniso_ave = f"p_ori_ave_{TJ_energy_type_ave}E_150_1k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt195.npy"
-    npy_file_name_aniso_min = f"p_ori_ave_{TJ_energy_type_min}E_150_1k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt195.npy"
-    npy_file_name_aniso_min195D264 = f"p_ori_ave_{TJ_energy_type_min}E_264_5k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt1.95.npy"
-    npy_file_name_iso = "p_ori_ave_aveE_150_1k_multiCore64_delta0.0_m2_J1_refer_1_0_0_seed56689_kt195.npy"
+    # npy_file_name_aniso_ave = f"p_ori_ave_{TJ_energy_type_ave}E_264_5k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt1.95.npy"
+    npy_file_name_aniso_min = f"p_ori_ave_{TJ_energy_type_min}E_264_5k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt1.95.npy"
+    npy_file_name_aniso_max = f"p_ori_ave_{TJ_energy_type_max}E_264_5k_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt1.95.npy"
+    npy_file_name_iso = "p_ori_ave_aveE_264_5k_multiCore64_delta0.0_m2_J1_refer_1_0_0_seed56689_kt1.95.npy"
 
     # Initial data
-    npy_file_aniso_ave = np.load(npy_file_folder + npy_file_name_aniso_ave)
+    # npy_file_aniso_ave = np.load(npy_file_folder + npy_file_name_aniso_ave)
     npy_file_aniso_min = np.load(npy_file_folder + npy_file_name_aniso_min)
-    npy_file_aniso_min195D264 = np.load(npy_file_folder + npy_file_name_aniso_min195D264)
+    npy_file_aniso_max = np.load(npy_file_folder + npy_file_name_aniso_max)
     npy_file_iso = np.load(npy_file_folder + npy_file_name_iso)
-    print(f"The ave data size is: {npy_file_aniso_ave.shape}")
+    # print(f"The ave data size is: {npy_file_aniso_ave.shape}")
     print(f"The min data size is: {npy_file_aniso_min.shape}")
-    print(f"The sum data size is: {npy_file_aniso_min195D264.shape}")
+    print(f"The max data size is: {npy_file_aniso_max.shape}")
     print(f"The iso data size is: {npy_file_iso.shape}")
     print("READING DATA DONE")
 
     # Initial container
     initial_grain_num = 1000
-    step_num = npy_file_aniso_min195D264.shape[0]
+    step_num = npy_file_aniso_min.shape[0]
     grain_num_aniso_ave = np.zeros(step_num)
     grain_num_aniso_min = np.zeros(step_num)
-    grain_num_aniso_min195D264 = np.zeros(step_num)
+    grain_num_aniso_max = np.zeros(step_num)
     grain_num_iso = np.zeros(step_num)
 
     # Calculate the number of grains
     for i in range(step_num):
-        grain_num_aniso_ave[i] = len(set(npy_file_aniso_ave[i,:].flatten()))
+        # grain_num_aniso_ave[i] = len(set(npy_file_aniso_ave[i,:].flatten()))
         grain_num_aniso_min[i] = len(set(npy_file_aniso_min[i,:].flatten()))
-        grain_num_aniso_min195D264[i] = len(set(npy_file_aniso_min195D264[i,:].flatten()))
+        grain_num_aniso_max[i] = len(set(npy_file_aniso_max[i,:].flatten()))
         grain_num_iso[i] = len(set(npy_file_iso[i,:].flatten()))
 
     expected_grain_num = 500
-    special_step_distribution_ave = int(np.argmin(abs(grain_num_aniso_ave - expected_grain_num)))
+    # special_step_distribution_ave = int(np.argmin(abs(grain_num_aniso_ave - expected_grain_num)))
     special_step_distribution_min = int(np.argmin(abs(grain_num_aniso_min - expected_grain_num)))
-    special_step_distribution_min195D264 = int(np.argmin(abs(grain_num_aniso_min195D264 - expected_grain_num)))
+    special_step_distribution_max = int(np.argmin(abs(grain_num_aniso_max - expected_grain_num)))
     special_step_distribution_iso = int(np.argmin(abs(grain_num_iso - expected_grain_num)))
 
-    # Aniso - 000
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_iso_sites_step{special_step_distribution_iso}.npy'
-    if os.path.exists(current_path + data_file_name_P):
-        P = np.load(current_path + data_file_name_P)
-        sites = np.load(current_path + data_file_name_sites)
-    else:
-        newplace = np.rot90(npy_file_iso[special_step_distribution_iso,:,:,:], 1, (0,1))
-        P, sites = get_normal_vector_3d(newplace)
-        np.save(current_path + data_file_name_P, P)
-        np.save(current_path + data_file_name_sites, sites)
+    # # Aniso - 000
+    # data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
+    # data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_iso_sites_step{special_step_distribution_iso}.npy'
+    # if os.path.exists(current_path + data_file_name_P):
+    #     P = np.load(current_path + data_file_name_P)
+    #     sites = np.load(current_path + data_file_name_sites)
+    # else:
+    #     newplace = np.rot90(npy_file_iso[special_step_distribution_iso,:,:,:], 1, (0,1))
+    #     P, sites = get_normal_vector_3d(newplace)
+    #     np.save(current_path + data_file_name_P, P)
+    #     np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_iso, "Isotropy")
-    # For bias
-    xLim = [0, 360]
-    binValue = 10.01
-    binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
-    freqArray_circle = np.ones(binNum)
-    freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
-    slope_list_bias = freqArray_circle - slope_list
+    # slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_iso, "Isotropy")
+    # # For bias
+    # xLim = [0, 360]
+    # binValue = 10.01
+    # binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
+    # freqArray_circle = np.ones(binNum)
+    # freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
+    # slope_list_bias = freqArray_circle - slope_list
 
 
     # Start polar figure xy
@@ -220,23 +220,44 @@ if __name__ == '__main__':
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
 
-    # Aniso - ave
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    # Iso
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_iso_sites_step{special_step_distribution_iso}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
     else:
-        newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+        newplace = np.rot90(npy_file_iso[special_step_distribution_iso,:,:,:], 1, (0,1))
         P, sites = get_normal_vector_3d(newplace)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave")
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_iso, "Iso")
+    # For bias
+    xLim = [0, 360]
+    binValue = 10.01
+    binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
+    freqArray_circle = np.ones(binNum)
+    freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
+    slope_list_bias = freqArray_circle - slope_list
+
+    # Aniso - ave
+    # data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
+    # data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    # if os.path.exists(current_path + data_file_name_P):
+    #     P = np.load(current_path + data_file_name_P)
+    #     sites = np.load(current_path + data_file_name_sites)
+    # else:
+    #     newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+    #     P, sites = get_normal_vector_3d(newplace)
+    #     np.save(current_path + data_file_name_P, P)
+    #     np.save(current_path + data_file_name_sites, sites)
+
+    # slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave")
 
     # Aniso - min
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
@@ -248,19 +269,19 @@ if __name__ == '__main__':
 
     slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min, "Min")
 
-    # Aniso - sum
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min195D264_P_step{special_step_distribution_min195D264}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min195D264_sites_step{special_step_distribution_min195D264}.npy'
+    # Aniso - max
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_max_P_step{special_step_distribution_max}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_max_sites_step{special_step_distribution_max}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
     else:
-        newplace = np.rot90(npy_file_aniso_min195D264[special_step_distribution_min195D264,:,:,:], 1, (0,1))
+        newplace = np.rot90(npy_file_aniso_max[special_step_distribution_max,:,:,:], 1, (0,1))
         P, sites = get_normal_vector_3d(newplace)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min195D264, "Min-1.95")
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_max, "Max")
 
     plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
     plt.text(0.0, 0.0095, "x", fontsize=14)
@@ -284,23 +305,44 @@ if __name__ == '__main__':
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
 
-    # Aniso - ave
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    # Iso
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_iso_sites_step{special_step_distribution_iso}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
     else:
-        newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+        newplace = np.rot90(npy_file_iso[special_step_distribution_iso,:,:,:], 1, (0,1))
         P, sites = get_normal_vector_3d(newplace)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave", 1)
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_iso, "Iso", 1)
+     # For bias
+    xLim = [0, 360]
+    binValue = 10.01
+    binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
+    freqArray_circle = np.ones(binNum)
+    freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
+    slope_list_bias_1 = freqArray_circle - slope_list
+
+    # Aniso - ave
+    # data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
+    # data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    # if os.path.exists(current_path + data_file_name_P):
+    #     P = np.load(current_path + data_file_name_P)
+    #     sites = np.load(current_path + data_file_name_sites)
+    # else:
+    #     newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+    #     P, sites = get_normal_vector_3d(newplace)
+    #     np.save(current_path + data_file_name_P, P)
+    #     np.save(current_path + data_file_name_sites, sites)
+
+    # slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave", 1)
 
     # Aniso - min
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
@@ -312,19 +354,19 @@ if __name__ == '__main__':
 
     slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min, "Min", 1)
 
-    # Aniso - sum
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min195D264_P_step{special_step_distribution_min195D264}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min195D264_sites_step{special_step_distribution_min195D264}.npy'
+    # Aniso - max
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_max_P_step{special_step_distribution_max}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_max_sites_step{special_step_distribution_max}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
     else:
-        newplace = np.rot90(npy_file_aniso_min195D264[special_step_distribution_min195D264,:,:,:], 1, (0,1))
+        newplace = np.rot90(npy_file_aniso_max[special_step_distribution_max,:,:,:], 1, (0,1))
         P, sites = get_normal_vector_3d(newplace)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min195D264, "Min-1.95", 1)
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_max, "Max", 1)
 
     plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
     plt.text(0.0, 0.0095, "x", fontsize=14)
@@ -349,23 +391,44 @@ if __name__ == '__main__':
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
 
-    # Aniso - ave
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    # Iso
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_iso_sites_step{special_step_distribution_iso}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
     else:
-        newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+        newplace = np.rot90(npy_file_iso[special_step_distribution_iso,:,:,:], 1, (0,1))
         P, sites = get_normal_vector_3d(newplace)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave", 2)
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_iso, "Iso", 2)
+    # For bias
+    xLim = [0, 360]
+    binValue = 10.01
+    binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
+    freqArray_circle = np.ones(binNum)
+    freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
+    slope_list_bias_2 = freqArray_circle - slope_list
+
+    # Aniso - ave
+    # data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
+    # data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    # if os.path.exists(current_path + data_file_name_P):
+    #     P = np.load(current_path + data_file_name_P)
+    #     sites = np.load(current_path + data_file_name_sites)
+    # else:
+    #     newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+    #     P, sites = get_normal_vector_3d(newplace)
+    #     np.save(current_path + data_file_name_P, P)
+    #     np.save(current_path + data_file_name_sites, sites)
+
+    # slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave", 2)
 
     # Aniso - min
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
@@ -377,19 +440,19 @@ if __name__ == '__main__':
 
     slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min, "Min", 2)
 
-    # Aniso - sum
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min195D264_P_step{special_step_distribution_min195D264}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min195D264_sites_step{special_step_distribution_min195D264}.npy'
+    # Aniso - max
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_max_P_step{special_step_distribution_max}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_max_sites_step{special_step_distribution_max}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
     else:
-        newplace = np.rot90(npy_file_aniso_min195D264[special_step_distribution_min195D264,:,:,:], 1, (0,1))
+        newplace = np.rot90(npy_file_aniso_max[special_step_distribution_max,:,:,:], 1, (0,1))
         P, sites = get_normal_vector_3d(newplace)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min195D264, "Min-1.95", 2)
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_max, "Max", 2)
 
     plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
     plt.text(0.0, 0.0095, "y", fontsize=14)
@@ -416,23 +479,37 @@ if __name__ == '__main__':
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
 
-    # Aniso - ave
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    # Iso
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_iso_sites_step{special_step_distribution_iso}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
     else:
-        newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+        newplace = np.rot90(npy_file_iso[special_step_distribution_iso,:,:,:], 1, (0,1))
         P, sites = get_normal_vector_3d(newplace)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave", 0, slope_list_bias)
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_iso, "Iso", 0, slope_list_bias)
+
+    # Aniso - ave
+    # data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
+    # data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    # if os.path.exists(current_path + data_file_name_P):
+    #     P = np.load(current_path + data_file_name_P)
+    #     sites = np.load(current_path + data_file_name_sites)
+    # else:
+    #     newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+    #     P, sites = get_normal_vector_3d(newplace)
+    #     np.save(current_path + data_file_name_P, P)
+    #     np.save(current_path + data_file_name_sites, sites)
+
+    # slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave", 0, slope_list_bias)
 
     # Aniso - min
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
@@ -445,18 +522,18 @@ if __name__ == '__main__':
     slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min, "Min", 0, slope_list_bias)
 
     # Aniso - sum
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min195D264_P_step{special_step_distribution_min195D264}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min195D264_sites_step{special_step_distribution_min195D264}.npy'
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_max_P_step{special_step_distribution_max}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_max_sites_step{special_step_distribution_max}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
     else:
-        newplace = np.rot90(npy_file_aniso_min195D264[special_step_distribution_min195D264,:,:,:], 1, (0,1))
+        newplace = np.rot90(npy_file_aniso_max[special_step_distribution_max,:,:,:], 1, (0,1))
         P, sites = get_normal_vector_3d(newplace)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min195D264, "Min-1.95", 0, slope_list_bias)
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_max, "Max", 0, slope_list_bias)
 
     plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
     plt.text(0.0, 0.0095, "x", fontsize=14)
@@ -480,23 +557,37 @@ if __name__ == '__main__':
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
 
-    # Aniso - ave
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    # Iso
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_iso_sites_step{special_step_distribution_iso}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
     else:
-        newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+        newplace = np.rot90(npy_file_iso[special_step_distribution_iso,:,:,:], 1, (0,1))
         P, sites = get_normal_vector_3d(newplace)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave", 1, slope_list_bias)
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_iso, "Iso", 1, slope_list_bias_1)
+
+    # Aniso - ave
+    # data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
+    # data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    # if os.path.exists(current_path + data_file_name_P):
+    #     P = np.load(current_path + data_file_name_P)
+    #     sites = np.load(current_path + data_file_name_sites)
+    # else:
+    #     newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+    #     P, sites = get_normal_vector_3d(newplace)
+    #     np.save(current_path + data_file_name_P, P)
+    #     np.save(current_path + data_file_name_sites, sites)
+
+    # slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave", 1, slope_list_bias_1)
 
     # Aniso - min
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
@@ -506,21 +597,21 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min, "Min-1.95", 1, slope_list_bias)
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min, "Min", 1, slope_list_bias_1)
 
-    # Aniso - sum
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min195D264_P_step{special_step_distribution_min195D264}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min195D264_sites_step{special_step_distribution_min195D264}.npy'
+    # Aniso - max
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_max_P_step{special_step_distribution_max}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_max_sites_step{special_step_distribution_max}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
     else:
-        newplace = np.rot90(npy_file_aniso_min195D264[special_step_distribution_min195D264,:,:,:], 1, (0,1))
+        newplace = np.rot90(npy_file_aniso_max[special_step_distribution_max,:,:,:], 1, (0,1))
         P, sites = get_normal_vector_3d(newplace)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min195D264, "Min-1.95", 1, slope_list_bias)
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_max, "Max", 1, slope_list_bias_1)
 
     plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
     plt.text(0.0, 0.0095, "x", fontsize=14)
@@ -545,23 +636,37 @@ if __name__ == '__main__':
     ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
     ax.set_axisbelow('True')
 
-    # Aniso - ave
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    # Iso
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_iso_sites_step{special_step_distribution_iso}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
     else:
-        newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+        newplace = np.rot90(npy_file_iso[special_step_distribution_iso,:,:,:], 1, (0,1))
         P, sites = get_normal_vector_3d(newplace)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave", 2, slope_list_bias)
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_iso, "Iso", 2, slope_list_bias_2)
+
+    # Aniso - ave
+    # data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_ave_P_step{special_step_distribution_ave}.npy'
+    # data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_ave_sites_step{special_step_distribution_ave}.npy'
+    # if os.path.exists(current_path + data_file_name_P):
+    #     P = np.load(current_path + data_file_name_P)
+    #     sites = np.load(current_path + data_file_name_sites)
+    # else:
+    #     newplace = np.rot90(npy_file_aniso_ave[special_step_distribution_ave,:,:,:], 1, (0,1))
+    #     P, sites = get_normal_vector_3d(newplace)
+    #     np.save(current_path + data_file_name_P, P)
+    #     np.save(current_path + data_file_name_sites, sites)
+
+    # slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_ave, "Ave", 2, slope_list_bias_2)
 
     # Aniso - min
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_min_P_step{special_step_distribution_min}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_min_P_sites_step{special_step_distribution_min}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
@@ -571,21 +676,21 @@ if __name__ == '__main__':
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min, "Min", 2, slope_list_bias)
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min, "Min", 2, slope_list_bias_2)
 
-    # Aniso - sum
-    data_file_name_P = f'/normal_distribution_data/3D_normal_distribution_min195D264_P_step{special_step_distribution_min195D264}.npy'
-    data_file_name_sites = f'/normal_distribution_data/3D_normal_distribution_min195D264_sites_step{special_step_distribution_min195D264}.npy'
+    # Aniso - max
+    data_file_name_P = f'/3D_normal_distribution_data/3D_normal_distribution_max_P_step{special_step_distribution_max}.npy'
+    data_file_name_sites = f'/3D_normal_distribution_data/3D_normal_distribution_max_sites_step{special_step_distribution_max}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
     else:
-        newplace = np.rot90(npy_file_aniso_min195D264[special_step_distribution_min195D264,:,:,:], 1, (0,1))
+        newplace = np.rot90(npy_file_aniso_max[special_step_distribution_max,:,:,:], 1, (0,1))
         P, sites = get_normal_vector_3d(newplace)
         np.save(current_path + data_file_name_P, P)
         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_min195D264, "Min-1.95", 2, slope_list_bias)
+    slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_max, "Max", 2, slope_list_bias_2)
 
     plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
     plt.text(0.0, 0.0095, "y", fontsize=14)

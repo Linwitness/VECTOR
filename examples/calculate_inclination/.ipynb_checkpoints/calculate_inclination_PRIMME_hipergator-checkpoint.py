@@ -48,11 +48,11 @@ def calculate_inclination_data(input_path, output_path, step_list):
         test1.linear_main('inclination')
         P = test1.get_P()
         #Running time
-        print('For ' + input_path.split('/')[-1])
-        print('loop_times = ' + str(test1.loop_times))
-        print('running_time = %.2f' % test1.running_time)
-        print('running_core time = %.2f' % test1.running_coreTime)
-        print()
+        # print('For ' + input_path.spilt('/')[-1])
+        # print('loop_times = ' + str(test1.loop_times))
+        # print('running_time = %.2f' % test1.running_time)
+        # print('running_core time = %.2f' % test1.running_coreTime)
+        # print()
 
         # Output the inclination data
         P_final = np.array(P)
