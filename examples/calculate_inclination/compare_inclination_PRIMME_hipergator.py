@@ -83,11 +83,11 @@ def get_normal_vector_slope(P, sites, para_name, bias=None):
 
     return freqArray
 
-def compare_inclination_dsitribution(primme_data, spparks_data, step_list, output_path):
+def compare_inclination_dsitribution(primme_data, spparks_data, step_list, input_path, output_path):
 
     for i in step_list:
-        npy_file_s20k = np.load(spparks_data+f"{i}.npy")
-        npy_file_p20k = np.load(primme_data+f"{i}.npy")
+        npy_file_s20k = np.load(input_path+spparks_data+f"{i}.npy")
+        npy_file_p20k = np.load(input_path+primme_data+f"{i}.npy")
         # Initial container
         initial_grain_num = 20000
 
@@ -117,7 +117,7 @@ def compare_inclination_dsitribution(primme_data, spparks_data, step_list, outpu
         slope_list = get_normal_vector_slope(npy_file_p20k, sites_list, r"primme20k")
 
         plt.legend(loc=(-0.10,-0.3),fontsize=16,ncol=2)
-        plt.savefig(output_path + f"Images/normal_distribution_{primme_data}_step{i}.png", dpi=400,bbox_inches='tight')
+        plt.savefig(output_path + f"figures/normal_distribution_{primme_data}{i}.png", dpi=400,bbox_inches='tight')
 
 
 if __name__ == '__main__':
@@ -156,7 +156,8 @@ if __name__ == '__main__':
              [300,400,600,800,1600]]
 
     for i in range(len(input_name)):
-        compare_inclination_dsitribution(input_name[i],compare_data_name,step_lists[i],input_folder)
+        compare_inclination_dsitribution(input_name[i],compare_data_name,step_lists[i],input_folder,input_folder)
+        print(f"finish {input_name[i]}")
 
 
 
