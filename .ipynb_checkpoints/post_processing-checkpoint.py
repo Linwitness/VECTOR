@@ -151,7 +151,7 @@ def get_normal_vector(grain_structure_figure_one, grain_num):
     nx = grain_structure_figure_one.shape[0]
     ny = grain_structure_figure_one.shape[1]
     ng = np.max(grain_structure_figure_one)
-    cores = 8
+    cores = 1
     loop_times = 5
     P0 = grain_structure_figure_one
     R = np.zeros((nx,ny,2))
@@ -159,6 +159,10 @@ def get_normal_vector(grain_structure_figure_one, grain_num):
 
     smooth_class.linear_main("inclination")
     P = smooth_class.get_P()
+    # sites = smooth_class.get_gb_list(1)
+    # print(len(sites))
+    # for id in range(2,grain_num+1): sites += smooth_class.get_gb_list(id)
+    # print(len(sites))
     sites = smooth_class.get_all_gb_list()
     sites_together = []
     for id in range(len(sites)): sites_together += sites[id]
@@ -186,9 +190,9 @@ def get_normal_vector_3d(grain_structure_figure_one):
 
     return P, sites_together
 
-def get_normal_vector_slope(P, sites, step, para_name):
-    xLim = [0, 360]
-    binValue = 10.01
+def plot_normal_vector_distribution(P, sites, step, figure_path):
+    xLim = [0, 90]
+    binValue = 5.01
     binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
     xCor = np.linspace((xLim[0]+binValue/2),(xLim[1]-binValue/2),binNum)
 
@@ -197,56 +201,115 @@ def get_normal_vector_slope(P, sites, step, para_name):
     for sitei in sites:
         [i,j] = sitei
         dx,dy = myInput.get_grad(P,i,j)
-        degree.append(math.atan2(-dy, dx) + math.pi)
+        if dx == 0:
+            degree.append(math.pi/2)
+        elif dy >= 0:
+            degree.append(abs(math.atan(-dy/dx)))
+        elif dy < 0:
+            degree.append(abs(math.atan(dy/dx)))
     for i in range(len(degree)):
+        if (degree[i] < 0) or (degree[i] > math.pi/2):
+            print("Why??")
         freqArray[int((degree[i]/math.pi*180-xLim[0])/binValue)] += 1
-    freqArray = freqArray/sum(freqArray*binValue)
+    freqArray = freqArray/sum(freqArray)
 
-    # Plot
-    plt.plot(xCor/180*math.pi, freqArray, linewidth=2, label=para_name)
+    plt.clf()
+    fig = plt.subplots()
+    plt.plot(xCor, freqArray,'-o',linewidth=2,label='Distribution')
+    plt.xlabel("angle")
+    plt.ylabel("frequence")
+    plt.ylim([0, 0.1])
+    # fitting
+    fit_coeff = np.polyfit(xCor, freqArray, 1)
+    plt.plot(xCor, xCor*fit_coeff[0]+fit_coeff[1],'--',color='k',linewidth=2,label='fitting')
+    plt.legend()
+    plt.title(f"The slope of fitting line is {round(fit_coeff[0]*1e4,2)}e4")
 
-    return 0
+    if step < 10:
+        step_str = '000' + str(step)
+    elif step < 100:
+        step_str = '00' + str(step)
+    elif step < 1000:
+        step_str = '0' + str(step)
 
-def get_normal_vector_slope_3d(P, sites, step, para_name, angle_index=0, bias=None):
-    xLim = [0, 360]
-    binValue = 10.01
+    plt.savefig(f'results/{figure_path}_step.{step_str}.png',dpi=400,bbox_inches='tight')
+    return fit_coeff[0]
+
+def plot_normal_vector_distribution_3d(P, sites, step, figure_path):
+    xLim = [0, 90]
+    binValue = 5.01
+    binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
+    xCor = np.linspace((xLim[0]+binValue/2),(xLim[1]-binValue/2),binNum)
+
+    freqArray = np.zeros(binNum)
+    degree = []
+    # for graini in range(len(P_list)):
+    #     P = P_list[graini]
+    #     sites = sites_list[graini]
+    for sitei in sites:
+        [i,j,k] = sitei
+        dx,dy,dz = myInput.get_grad3d(P,i,j,k)
+        dy_fake = math.sqrt(dy**2 + dz**2)
+
+        degree.append(math.atan2(dy_fake, dx))
+    for i in range(len(degree)):
+        if degree[i] < -math.pi or degree[i] > math.pi: degree[i] += 2 * math.pi * (int(degree[i] < -math.pi) - 0.5) * 2
+        degree[i] = abs(degree[i])
+        if degree[i] > 0.5*math.pi: degree[i] = math.pi - degree[i]
+        if (degree[i] < 0) or (degree[i] > math.pi/2):
+            print("Why??")
+        freqArray[int((degree[i]/math.pi*180-xLim[0])/binValue)] += 1
+    freqArray = freqArray/sum(freqArray)
+
+    plt.clf()
+    fig = plt.subplots()
+    # plt.bar(xCor,freqArray,width=binValue*0.7)
+    plt.plot(xCor, freqArray,'-o',linewidth=2,label='Distribution')
+    plt.xlabel("angle")
+    plt.ylabel("frequence")
+    plt.ylim([0, 0.15])
+    # fitting
+    fit_coeff = np.polyfit(xCor, freqArray, 1)
+    plt.plot(xCor, xCor*fit_coeff[0]+fit_coeff[1],'--',color='k',linewidth=2,label='fitting')
+    plt.legend()
+    plt.title(f"The slope of fitting line is {round(fit_coeff[0]*1e4,2)}e4")
+
+    if step < 10:
+        step_str = '000' + str(step)
+    elif step < 100:
+        step_str = '00' + str(step)
+    elif step < 1000:
+        step_str = '0' + str(step)
+
+    plt.savefig(f'results/{figure_path}_step.{step_str}.png',dpi=400,bbox_inches='tight')
+    return fit_coeff[0]
+
+def get_normal_vector_slope(P, sites, step):
+    xLim = [0, 90]
+    binValue = 5.01
     binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
     xCor = np.linspace((xLim[0]+binValue/2),(xLim[1]-binValue/2),binNum)
 
     freqArray = np.zeros(binNum)
     degree = []
     for sitei in sites:
-        [i,j,k] = sitei
-        dx,dy,dz = myInput.get_grad3d(P,i,j,k)
-        if angle_index == 0:
-            dx_fake = dx
-            dy_fake = dy
-        elif angle_index == 1:
-            dx_fake = dx
-            dy_fake = dz
-        elif angle_index == 2:
-            dx_fake = dy
-            dy_fake = dz
+        [i,j] = sitei
+        dx,dy = myInput.get_grad(P,i,j)
+        if dx == 0:
+            degree.append(math.pi/2)
+        elif dy >= 0:
+            degree.append(abs(math.atan(-dy/dx)))
+        elif dy < 0:
+            degree.append(abs(math.atan(dy/dx)))
+    for i in range(len(degree)):
+        if (degree[i] < 0) or (degree[i] > math.pi/2):
+            print("Why??")
+        freqArray[int((degree[i]/math.pi*180-xLim[0])/binValue)] += 1
+    freqArray = freqArray/sum(freqArray)
 
-        # Normalize
-        if math.sqrt(dy_fake**2+dx_fake**2) < 1e-5: continue
-        dy_fake_norm = dy_fake / math.sqrt(dy_fake**2+dx_fake**2)
-        dx_fake_norm = dx_fake / math.sqrt(dy_fake**2+dx_fake**2)
-
-        degree.append(math.atan2(-dy_fake_norm, dx_fake_norm) + math.pi)
-    for n in range(len(degree)):
-        freqArray[int((degree[n]/math.pi*180-xLim[0])/binValue)] += 1
-    freqArray = freqArray/sum(freqArray*binValue)
-
-    if bias is not None:
-        freqArray = freqArray + bias
-        freqArray = freqArray/sum(freqArray*binValue)
-
-    # Plot
-    plt.plot(np.append(xCor,xCor[0])/180*math.pi, np.append(freqArray,freqArray[0]),linewidth=2,label=para_name)
-
-    return freqArray
-
+    # fitting
+    fit_coeff = np.polyfit(xCor, freqArray, 1)
+    return fit_coeff[0]
 
 
 
