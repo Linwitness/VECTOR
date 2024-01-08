@@ -234,11 +234,11 @@ if __name__ == '__main__':
     # TJ_energy_type_099 = "0.99"
 
     # energy_function = "Cos"
-    energy_function = "CosMax1"
+    energy_function = "Cosmin1"
     npy_file_name_iso = "p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066.npy"
-    npy_file_name_aniso_070 = f"pz_aveE_20000_{energy_function}_delta{TJ_energy_type_070}_J1_refer_1_0_0_seed56689_kt0.66.npy"
-    npy_file_name_aniso_080 = f"pz_aveE_20000_{energy_function}_delta{TJ_energy_type_080}_J1_refer_1_0_0_seed56689_kt0.66.npy"
-    npy_file_name_aniso_090 = f"pz_aveE_20000_{energy_function}_delta{TJ_energy_type_090}_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    npy_file_name_aniso_070 = f"p_aveE_20000_{energy_function}_delta{TJ_energy_type_070}_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    npy_file_name_aniso_080 = f"p_aveE_20000_{energy_function}_delta{TJ_energy_type_080}_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    npy_file_name_aniso_090 = f"p_aveE_20000_{energy_function}_delta{TJ_energy_type_090}_J1_refer_1_0_0_seed56689_kt0.66.npy"
     # npy_file_name_aniso_095 = f"p_aveE_20000_{energy_function}_delta{TJ_energy_type_095}_J1_refer_1_0_0_seed56689_kt0.66.npy"
     # npy_file_name_aniso_099 = f"p_aveE_20000_{energy_function}_delta{TJ_energy_type_099}_J1_refer_1_0_0_seed56689_kt0.66.npy"
 
@@ -269,7 +269,7 @@ if __name__ == '__main__':
     grain_num_iso = np.zeros(step_num)
 
     # Calculate the number of grains
-    for i in range(step_num):
+    for i in range(11,step_num):
         grain_num_aniso_070[i] = len(set(npy_file_aniso_070[i,:].flatten()))
         grain_num_aniso_080[i] = len(set(npy_file_aniso_080[i,:].flatten()))
         grain_num_aniso_090[i] = len(set(npy_file_aniso_090[i,:].flatten()))
@@ -279,11 +279,11 @@ if __name__ == '__main__':
 
     expected_grain_num = 200
     special_step_distribution_070 = int(np.argmin(abs(grain_num_aniso_070 - expected_grain_num)))
-    special_step_distribution_080 = int(np.argmin(abs(grain_num_aniso_080 - expected_grain_num)))
-    special_step_distribution_090 = int(np.argmin(abs(grain_num_aniso_090 - expected_grain_num)))
-    # special_step_distribution_095 = int(np.argmin(abs(grain_num_aniso_095- expected_grain_num)))
-    # special_step_distribution_099 = int(np.argmin(abs(grain_num_aniso_099 - expected_grain_num)))
-    special_step_distribution_iso = int(np.argmin(abs(grain_num_iso - expected_grain_num)))
+    special_step_distribution_080 = int(np.argmin(abs(grain_num_aniso_080[11:] - expected_grain_num)))
+    special_step_distribution_090 = int(np.argmin(abs(grain_num_aniso_090[11:] - expected_grain_num)))
+    # special_step_distribution_095 = int(np.argmin(abs(grain_num_aniso_095[11:] - expected_grain_num)))
+    # special_step_distribution_099 = int(np.argmin(abs(grain_num_aniso_099[11:] - expected_grain_num)))
+    special_step_distribution_iso = int(np.argmin(abs(grain_num_iso[11:] - expected_grain_num)))
     print("Found time steps")
 
     # Aniso - iso
@@ -449,7 +449,7 @@ if __name__ == '__main__':
     plt.ylim([-0.05,1.0])
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-    plt.savefig(current_path + f"/figures/anisotropic_poly_pz_20k_aspect_ratio_{energy_function}.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + f"/figures/anisotropic_poly_20k_aspect_ratio_{energy_function}.png", dpi=400,bbox_inches='tight')
 
 
 
