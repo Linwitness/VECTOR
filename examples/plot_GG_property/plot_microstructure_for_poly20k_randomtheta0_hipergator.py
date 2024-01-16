@@ -52,12 +52,12 @@ if __name__ == '__main__':
     TJ_energy_type_max = "max"
     TJ_energy_type_consMax = "consMax"
 
-    npy_file_name_aniso_ave = f"p_ori_ave_{TJ_energy_type_ave}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
-    npy_file_name_aniso_consMin = f"pm_ori_ave_{TJ_energy_type_consMin}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
-    npy_file_name_aniso_sum = f"pm_ori_ave_{TJ_energy_type_sum}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
-    npy_file_name_aniso_min = f"pm_ori_ave_{TJ_energy_type_min}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
-    npy_file_name_aniso_max = f"pm_ori_ave_{TJ_energy_type_max}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
-    npy_file_name_aniso_consMax = f"pm_ori_ave_{TJ_energy_type_consMax}E_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy"
+    npy_file_name_aniso_ave = f"p_randomtheta0_{TJ_energy_type_ave}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    npy_file_name_aniso_consMin = f"p_randomtheta0_{TJ_energy_type_consMin}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    npy_file_name_aniso_sum = f"p_randomtheta0_{TJ_energy_type_sum}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    npy_file_name_aniso_min = f"p_randomtheta0_{TJ_energy_type_min}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    npy_file_name_aniso_max = f"p_randomtheta0_{TJ_energy_type_max}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    npy_file_name_aniso_consMax = f"p_randomtheta0_{TJ_energy_type_consMax}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
 
     # Initial data
     npy_file_aniso_ave = np.load(npy_file_folder + npy_file_name_aniso_ave)
@@ -78,12 +78,12 @@ if __name__ == '__main__':
     initial_grain_num = 20000
     step_num = npy_file_aniso_ave.shape[0]
 
-    special_step_distribution_ave = 11     #to get 2000 grains
-    special_step_distribution_consMin = 11 #to get 2000 grains
-    special_step_distribution_sum = 11     #to get 2000 grains
-    special_step_distribution_min = 30     #to get 2000 grains
-    special_step_distribution_max = 15     #to get 2000 grains
-    special_step_distribution_consMax = 11 #to get 2000 grains
+    special_step_distribution_ave = 12     #to get 2000 grains
+    special_step_distribution_consMin = 12 #to get 2000 grains
+    special_step_distribution_sum = 12     #to get 2000 grains
+    special_step_distribution_min = 22     #to get 2000 grains
+    special_step_distribution_max = 12     #to get 2000 grains
+    special_step_distribution_consMax = 13 #to get 2000 grains
 
     #special_step_distribution_ave = 334     # clear figure
     #special_step_distribution_consMin = 334 # clear figure
@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
 
     # Start microstructure figure
-    figure_path = current_path + "/figures/microstructure_poly20k"
+    figure_path = current_path + "/figures/microstructure_randomtheta0_poly20k"
     plot_structure_figure(special_step_distribution_min, npy_file_aniso_min[:,:,:,0], figure_path + "_min")
     plot_structure_figure(special_step_distribution_max, npy_file_aniso_max[:,:,:,0], figure_path + "_max")
     plot_structure_figure(special_step_distribution_ave, npy_file_aniso_ave[:,:,:,0], figure_path + "_ave")

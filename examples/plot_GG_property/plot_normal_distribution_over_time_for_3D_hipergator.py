@@ -94,11 +94,9 @@ def get_normal_vector_slope_3d(P, sites, step, para_name, angle_index=0, bias=No
 
     freqArray = np.zeros(binNum)
     degree = []
-    # degree_shadow = []
     for sitei in sites:
         [i,j,k] = sitei
         dx,dy,dz = myInput.get_grad3d(P,i,j,k)
-        # dy_fake = math.sqrt(dy**2 + dz**2)
         if angle_index == 0:
             dx_fake = dx
             dy_fake = dy
@@ -115,11 +113,8 @@ def get_normal_vector_slope_3d(P, sites, step, para_name, angle_index=0, bias=No
         dx_fake_norm = dx_fake / math.sqrt(dy_fake**2+dx_fake**2)
 
         degree.append(math.atan2(-dy_fake_norm, dx_fake_norm) + math.pi)
-        # degree_shadow.append([i,j,k,dz])
     for n in range(len(degree)):
         freqArray[int((degree[n]/math.pi*180-xLim[0])/binValue)] += 1
-        # if int((degree[n]/math.pi*180-xLim[0])/binValue) == 0:
-        #     print(f"loc: {degree_shadow[n][0]},{degree_shadow[n][1]},{degree_shadow[n][2]} : {degree[n]/np.pi*180} and {degree_shadow[n][3]}")
     freqArray = freqArray/sum(freqArray*binValue)
 
     if bias is not None:
@@ -255,7 +250,7 @@ if __name__ == '__main__':
 
     slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_max, "Max")
 
-    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
+    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=3)
     plt.text(0.0, 0.0095, "x", fontsize=14)
     plt.text(np.pi/2, 0.0095, "y", fontsize=14)
     plt.savefig(current_path + f"/figures/normal_distribution_3d_xy_{expected_grain_num}grains.png", dpi=400,bbox_inches='tight')
@@ -340,7 +335,7 @@ if __name__ == '__main__':
 
     slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_max, "Max", 1)
 
-    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
+    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=3)
     plt.text(0.0, 0.0095, "x", fontsize=14)
     plt.text(np.pi/2, 0.0095, "z", fontsize=14)
     plt.savefig(current_path + f"/figures/normal_distribution_3d_xz_{expected_grain_num}grains.png", dpi=400,bbox_inches='tight')
@@ -426,7 +421,7 @@ if __name__ == '__main__':
 
     slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_max, "Max", 2)
 
-    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
+    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=3)
     plt.text(0.0, 0.0095, "y", fontsize=14)
     plt.text(np.pi/2, 0.0095, "z", fontsize=14)
     plt.savefig(current_path + f"/figures/normal_distribution_3d_yz_{expected_grain_num}grains.png", dpi=400,bbox_inches='tight')
@@ -507,7 +502,7 @@ if __name__ == '__main__':
 
     slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_max, "Max", 0, slope_list_bias)
 
-    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
+    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=3)
     plt.text(0.0, 0.0095, "x", fontsize=14)
     plt.text(np.pi/2, 0.0095, "y", fontsize=14)
     plt.savefig(current_path + f"/figures/normal_distribution_3d_xy_{expected_grain_num}grains_after_removing_bias.png", dpi=400,bbox_inches='tight')
@@ -585,7 +580,7 @@ if __name__ == '__main__':
 
     slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_max, "Max", 1, slope_list_bias_1)
 
-    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
+    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=3)
     plt.text(0.0, 0.0095, "x", fontsize=14)
     plt.text(np.pi/2, 0.0095, "z", fontsize=14)
     plt.savefig(current_path + f"/figures/normal_distribution_3d_xz_{expected_grain_num}grains_after_removing_bias.png", dpi=400,bbox_inches='tight')
@@ -664,7 +659,7 @@ if __name__ == '__main__':
 
     slope_list = get_normal_vector_slope_3d(P, sites, special_step_distribution_max, "Max", 2, slope_list_bias_2)
 
-    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=2)
+    plt.legend(loc=(0.05,-0.25),fontsize=14, ncol=3)
     plt.text(0.0, 0.0095, "y", fontsize=14)
     plt.text(np.pi/2, 0.0095, "z", fontsize=14)
     plt.savefig(current_path + f"/figures/normal_distribution_3d_yz_{expected_grain_num}grains_after_removing_bias.png", dpi=400,bbox_inches='tight')
