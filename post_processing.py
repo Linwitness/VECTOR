@@ -8,9 +8,6 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from tqdm import tqdm
-# import sys
-# current_path = './'
-# sys.path.append(current_path)
 import PACKAGE_MP_3DLinear as smooth_3d
 import PACKAGE_MP_Linear as smooth
 import myInput
@@ -147,7 +144,7 @@ def dump2img(dump_path, num_steps=None, extract_data='type'):
 
     return time_steps, grain_structure_figure
 
-def get_normal_vector(grain_structure_figure_one, grain_num):
+def get_normal_vector(grain_structure_figure_one):
     nx = grain_structure_figure_one.shape[0]
     ny = grain_structure_figure_one.shape[1]
     ng = np.max(grain_structure_figure_one)
@@ -164,7 +161,7 @@ def get_normal_vector(grain_structure_figure_one, grain_num):
     for id in range(len(sites)): sites_together += sites[id]
     print(f"Total num of GB sites: {len(sites_together)}")
 
-    return P, sites_together
+    return P, sites_together, sites
 
 def get_normal_vector_3d(grain_structure_figure_one):
     nx = grain_structure_figure_one.shape[0]
@@ -184,9 +181,9 @@ def get_normal_vector_3d(grain_structure_figure_one):
     for id in range(len(sites)): sites_together += sites[id]
     print(f"Total num of GB sites: {len(sites_together)}")
 
-    return P, sites_together
+    return P, sites_together, sites
 
-def get_normal_vector_slope(P, sites, step, para_name):
+def get_normal_vector_slope(P, sites, step, para_name, bias=None):
     xLim = [0, 360]
     binValue = 10.01
     binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
@@ -202,6 +199,10 @@ def get_normal_vector_slope(P, sites, step, para_name):
         freqArray[int((degree[i]/math.pi*180-xLim[0])/binValue)] += 1
     freqArray = freqArray/sum(freqArray*binValue)
 
+    # bias situation
+    if bias is not None:
+        freqArray = freqArray + bias
+        freqArray = freqArray/sum(freqArray*binValue)
     # Plot
     plt.plot(xCor/180*math.pi, freqArray, linewidth=2, label=para_name)
 
@@ -247,7 +248,42 @@ def get_normal_vector_slope_3d(P, sites, step, para_name, angle_index=0, bias=No
 
     return freqArray
 
+def simple_magnitude(freqArray):
+    # Get the simple anisotropic magnitude from inclination distribution
 
+    xLim = [0, 360]
+    binValue = 10.01
+    binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
+    # prefect circle
+    freqArray_circle = np.ones(binNum)
+    freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
+    # max/average(difference between currect distribuition and perfect distribution) over average of perfect distribution
+    magnitude_max = np.max(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
+    magnitude_ave = np.average(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
+    # standard
+    magnitude_stan = np.sqrt(np.sum((abs(freqArray - freqArray_circle)/np.average(freqArray_circle) - magnitude_ave)**2)/binNum)
+
+    return magnitude_ave, magnitude_stan
+
+
+def calculate_expected_step(input_npy_data, expected_grain_num=200):
+    # calculate the timestep for expected_grain_num in npy dataset
+
+    num_input = len(input_npy_data)
+    special_step_distribution = np.zeros(num_input)
+    microstructure_list = []
+
+    for input_i in range(num_input):
+        npy_data = np.load(input_npy_data[input_i])
+        step_num = npy_data.shape[0]
+        grain_num_list = np.zeros(step_num)
+        for i in tqdm(range(step_num)):
+            grain_num_list[i] = len(set(npy_data[i,:].flatten()))
+        special_step_distribution[input_i] = int(np.argmin(abs(grain_num_list - expected_grain_num)))
+        microstructure_list.append(npy_data[int(special_step_distribution[input_i]),:])
+    print("> Step calculation done")
+
+    return special_step_distribution, microstructure_list
 
 
 
