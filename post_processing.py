@@ -74,8 +74,10 @@ def plot_structure_video(timestep, structure_figure, figure_path):
     writer = animation.FFMpegWriter(fps=math.floor(len(timestep)/5), bitrate=10000)
     ani.save(figure_path+".mp4",writer=writer)
 
-def dump2img(dump_path, num_steps=None, extract_data='type'):
-    # Create grain structure figure from dump file with site ID
+def dump2img(dump_path, num_steps=None, extract_data='type', extract_step=None):
+    # Create grain structure figure from dump file with site ID.
+    # if extarct_step is not None, function will extarct one step figrue (extract_step),
+    # only work for dump type 1 currently
 
     # dump file (type 0) or dump.* files (type 1)
     if os.path.exists(dump_path+".dump"):
@@ -120,9 +122,29 @@ def dump2img(dump_path, num_steps=None, extract_data='type'):
                 if line_num==entry_length-1:
                     grain_structure_figure.append(entry)
     elif dump_type == 1:
-        dump_item = 0
-        dump_file_name_item = dump_path+".dump."+str(int(dump_item))
-        while os.path.exists(dump_file_name_item):
+        if extract_step == None:
+            dump_item = 0
+            dump_file_name_item = dump_path+".dump."+str(int(dump_item))
+            while os.path.exists(dump_file_name_item):
+                with open(dump_file_name_item) as file:
+                    for i, line in tqdm(enumerate(file), "EXTRACTING SPPARKS DUMP (%s.dump)"%dump_file_name_item[-20:], total=entry_length):
+                        if i==0: entry = np.zeros(box_size) #set the energy figure matrix
+                        if i==1: time_steps.append(int(float(line.split()[-1]))) #log the time step
+                        atom_num = i-9 #track which atom line we're on
+                        if atom_num>=0 and atom_num<num_sites:
+                            line_split = np.array(line.split(), dtype=float)
+                            site_x = int(line_split[name_vars.index('x')])
+                            site_y = int(line_split[name_vars.index('y')])
+                            site_z = int(line_split[name_vars.index('z')])
+                            entry[site_x,site_y,site_z] = line_split[name_vars.index(extract_data)] #record valid atom lines
+                        if i==entry_length-1: grain_structure_figure.append(entry)
+                # jump to next dump.*
+                dump_item += 1
+                dump_file_name_item = dump_path+".dump."+str(int(dump_item))
+        else:
+            # extarct only specific steps
+            dump_item = int(extract_step)
+            dump_file_name_item = dump_path+".dump."+str(int(dump_item))
             with open(dump_file_name_item) as file:
                 for i, line in tqdm(enumerate(file), "EXTRACTING SPPARKS DUMP (%s.dump)"%dump_file_name_item[-20:], total=entry_length):
                     if i==0: entry = np.zeros(box_size) #set the energy figure matrix
@@ -135,9 +157,6 @@ def dump2img(dump_path, num_steps=None, extract_data='type'):
                         site_z = int(line_split[name_vars.index('z')])
                         entry[site_x,site_y,site_z] = line_split[name_vars.index(extract_data)] #record valid atom lines
                     if i==entry_length-1: grain_structure_figure.append(entry)
-            # jump to next dump.*
-            dump_item += 1
-            dump_file_name_item = dump_path+".dump."+str(int(dump_item))
     else: print("wrong dump file input!")
     grain_structure_figure = np.array(grain_structure_figure)
     time_steps = np.array(time_steps)
@@ -284,6 +303,99 @@ def calculate_expected_step(input_npy_data, expected_grain_num=200):
     print("> Step calculation done")
 
     return special_step_distribution, microstructure_list
+
+
+def get_poly_center(micro_matrix, step):
+    # Get the center of all non-periodic grains in matrix
+    num_grains = int(np.max(micro_matrix[step,:]))
+    center_list = np.zeros((num_grains,2))
+    sites_num_list = np.zeros(num_grains)
+    ave_radius_list = np.zeros(num_grains)
+    coord_refer_i = np.zeros((micro_matrix.shape[1], micro_matrix.shape[2]))
+    coord_refer_j = np.zeros((micro_matrix.shape[1], micro_matrix.shape[2]))
+    for i in range(micro_matrix.shape[1]):
+        for j in range(micro_matrix.shape[2]):
+            coord_refer_i[i,j] = i
+            coord_refer_j[i,j] = j
+
+    table = micro_matrix[step,:,:,0]
+    for i in range(num_grains):
+        sites_num_list[i] = np.sum(table == i+1)
+
+        if (sites_num_list[i] < 500) or \
+           (np.max(coord_refer_i[table == i+1]) - np.min(coord_refer_i[table == i+1]) == micro_matrix.shape[1]) or \
+           (np.max(coord_refer_j[table == i+1]) - np.min(coord_refer_j[table == i+1]) == micro_matrix.shape[2]): # grains on bc are ignored
+          center_list[i, 0] = 0
+          center_list[i, 1] = 0
+          sites_num_list[i] == 0
+        else:
+          center_list[i, 0] = np.sum(coord_refer_i[table == i+1]) / sites_num_list[i]
+          center_list[i, 1] = np.sum(coord_refer_j[table == i+1]) / sites_num_list[i]
+    ave_radius_list = np.sqrt(sites_num_list / np.pi)
+
+    return center_list, ave_radius_list
+
+def get_poly_statistical_radius(micro_matrix, sites_list, step):
+    # Get the max offset of average radius and real radius
+    center_list, ave_radius_list = get_poly_center(micro_matrix, step)
+    num_grains = int(np.max(micro_matrix[step,:]))
+
+    max_radius_offset_list = np.zeros(num_grains)
+    for n in range(num_grains):
+        center = center_list[n]
+        ave_radius = ave_radius_list[n]
+        sites = sites_list[n]
+
+        if ave_radius != 0:
+          for sitei in sites:
+              [i,j] = sitei
+              current_radius = np.sqrt((i - center[0])**2 + (j - center[1])**2)
+              radius_offset = abs(current_radius - ave_radius)
+              if radius_offset > max_radius_offset_list[n]: max_radius_offset_list[n] = radius_offset
+
+          max_radius_offset_list[n] = max_radius_offset_list[n] / ave_radius
+
+    max_radius_offset = np.average(max_radius_offset_list[max_radius_offset_list!=0])
+    area_list = np.pi*ave_radius_list*ave_radius_list
+    if np.sum(area_list) == 0: max_radius_offset = 0
+    else: max_radius_offset = np.sum(max_radius_offset_list * area_list) / np.sum(area_list)
+
+    return max_radius_offset
+
+def get_poly_statistical_ar(micro_matrix, step):
+    # Get the average aspect ratio
+    num_grains = int(np.max(micro_matrix[step,:]))
+    sites_num_list = np.zeros(num_grains)
+    coord_refer_i = np.zeros((micro_matrix.shape[1], micro_matrix.shape[2]))
+    coord_refer_j = np.zeros((micro_matrix.shape[1], micro_matrix.shape[2]))
+    for i in range(micro_matrix.shape[1]):
+        for j in range(micro_matrix.shape[2]):
+            coord_refer_i[i,j] = i
+            coord_refer_j[i,j] = j
+
+    aspect_ratio_i = np.zeros((num_grains,2))
+    aspect_ratio_j = np.zeros((num_grains,2))
+    aspect_ratio = np.zeros(num_grains)
+    table = micro_matrix[step,:,:,0]
+
+    aspect_ratio_i_list = [[] for _ in range(int(num_grains))]
+    aspect_ratio_j_list = [[] for _ in range(int(num_grains))]
+    for i in range(micro_matrix.shape[1]):
+        for j in range(micro_matrix.shape[2]):
+            grain_id = int(table[i][j]-1)
+            sites_num_list[grain_id] +=1
+            aspect_ratio_i_list[grain_id].append(coord_refer_i[i][j])
+            aspect_ratio_j_list[grain_id].append(coord_refer_j[i][j])
+
+    for i in range(num_grains):
+        aspect_ratio_i[i, 0] = len(list(set(aspect_ratio_i_list[i])))
+        aspect_ratio_j[i, 1] = len(list(set(aspect_ratio_j_list[i])))
+        if aspect_ratio_j[i, 1] == 0: aspect_ratio[i] = 0
+        else: aspect_ratio[i] = aspect_ratio_i[i, 0] / aspect_ratio_j[i, 1]
+
+    aspect_ratio = np.sum(aspect_ratio * sites_num_list) / np.sum(sites_num_list)
+
+    return aspect_ratio
 
 
 
