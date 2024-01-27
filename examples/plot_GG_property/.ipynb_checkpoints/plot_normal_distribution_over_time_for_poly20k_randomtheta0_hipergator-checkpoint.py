@@ -235,27 +235,27 @@ if __name__ == '__main__':
 
 
     npy_file_name_iso = "p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066.npy"
-    npy_file_name_aniso_ave = f"pm_randomtheta0_{TJ_energy_type_ave}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
-    npy_file_name_aniso_consMin = f"pm_randomtheta0_{TJ_energy_type_consMin}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
-    npy_file_name_aniso_sum = f"pm_randomtheta0_{TJ_energy_type_sum}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
-    npy_file_name_aniso_min = f"pm_randomtheta0_{TJ_energy_type_min}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
-    npy_file_name_aniso_max = f"pm_randomtheta0_{TJ_energy_type_max}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
-    npy_file_name_aniso_consMax = f"pm_randomtheta0_{TJ_energy_type_consMax}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    npy_file_name_aniso_ave = f"p_randomtheta0_{TJ_energy_type_ave}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    # npy_file_name_aniso_consMin = f"pm_randomtheta0_{TJ_energy_type_consMin}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    # npy_file_name_aniso_sum = f"pm_randomtheta0_{TJ_energy_type_sum}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    npy_file_name_aniso_min = f"p_randomtheta0_{TJ_energy_type_min}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    npy_file_name_aniso_max = f"p_randomtheta0_{TJ_energy_type_max}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
+    # npy_file_name_aniso_consMax = f"pm_randomtheta0_{TJ_energy_type_consMax}E_20000_delta0.6_J1_refer_1_0_0_seed56689_kt0.66.npy"
 
     # Initial data
     npy_file_iso = np.load(npy_file_folder + npy_file_name_iso)
     npy_file_aniso_ave = np.load(npy_file_folder + npy_file_name_aniso_ave)
-    npy_file_aniso_consMin = np.load(npy_file_folder + npy_file_name_aniso_consMin)
-    npy_file_aniso_sum = np.load(npy_file_folder + npy_file_name_aniso_sum)
+    # npy_file_aniso_consMin = np.load(npy_file_folder + npy_file_name_aniso_consMin)
+    # npy_file_aniso_sum = np.load(npy_file_folder + npy_file_name_aniso_sum)
     npy_file_aniso_min = np.load(npy_file_folder + npy_file_name_aniso_min)
     npy_file_aniso_max = np.load(npy_file_folder + npy_file_name_aniso_max)
-    npy_file_aniso_consMax = np.load(npy_file_folder + npy_file_name_aniso_consMax)
+    # npy_file_aniso_consMax = np.load(npy_file_folder + npy_file_name_aniso_consMax)
     print(f"The ave data size is: {npy_file_aniso_ave.shape}")
-    print(f"The consMin data size is: {npy_file_aniso_consMin.shape}")
-    print(f"The sum data size is: {npy_file_aniso_sum.shape}")
+    # print(f"The consMin data size is: {npy_file_aniso_consMin.shape}")
+    # print(f"The sum data size is: {npy_file_aniso_sum.shape}")
     print(f"The min data size is: {npy_file_aniso_min.shape}")
     print(f"The max data size is: {npy_file_aniso_max.shape}")
-    print(f"The consMax data size is: {npy_file_aniso_consMax.shape}")
+    # print(f"The consMax data size is: {npy_file_aniso_consMax.shape}")
     print(f"The iso data size is: {npy_file_iso.shape}")
     print("READING DATA DONE")
 
@@ -271,17 +271,17 @@ if __name__ == '__main__':
     special_step_distribution_iso = 10#to get 2000 grains
     grain_size_distribution_ave = np.zeros(bin_num)
     special_step_distribution_ave = 12 #to get 2000 grains
-    grain_size_distribution_consMin = np.zeros(bin_num)
-    special_step_distribution_consMin = 12#to get 2000 grains
-    grain_size_distribution_sum = np.zeros(bin_num)
-    special_step_distribution_sum = 12#to get 2000 grains
+    # grain_size_distribution_consMin = np.zeros(bin_num)
+    # special_step_distribution_consMin = 12#to get 2000 grains
+    # grain_size_distribution_sum = np.zeros(bin_num)
+    # special_step_distribution_sum = 12#to get 2000 grains
     grain_size_distribution_iso = np.zeros(bin_num)
     grain_size_distribution_min = np.zeros(bin_num)
     special_step_distribution_min = 22#to get 2000 grains
     grain_size_distribution_max = np.zeros(bin_num)
     special_step_distribution_max = 12#to get 2000 grains
-    grain_size_distribution_consMax = np.zeros(bin_num)
-    special_step_distribution_consMax = 13#to get 2000 grains
+    # grain_size_distribution_consMax = np.zeros(bin_num)
+    # special_step_distribution_consMax = 13#to get 2000 grains
 
 
     # Get bias from kT test
@@ -337,8 +337,8 @@ if __name__ == '__main__':
     aniso_mag_stand = np.zeros(6)
 
     # Aniso - min
-    data_file_name_P = f'/normal_distribution_data/normal_distribution_rdt0m_min_P_step{special_step_distribution_min}.npy'
-    data_file_name_sites = f'/normal_distribution_data/normal_distribution_rdt0m_min_sites_step{special_step_distribution_min}.npy'
+    data_file_name_P = f'/normal_distribution_data/normal_distribution_rdt0_min_P_step{special_step_distribution_min}.npy'
+    data_file_name_sites = f'/normal_distribution_data/normal_distribution_rdt0_min_sites_step{special_step_distribution_min}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
@@ -352,8 +352,8 @@ if __name__ == '__main__':
     aniso_mag[0], aniso_mag_stand[0] = simple_magnitude(slope_list)
 
     # Aniso - max
-    data_file_name_P = f'/normal_distribution_data/normal_distribution_rdt0m_max_P_step{special_step_distribution_max}.npy'
-    data_file_name_sites = f'/normal_distribution_data/normal_distribution_rdt0m_max_sites_step{special_step_distribution_max}.npy'
+    data_file_name_P = f'/normal_distribution_data/normal_distribution_rdt0_max_P_step{special_step_distribution_max}.npy'
+    data_file_name_sites = f'/normal_distribution_data/normal_distribution_rdt0_max_sites_step{special_step_distribution_max}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
@@ -367,8 +367,8 @@ if __name__ == '__main__':
     aniso_mag[1], aniso_mag_stand[1] = simple_magnitude(slope_list)
 
     # Aniso - ave
-    data_file_name_P = f'/normal_distribution_data/normal_distribution_rdt0m_ave_P_step{special_step_distribution_ave}.npy'
-    data_file_name_sites = f'/normal_distribution_data/normal_distribution_rdt0m_ave_sites_step{special_step_distribution_ave}.npy'
+    data_file_name_P = f'/normal_distribution_data/normal_distribution_rdt0_ave_P_step{special_step_distribution_ave}.npy'
+    data_file_name_sites = f'/normal_distribution_data/normal_distribution_rdt0_ave_sites_step{special_step_distribution_ave}.npy'
     if os.path.exists(current_path + data_file_name_P):
         P = np.load(current_path + data_file_name_P)
         sites = np.load(current_path + data_file_name_sites)
@@ -381,50 +381,50 @@ if __name__ == '__main__':
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_ave, "Ave",slope_list_bias)
     aniso_mag[2], aniso_mag_stand[2] = simple_magnitude(slope_list)
 
-    # Aniso - sum
-    data_file_name_P = f'/normal_distribution_data/normal_distribution_rdt0m_sum_P_step{special_step_distribution_sum}.npy'
-    data_file_name_sites = f'/normal_distribution_data/normal_distribution_rdt0m_sum_sites_step{special_step_distribution_sum}.npy'
-    if os.path.exists(current_path + data_file_name_P):
-        P = np.load(current_path + data_file_name_P)
-        sites = np.load(current_path + data_file_name_sites)
-    else:
-        newplace = np.rot90(npy_file_aniso_sum[special_step_distribution_sum,:,:,:], 1, (0,1))
-        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        np.save(current_path + data_file_name_P, P)
-        np.save(current_path + data_file_name_sites, sites)
+#     # Aniso - sum
+#     data_file_name_P = f'/normal_distribution_data/normal_distribution_rdt0m_sum_P_step{special_step_distribution_sum}.npy'
+#     data_file_name_sites = f'/normal_distribution_data/normal_distribution_rdt0m_sum_sites_step{special_step_distribution_sum}.npy'
+#     if os.path.exists(current_path + data_file_name_P):
+#         P = np.load(current_path + data_file_name_P)
+#         sites = np.load(current_path + data_file_name_sites)
+#     else:
+#         newplace = np.rot90(npy_file_aniso_sum[special_step_distribution_sum,:,:,:], 1, (0,1))
+#         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+#         np.save(current_path + data_file_name_P, P)
+#         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_sum, "Sum",slope_list_bias)
-    aniso_mag[3], aniso_mag_stand[3] = simple_magnitude(slope_list)
+#     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_sum, "Sum",slope_list_bias)
+#     aniso_mag[3], aniso_mag_stand[3] = simple_magnitude(slope_list)
 
-    # Aniso - consMin
-    data_file_name_P = f'/normal_distribution_data/normal_distribution_rdt0m_consMin_P_step{special_step_distribution_consMin}.npy'
-    data_file_name_sites = f'/normal_distribution_data/normal_distribution_rdt0m_consMin_P_sites_step{special_step_distribution_consMin}.npy'
-    if os.path.exists(current_path + data_file_name_P):
-        P = np.load(current_path + data_file_name_P)
-        sites = np.load(current_path + data_file_name_sites)
-    else:
-        newplace = np.rot90(npy_file_aniso_consMin[special_step_distribution_consMin,:,:,:], 1, (0,1))
-        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        np.save(current_path + data_file_name_P, P)
-        np.save(current_path + data_file_name_sites, sites)
+#     # Aniso - consMin
+#     data_file_name_P = f'/normal_distribution_data/normal_distribution_rdt0m_consMin_P_step{special_step_distribution_consMin}.npy'
+#     data_file_name_sites = f'/normal_distribution_data/normal_distribution_rdt0m_consMin_P_sites_step{special_step_distribution_consMin}.npy'
+#     if os.path.exists(current_path + data_file_name_P):
+#         P = np.load(current_path + data_file_name_P)
+#         sites = np.load(current_path + data_file_name_sites)
+#     else:
+#         newplace = np.rot90(npy_file_aniso_consMin[special_step_distribution_consMin,:,:,:], 1, (0,1))
+#         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+#         np.save(current_path + data_file_name_P, P)
+#         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMin, "CMin",slope_list_bias)
-    aniso_mag[4], aniso_mag_stand[4] = simple_magnitude(slope_list)
+#     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMin, "CMin",slope_list_bias)
+#     aniso_mag[4], aniso_mag_stand[4] = simple_magnitude(slope_list)
 
-    # Aniso - consMax
-    data_file_name_P = f'/normal_distribution_data/normal_distribution_rdt0m_consMax_P_step{special_step_distribution_consMax}.npy'
-    data_file_name_sites = f'/normal_distribution_data/normal_distribution_rdt0m_consMax_sites_step{special_step_distribution_consMax}.npy'
-    if os.path.exists(current_path + data_file_name_P):
-        P = np.load(current_path + data_file_name_P)
-        sites = np.load(current_path + data_file_name_sites)
-    else:
-        newplace = np.rot90(npy_file_aniso_consMax[special_step_distribution_consMax,:,:,:], 1, (0,1))
-        P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-        np.save(current_path + data_file_name_P, P)
-        np.save(current_path + data_file_name_sites, sites)
+#     # Aniso - consMax
+#     data_file_name_P = f'/normal_distribution_data/normal_distribution_rdt0m_consMax_P_step{special_step_distribution_consMax}.npy'
+#     data_file_name_sites = f'/normal_distribution_data/normal_distribution_rdt0m_consMax_sites_step{special_step_distribution_consMax}.npy'
+#     if os.path.exists(current_path + data_file_name_P):
+#         P = np.load(current_path + data_file_name_P)
+#         sites = np.load(current_path + data_file_name_sites)
+#     else:
+#         newplace = np.rot90(npy_file_aniso_consMax[special_step_distribution_consMax,:,:,:], 1, (0,1))
+#         P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+#         np.save(current_path + data_file_name_P, P)
+#         np.save(current_path + data_file_name_sites, sites)
 
-    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMax, "CMax",slope_list_bias)
-    aniso_mag[5], aniso_mag_stand[5] = simple_magnitude(slope_list)
+#     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_consMax, "CMax",slope_list_bias)
+#     aniso_mag[5], aniso_mag_stand[5] = simple_magnitude(slope_list)
 
     # Aniso - iso
     data_file_name_P = f'/normal_distribution_data/normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
@@ -441,124 +441,21 @@ if __name__ == '__main__':
     slope_list = get_normal_vector_slope(P, sites, special_step_distribution_iso, "Iso",slope_list_bias)
 
     plt.legend(loc=(-0.12,-0.35),fontsize=16,ncol=3)
-    plt.savefig(current_path + "/figures/normal_distribution_polym_randomtheta0_20k_after_removing_bias.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + "/figures/normal_distribution_poly_randomtheta0_20k_after_removing_bias.png", dpi=400,bbox_inches='tight')
 
-    # PLot magnitude of anisotropy
-    # data_file_name_aniso_mag = f'/normal_distribution_data/aniso_magnitude_poly_20k_energy_type.npz'
-    # if os.path.exists(current_path + data_file_name_aniso_mag):
-    #     data_file_aniso_mag = np.load(current_path + data_file_name_aniso_mag)
-    #     aniso_mag_min=data_file_aniso_mag['aniso_mag_min']
-    #     aniso_mag_max=data_file_aniso_mag['aniso_mag_max']
-    #     aniso_mag_ave=data_file_aniso_mag['aniso_mag_ave']
-    #     aniso_mag_sum=data_file_aniso_mag['aniso_mag_sum']
-    #     aniso_mag_consMin=data_file_aniso_mag['aniso_mag_consMin']
-    #     aniso_mag_consMax=data_file_aniso_mag['aniso_mag_consMax']
-    # else:
-    #     aniso_mag_min = np.zeros(step_num)
-    #     aniso_mag_max = np.zeros(step_num)
-    #     aniso_mag_ave = np.zeros(step_num)
-    #     aniso_mag_sum = np.zeros(step_num)
-    #     aniso_mag_consMin = np.zeros(step_num)
-    #     aniso_mag_consMax = np.zeros(step_num)
-    #     cores = 16
-    #     loop_times = 5
-    #     for i in tqdm(range(step_num)):
-    #         # newplace = np.rot90(npy_file_aniso_min[i,:,:,:], 1, (0,1))
-    #         # newplace = npy_file_aniso_min[i,:,:,:]
-    #         # nx = newplace.shape[0]
-    #         # ny = newplace.shape[1]
-    #         # ng = np.max(newplace)
-    #         # R = np.zeros((nx,ny,2))
-    #         # P0 = newplace
-    #         # smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-    #         # sites_list = smooth_class.get_all_gb_list()
-    #         # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-    #         aniso_mag_min[i] = get_poly_statistical_ar(npy_file_aniso_min, i)
-
-    #         # newplace = np.rot90(npy_file_aniso_max[i,:,:,:], 1, (0,1))
-    #         # newplace = npy_file_aniso_max[i,:,:,:]
-    #         # nx = newplace.shape[0]
-    #         # ny = newplace.shape[1]
-    #         # ng = np.max(newplace)
-    #         # R = np.zeros((nx,ny,2))
-    #         # P0 = newplace
-    #         # smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-    #         # sites_list = smooth_class.get_all_gb_list()
-    #         # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-    #         aniso_mag_max[i] = get_poly_statistical_ar(npy_file_aniso_max, i)
-
-    #         # newplace = np.rot90(npy_file_aniso_ave[i,:,:,:], 1, (0,1))
-    #         # newplace = npy_file_aniso_ave[i,:,:,:]
-    #         # nx = newplace.shape[0]
-    #         # ny = newplace.shape[1]
-    #         # ng = np.max(newplace)
-    #         # R = np.zeros((nx,ny,2))
-    #         # P0 = newplace
-    #         # smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-    #         # sites_list = smooth_class.get_all_gb_list()
-    #         # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-    #         aniso_mag_ave[i] = get_poly_statistical_ar(npy_file_aniso_ave, i)
-
-    #         # newplace = np.rot90(npy_file_aniso_sum[i,:,:,:], 1, (0,1))
-    #         # newplace = npy_file_aniso_sum[i,:,:,:]
-    #         # nx = newplace.shape[0]
-    #         # ny = newplace.shape[1]
-    #         # ng = np.max(newplace)
-    #         # R = np.zeros((nx,ny,2))
-    #         # P0 = newplace
-    #         # smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-    #         # sites_list = smooth_class.get_all_gb_list()
-    #         # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-    #         aniso_mag_sum[i] = get_poly_statistical_ar(npy_file_aniso_sum, i)
-
-    #         # newplace = np.rot90(npy_file_aniso_consMin[i,:,:,:], 1, (0,1))
-    #         # newplace = npy_file_aniso_consMin[i,:,:,:]
-    #         # nx = newplace.shape[0]
-    #         # ny = newplace.shape[1]
-    #         # ng = np.max(newplace)
-    #         # R = np.zeros((nx,ny,2))
-    #         # P0 = newplace
-    #         # smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-    #         # sites_list = smooth_class.get_all_gb_list()
-    #         # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-    #         aniso_mag_consMin[i] = get_poly_statistical_ar(npy_file_aniso_consMin, i)
-
-    #         # newplace = np.rot90(npy_file_aniso_consMax[i,:,:,:], 1, (0,1))
-    #         # newplace = npy_file_aniso_consMax[i,:,:,:]
-    #         # nx = newplace.shape[0]
-    #         # ny = newplace.shape[1]
-    #         # ng = np.max(newplace)
-    #         # R = np.zeros((nx,ny,2))
-    #         # P0 = newplace
-    #         # smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
-    #         # sites_list = smooth_class.get_all_gb_list()
-    #         # P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-    #         aniso_mag_consMax[i] = get_poly_statistical_ar(npy_file_aniso_consMax, i)
-    #     np.savez(current_path + data_file_name_aniso_mag, aniso_mag_min=aniso_mag_min,
-    #                                                       aniso_mag_max=aniso_mag_max,
-    #                                                       aniso_mag_ave=aniso_mag_ave,
-    #                                                       aniso_mag_sum=aniso_mag_sum,
-    #                                                       aniso_mag_consMin=aniso_mag_consMin,
-    #                                                       aniso_mag_consMax=aniso_mag_consMax)
-    plt.close()
-    fig = plt.figure(figsize=(5, 5))
-    # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_min, label='Min case', linewidth=2)
-    # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_max, label='Max case', linewidth=2)
-    # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_ave, label='Ave case', linewidth=2)
-    # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_sum, label='Sum case', linewidth=2)
-    # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_consMin, label='ConsMin case', linewidth=2)
-    # plt.plot(np.linspace(0,step_num,step_num)*30, aniso_mag_consMax, label='ConsMax case', linewidth=2)
-    label_list = ["Min", "Max", "Ave", "Sum", "CMin", "CMax"]
-    # plt.errorbar(np.linspace(0,len(label_list)-1,len(label_list)), aniso_mag, yerr=aniso_mag_stand, linestyle='None', marker='None',color='black',linewidth=1, capsize=2)
-    plt.plot(np.linspace(0,len(label_list)-1,len(label_list)), aniso_mag, '.-', markersize=8, label='around 2000 grains', linewidth=2)
-    plt.xlabel("TJ energy approach", fontsize=16)
-    plt.ylabel("Anisotropic Magnitude", fontsize=16)
-    plt.xticks([0,1,2,3,4,5],label_list)
-    # plt.legend(fontsize=16)
-    plt.ylim([-0.05,1.0])
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
-    plt.savefig(current_path + "/figures/anisotropic_polym_randomtheta0_20k_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
+    # plt.close()
+    # fig = plt.figure(figsize=(5, 5))
+    # label_list = ["Min", "Max", "Ave", "Sum", "CMin", "CMax"]
+    # # plt.errorbar(np.linspace(0,len(label_list)-1,len(label_list)), aniso_mag, yerr=aniso_mag_stand, linestyle='None', marker='None',color='black',linewidth=1, capsize=2)
+    # plt.plot(np.linspace(0,len(label_list)-1,len(label_list)), aniso_mag, '.-', markersize=8, label='around 2000 grains', linewidth=2)
+    # plt.xlabel("TJ energy approach", fontsize=16)
+    # plt.ylabel("Anisotropic Magnitude", fontsize=16)
+    # plt.xticks([0,1,2,3,4,5],label_list)
+    # # plt.legend(fontsize=16)
+    # plt.ylim([-0.05,1.0])
+    # plt.xticks(fontsize=16)
+    # plt.yticks(fontsize=16)
+    # plt.savefig(current_path + "/figures/anisotropic_polym_randomtheta0_20k_magnitude_polar_ave.png", dpi=400,bbox_inches='tight')
 
 
 
