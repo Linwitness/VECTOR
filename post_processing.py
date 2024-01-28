@@ -83,9 +83,9 @@ def dump2img(dump_path, num_steps=None, extract_data='type', extract_step=None):
     if os.path.exists(dump_path+".dump"):
         dump_type = 0
         dump_file_name_0 = dump_path+".dump"
-    elif os.path.exists(dump_path+".dump.0"):
+    elif os.path.exists(dump_path+f".dump.{0 if extract_step == None else int(extract_step)}"):
         dump_type = 1
-        dump_file_name_0 = dump_path+".dump.0"
+        dump_file_name_0 = dump_path+f".dump.{0 if extract_step == None else int(extract_step)}"
     else: print("There is no correct dump file for "+dump_path)
 
     with open(dump_file_name_0) as file:
@@ -396,6 +396,148 @@ def get_poly_statistical_ar(micro_matrix, step):
     aspect_ratio = np.sum(aspect_ratio * sites_num_list) / np.sum(sites_num_list)
 
     return aspect_ratio
+
+def init2EAarray(init_file_path, grain_num):
+    euler_angle_array = np.ones((grain_num, 3))*-2
+    with open(init_file_path, 'r', encoding='utf-8') as file:
+        for i, line in enumerate(file):
+            if i > 2: euler_angle_array[int(line.split()[1])-1] = np.array([float(line.split()[2]), float(line.split()[3]), float(line.split()[4])])
+    # Check if missing grains
+    for i in range(grain_num):
+        if euler_angle_array[i,0] == -2:
+            print("Missing grains here!")
+            euler_angle_array[i] = np.array([0,0,0])
+    return euler_angle_array
+
+def output_init_from_dump(dump_file_path, euler_angle_array, init_file_path_output):
+    # output the init file with euler_angle_array and one dump file
+    # Read necessary information from dump file
+    with open(dump_file_path) as file:
+        box_size = np.zeros(3)
+        for i, line in enumerate(file):
+            if i==3: num_sites = int(line)
+            if i==5: box_size[0] = np.array(line.split(), dtype=float)[-1]
+            if i==6: box_size[1] = np.array(line.split(), dtype=float)[-1]
+            if i==7: box_size[2] = np.array(line.split(), dtype=float)[-1]
+            if i==8: name_vars = line.split()[2:]
+            if i>8: break
+    box_size = np.ceil(box_size).astype(int) #reformat box_size
+    entry_length = num_sites+9 #there are 9 header lines in each entry
+
+
+    # write the IC files and read the dump data
+    # create IC file
+    IC_nei = []
+    IC_nei.append("# This line is ignored\n")
+    IC_nei.append("Values\n")
+    IC_nei.append("\n")
+    with open(init_file_path_output, 'w') as output_file:
+        output_file.writelines( IC_nei )
+    IC_nei = []
+    # read and write
+    with open(init_file_path_output, 'a') as output_file:
+        with open(dump_file_path) as file:
+            for i, line in tqdm(enumerate(file), "EXTRACTING SPPARKS DUMP (%s.dump)"%dump_file_path[-20:], total=entry_length):
+                if i==1: time_step = int(float(line.split()[-1])) #log the time step
+                atom_num = i-9 #track which atom line we're on
+                if atom_num>=0 and atom_num<num_sites:
+                    line_split = np.array(line.split(), dtype=float)
+                    grain_id = int(line_split[1])-1
+                    output_file.write(f"{int(line_split[0])} {int(line_split[1])} {euler_angle_array[grain_id, 0]} {euler_angle_array[grain_id, 0]} {euler_angle_array[grain_id, 0]}\n")
+
+    return box_size, entry_length
+
+def output_init_neighbor_from_init(interval, box_size, init_file_path_input, init_file_path_output):
+    # Output the init_nighbor5 with init file
+
+    nei_num = (2*interval+3)**3-1
+    size_x,size_y,size_z = box_size
+    img = np.zeros((size_y,size_x,size_z)) #Figure of all sites with GrainID
+
+    print(f"> img matrix start.")
+    for k in tqdm(range(size_z)): # z-axis
+        for i in range(size_y): # y-axis
+            for j in range(size_x): # x-axis
+                img[i,j,k] = int(k*size_x*size_y + i*size_x + j)
+    print(f"> img matrix end")
+
+    IC_nei = []
+    IC_nei.append("# This line is ignored\n")
+    IC_nei.append("3 dimension\n")
+    IC_nei.append(f"{nei_num} max neighbors\n")
+    IC_nei.append(f"{size_x*size_y*size_z} sites\n")
+    IC_nei.append(f"0 {size_x} xlo xhi\n")
+    IC_nei.append(f"0 {size_y} ylo yhi\n")
+    IC_nei.append(f"0 {size_z} zlo zhi\n")
+    IC_nei.append("\n")
+    IC_nei.append("Sites\n")
+    IC_nei.append("\n")
+    with open(init_file_path_output, 'w') as file:
+        file.writelines( IC_nei )
+    IC_nei = []
+
+    print("> Sites start writing")
+    with open(init_file_path_output, 'a') as file:
+        for k in tqdm(range(size_z)): # z-axis
+            for i in range(size_y): # y-axis
+                for j in range(size_x): # x-axis
+                    file.write(f"{int(img[i,j,k] + 1)} {float(j)} {float(i)} {float(k)}\n")
+    print("> Sites end writing")
+
+    IC_nei.append("\n")
+    IC_nei.append("Neighbors\n")
+    IC_nei.append("\n")
+    with open(init_file_path_output, 'a') as file:
+        file.writelines( IC_nei )
+    IC_nei = []
+
+    print("> Neighbors start writing")
+    max_length_neighbors = 0
+    with open(init_file_path_output, 'a') as file:
+        for k in tqdm(range(size_z)): # z-axis
+            for i in range(size_y): # y-axis
+                for j in range(size_x): # x-axis
+                    tmp_nei = f"{int(img[i,j,k] + 1)} "
+                    offsets = np.array(np.meshgrid(
+                    np.arange(-(interval + 1), interval + 2),
+                    np.arange(-(interval + 1), interval + 2),
+                    np.arange(-(interval + 1), interval + 2),
+                    )).T.reshape(-1, 3)
+                    # Filter out the [0, 0, 0] offset since we want to skip it
+                    offsets = offsets[np.any(offsets != 0, axis=1)]
+                    # Compute the indices with wrapping around boundaries (using np.mod)
+                    indices = (np.array([i, j, k]) + offsets) % np.array([size_y, size_x, size_z])
+                    # Extract the values from 'img' using advanced indexing
+                    neighbour_values = img[indices[:, 0], indices[:, 1], indices[:, 2]].astype('int')
+                    # Convert values to 1-based indexing and concatenate into a string
+                    tmp_nei += ' '.join(map(str, neighbour_values + 1))
+                    # tmp_nei = f"{int(img[i,j,k] + 1)}"
+                    # for p in range(-(interval+1),interval+2):
+                    #     for m in range(-(interval+1),interval+2):
+                    #         for n in range(-(interval+1),interval+2):
+                    #             if m==0 and n==0 and p==0: continue
+                    #             tmp_i = (i+m)%size_y
+                    #             tmp_j = (j+n)%size_x
+                    #             tmp_k = (k+p)%size_z
+                    #             tmp_nei += f" {int(img[tmp_i, tmp_j, tmp_k]+1)}"
+
+                    # IC_nei.append(tmp_nei+"\n")
+                    if len(tmp_nei) > max_length_neighbors: max_length_neighbors = len(tmp_nei)
+                    file.write(tmp_nei+"\n")
+        file.write("\n")
+    print(f"The max length of neighbor data line is {max_length_neighbors}")
+    print("> Neighbors end writing")
+
+    print("> Values start writing")
+    with open(init_file_path_input, 'r') as f_read:
+        tmp_values = f_read.readlines()
+    print("> Values read done")
+    with open(init_file_path_output, 'a') as file:
+        file.writelines(tmp_values[1:])
+    print("> Values end writing")
+    return True
+
+
 
 
 
