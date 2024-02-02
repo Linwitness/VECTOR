@@ -460,81 +460,137 @@ def output_init_neighbor_from_init(interval, box_size, init_file_path_input, ini
             for j in range(size_x): # x-axis
                 img[i,j,k] = int(k*size_x*size_y + i*size_x + j)
     print(f"> img matrix end")
-
-    IC_nei = []
-    IC_nei.append("# This line is ignored\n")
-    IC_nei.append("3 dimension\n")
-    IC_nei.append(f"{nei_num} max neighbors\n")
-    IC_nei.append(f"{size_x*size_y*size_z} sites\n")
-    IC_nei.append(f"0 {size_x} xlo xhi\n")
-    IC_nei.append(f"0 {size_y} ylo yhi\n")
-    IC_nei.append(f"0 {size_z} zlo zhi\n")
-    IC_nei.append("\n")
-    IC_nei.append("Sites\n")
-    IC_nei.append("\n")
-    with open(init_file_path_output, 'w') as file:
-        file.writelines( IC_nei )
-    IC_nei = []
-
-    print("> Sites start writing")
-    with open(init_file_path_output, 'a') as file:
-        for k in tqdm(range(size_z)): # z-axis
+    
+    # distinguish the 2D and 3D cases
+    if size_z == 1:
+        IC_nei = []
+        IC_nei.append("# This line is ignored\n")
+        IC_nei.append("2 dimension\n")
+        IC_nei.append(f"{nei_num} max neighbors\n")
+        IC_nei.append(f"{size_x*size_y} sites\n")
+        IC_nei.append(f"0 {size_x} xlo xhi\n")
+        IC_nei.append(f"0 {size_y} ylo yhi\n")
+        IC_nei.append("0 1 zlo zhi\n")
+        IC_nei.append("\n")
+        IC_nei.append("Sites\n")
+        IC_nei.append("\n")
+        with open(init_file_path_output, 'w') as file:
+            file.writelines( IC_nei )
+        IC_nei = []
+        print("> Sites start writing")
+        with open(init_file_path_output, 'a') as file:
             for i in range(size_y): # y-axis
                 for j in range(size_x): # x-axis
-                    file.write(f"{int(img[i,j,k] + 1)} {float(j)} {float(i)} {float(k)}\n")
-    print("> Sites end writing")
-
-    IC_nei.append("\n")
-    IC_nei.append("Neighbors\n")
-    IC_nei.append("\n")
-    with open(init_file_path_output, 'a') as file:
-        file.writelines( IC_nei )
-    IC_nei = []
-
-    print("> Neighbors start writing")
-    max_length_neighbors = 0
-    with open(init_file_path_output, 'a') as file:
-        for k in tqdm(range(size_z)): # z-axis
+                    file.write(f"{int(img[i,j,0] + 1)} {float(j)} {float(i)} 0.5\n")
+        print("> Sites end writing")
+        IC_nei.append("\n")
+        IC_nei.append("Neighbors\n")
+        IC_nei.append("\n")
+        with open(init_file_path_output, 'a') as file:
+            file.writelines( IC_nei )
+        IC_nei = []
+        
+        print("> Neighbors start writing")
+        max_length_neighbors = 0
+        with open(init_file_path_output, 'a') as file:
             for i in range(size_y): # y-axis
                 for j in range(size_x): # x-axis
-                    tmp_nei = f"{int(img[i,j,k] + 1)} "
-                    offsets = np.array(np.meshgrid(
-                    np.arange(-(interval + 1), interval + 2),
-                    np.arange(-(interval + 1), interval + 2),
-                    np.arange(-(interval + 1), interval + 2),
-                    )).T.reshape(-1, 3)
-                    # Filter out the [0, 0, 0] offset since we want to skip it
-                    offsets = offsets[np.any(offsets != 0, axis=1)]
-                    # Compute the indices with wrapping around boundaries (using np.mod)
-                    indices = (np.array([i, j, k]) + offsets) % np.array([size_y, size_x, size_z])
-                    # Extract the values from 'img' using advanced indexing
-                    neighbour_values = img[indices[:, 0], indices[:, 1], indices[:, 2]].astype('int')
-                    # Convert values to 1-based indexing and concatenate into a string
-                    tmp_nei += ' '.join(map(str, neighbour_values + 1))
-                    # tmp_nei = f"{int(img[i,j,k] + 1)}"
-                    # for p in range(-(interval+1),interval+2):
-                    #     for m in range(-(interval+1),interval+2):
-                    #         for n in range(-(interval+1),interval+2):
-                    #             if m==0 and n==0 and p==0: continue
-                    #             tmp_i = (i+m)%size_y
-                    #             tmp_j = (j+n)%size_x
-                    #             tmp_k = (k+p)%size_z
-                    #             tmp_nei += f" {int(img[tmp_i, tmp_j, tmp_k]+1)}"
+                    tmp_nei = f"{int(img[i,j,0] + 1)} "
+                    for m in range(-(interval+1),interval+2):
+                        for n in range(-(interval+1),interval+2):
+                            if m==0 and n==0: continue
+                            tmp_i = (i+m)%size_y
+                            tmp_j = (j+n)%size_x
+                            tmp_nei += f" {int(img[tmp_i, tmp_j, 0]+1)}"
 
-                    # IC_nei.append(tmp_nei+"\n")
+                    IC_nei.append(tmp_nei+"\n")
                     if len(tmp_nei) > max_length_neighbors: max_length_neighbors = len(tmp_nei)
                     file.write(tmp_nei+"\n")
-        file.write("\n")
-    print(f"The max length of neighbor data line is {max_length_neighbors}")
-    print("> Neighbors end writing")
+            file.write("\n")
+        print(f"The max length of neighbor data line is {max_length_neighbors}")
+        print("> Neighbors end writing")
+        print("> Values start writing")
+        with open(init_file_path_input, 'r') as f_read:
+            tmp_values = f_read.readlines()
+        print("> Values read done")
+        with open(init_file_path_output, 'a') as file:
+            file.writelines(tmp_values[1:])
+        print("> Values end writing")
+        
+    else:
+        IC_nei = []
+        IC_nei.append("# This line is ignored\n")
+        IC_nei.append("3 dimension\n")
+        IC_nei.append(f"{nei_num} max neighbors\n")
+        IC_nei.append(f"{size_x*size_y*size_z} sites\n")
+        IC_nei.append(f"0 {size_x} xlo xhi\n")
+        IC_nei.append(f"0 {size_y} ylo yhi\n")
+        IC_nei.append(f"0 {size_z} zlo zhi\n")
+        IC_nei.append("\n")
+        IC_nei.append("Sites\n")
+        IC_nei.append("\n")
+        with open(init_file_path_output, 'w') as file:
+            file.writelines( IC_nei )
+        IC_nei = []
 
-    print("> Values start writing")
-    with open(init_file_path_input, 'r') as f_read:
-        tmp_values = f_read.readlines()
-    print("> Values read done")
-    with open(init_file_path_output, 'a') as file:
-        file.writelines(tmp_values[1:])
-    print("> Values end writing")
+        print("> Sites start writing")
+        with open(init_file_path_output, 'a') as file:
+            for k in tqdm(range(size_z)): # z-axis
+                for i in range(size_y): # y-axis
+                    for j in range(size_x): # x-axis
+                        file.write(f"{int(img[i,j,k] + 1)} {float(j)} {float(i)} {float(k)}\n")
+        print("> Sites end writing")
+
+        IC_nei.append("\n")
+        IC_nei.append("Neighbors\n")
+        IC_nei.append("\n")
+        with open(init_file_path_output, 'a') as file:
+            file.writelines( IC_nei )
+        IC_nei = []
+
+        print("> Neighbors start writing")
+        max_length_neighbors = 0
+        with open(init_file_path_output, 'a') as file:
+            for k in tqdm(range(size_z)): # z-axis
+                for i in range(size_y): # y-axis
+                    for j in range(size_x): # x-axis
+                        tmp_nei = f"{int(img[i,j,k] + 1)} "
+                        offsets = np.array(np.meshgrid(
+                        np.arange(-(interval + 1), interval + 2),
+                        np.arange(-(interval + 1), interval + 2),
+                        np.arange(-(interval + 1), interval + 2),
+                        )).T.reshape(-1, 3)
+                        # Filter out the [0, 0, 0] offset since we want to skip it
+                        offsets = offsets[np.any(offsets != 0, axis=1)]
+                        # Compute the indices with wrapping around boundaries (using np.mod)
+                        indices = (np.array([i, j, k]) + offsets) % np.array([size_y, size_x, size_z])
+                        # Extract the values from 'img' using advanced indexing
+                        neighbour_values = img[indices[:, 0], indices[:, 1], indices[:, 2]].astype('int')
+                        # Convert values to 1-based indexing and concatenate into a string
+                        tmp_nei += ' '.join(map(str, neighbour_values + 1))
+                        # tmp_nei = f"{int(img[i,j,k] + 1)}"
+                        # for p in range(-(interval+1),interval+2):
+                        #     for m in range(-(interval+1),interval+2):
+                        #         for n in range(-(interval+1),interval+2):
+                        #             if m==0 and n==0 and p==0: continue
+                        #             tmp_i = (i+m)%size_y
+                        #             tmp_j = (j+n)%size_x
+                        #             tmp_k = (k+p)%size_z
+                        #             tmp_nei += f" {int(img[tmp_i, tmp_j, tmp_k]+1)}"
+                        # IC_nei.append(tmp_nei+"\n")
+                        if len(tmp_nei) > max_length_neighbors: max_length_neighbors = len(tmp_nei)
+                        file.write(tmp_nei+"\n")
+            file.write("\n")
+        print(f"The max length of neighbor data line is {max_length_neighbors}")
+        print("> Neighbors end writing")
+
+        print("> Values start writing")
+        with open(init_file_path_input, 'r') as f_read:
+            tmp_values = f_read.readlines()
+        print("> Values read done")
+        with open(init_file_path_output, 'a') as file:
+            file.writelines(tmp_values[1:])
+        print("> Values end writing")
     return True
 
 
