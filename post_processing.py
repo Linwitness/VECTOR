@@ -3,6 +3,7 @@
 
 from turtle import color
 import numpy as np
+import multiprocess as mp
 import os
 import math
 import matplotlib.pyplot as plt
@@ -460,7 +461,7 @@ def output_init_neighbor_from_init(interval, box_size, init_file_path_input, ini
             for j in range(size_x): # x-axis
                 img[i,j,k] = int(k*size_x*size_y + i*size_x + j)
     print(f"> img matrix end")
-    
+
     # distinguish the 2D and 3D cases
     if size_z == 1:
         IC_nei = []
@@ -489,7 +490,7 @@ def output_init_neighbor_from_init(interval, box_size, init_file_path_input, ini
         with open(init_file_path_output, 'a') as file:
             file.writelines( IC_nei )
         IC_nei = []
-        
+
         print("> Neighbors start writing")
         max_length_neighbors = 0
         with open(init_file_path_output, 'a') as file:
@@ -516,7 +517,7 @@ def output_init_neighbor_from_init(interval, box_size, init_file_path_input, ini
         with open(init_file_path_output, 'a') as file:
             file.writelines(tmp_values[1:])
         print("> Values end writing")
-        
+
     else:
         IC_nei = []
         IC_nei.append("# This line is ignored\n")
@@ -568,16 +569,6 @@ def output_init_neighbor_from_init(interval, box_size, init_file_path_input, ini
                         neighbour_values = img[indices[:, 0], indices[:, 1], indices[:, 2]].astype('int')
                         # Convert values to 1-based indexing and concatenate into a string
                         tmp_nei += ' '.join(map(str, neighbour_values + 1))
-                        # tmp_nei = f"{int(img[i,j,k] + 1)}"
-                        # for p in range(-(interval+1),interval+2):
-                        #     for m in range(-(interval+1),interval+2):
-                        #         for n in range(-(interval+1),interval+2):
-                        #             if m==0 and n==0 and p==0: continue
-                        #             tmp_i = (i+m)%size_y
-                        #             tmp_j = (j+n)%size_x
-                        #             tmp_k = (k+p)%size_z
-                        #             tmp_nei += f" {int(img[tmp_i, tmp_j, tmp_k]+1)}"
-                        # IC_nei.append(tmp_nei+"\n")
                         if len(tmp_nei) > max_length_neighbors: max_length_neighbors = len(tmp_nei)
                         file.write(tmp_nei+"\n")
             file.write("\n")
@@ -593,6 +584,160 @@ def output_init_neighbor_from_init(interval, box_size, init_file_path_input, ini
         print("> Values end writing")
     return True
 
+def output_init_neighbor_from_init_mp(interval, box_size, init_file_path_input, init_file_path_output):
+    # Output the init_nighbor5 with init file
+    size_x,size_y,size_z = box_size
+    dimension = int(2 if size_z==1 else 3)
+    nei_num = (2*interval+3)**dimension-1
+
+    print(f"> img matrix start.")
+    # Create arrays representing the range of each dimension
+    k_range = np.arange(size_z).reshape(1, 1, size_z)
+    i_range = np.arange(size_y).reshape(size_y, 1, 1)
+    j_range = np.arange(size_x).reshape(1, size_x, 1)
+    img = (k_range * size_x * size_y + i_range * size_x + j_range).astype(int)
+    print(f"> img matrix end")
+
+    IC_nei = []
+    IC_nei.append("# This line is ignored\n")
+    IC_nei.append(f"{dimension} dimension\n")
+    IC_nei.append(f"{nei_num} max neighbors\n")
+    IC_nei.append(f"{size_x*size_y*size_z} sites\n")
+    IC_nei.append(f"0 {size_x} xlo xhi\n")
+    IC_nei.append(f"0 {size_y} ylo yhi\n")
+    IC_nei.append(f"0 {size_z} zlo zhi\n")
+    IC_nei.append("\n")
+    IC_nei.append("Sites\n")
+    IC_nei.append("\n")
+    with open(init_file_path_output, 'w') as file:
+        file.writelines( IC_nei )
+    IC_nei = []
+
+    print("> Sites start writing")
+    with open(init_file_path_output, 'a') as file:
+        for k in tqdm(range(size_z)): # z-axis
+            for i in range(size_y): # y-axis
+                for j in range(size_x): # x-axis
+                    file.write(f"{int(img[i,j,k] + 1)} {float(j)} {float(i)} {0.5 if dimension==2 else float(k)}\n")
+    print("> Sites end writing")
+    IC_nei.append("\n")
+    IC_nei.append("Neighbors\n")
+    IC_nei.append("\n")
+    with open(init_file_path_output, 'a') as file:
+        file.writelines( IC_nei )
+    IC_nei = []
+
+    # distinguish the 2D and 3D cases
+    print("> Neighbors start writing")
+    if dimension == 2:
+        # offset value setting before neighboring start
+        offsets = np.array(np.meshgrid(
+        np.arange(-(interval + 1), interval + 2),
+        np.arange(-(interval + 1), interval + 2),
+        )).T.reshape(-1, 2)
+        # Filter out the [0, 0, 0] offset since we want to skip it
+        offsets = offsets[np.any(offsets != 0, axis=1)]
+        # function for multiprocess
+        def process_chunk(start_k, end_k, file_name):
+            max_length_neighbors = 0
+            with open(file_name, 'w') as file:
+                for i in tqdm(range(start_k, end_k)): # y-axis
+                    for j in range(size_x): # x-axis
+                        tmp_nei = f"{int(img[i,j,0] + 1)} "
+                        # Compute the indices with wrapping around boundaries (using np.mod)
+                        indices = (np.array([i, j]) + offsets) % np.array([size_y, size_x])
+                        # Extract the values from 'img' using advanced indexing
+                        neighbour_values = img[indices[:, 0], indices[:, 1]].astype('int')
+                        # Convert values to 1-based indexing and concatenate into a string
+                        tmp_nei += ' '.join(map(str, neighbour_values + 1))
+                        max_length_neighbors = max(max_length_neighbors, len(tmp_nei))
+                        file.write(tmp_nei + "\n")
+            print(f"The max length of neighbor data line is {max_length_neighbors}")
+        # necessary init for multi cores writing
+        num_processes = mp.cpu_count() # or choose a number that suits your machine
+        chunk_size = size_y // num_processes
+        processes = []
+        temp_files = []
+        # Assign tasks for processors
+        for p in range(num_processes):
+            start_k = p * chunk_size
+            end_k = (p + 1) * chunk_size if p != num_processes - 1 else size_y
+            temp_file = f'{init_file_path_output}_temp_{p}.txt'
+            temp_files.append(temp_file)
+            process = mp.Process(target=process_chunk, args=(start_k, end_k, temp_file))
+            processes.append(process)
+            process.start()
+        # Wait for all processes to complete
+        for process in processes:
+            process.join()
+        # Concatenate all temporary files
+        with open(init_file_path_output, 'a') as outfile:
+            for fname in tqdm(temp_files, "Concatenating "):
+                with open(fname) as infile:
+                    outfile.write(infile.read())
+                os.remove(fname)  # Optional: remove temp file after concatenation
+            outfile.write("\n")
+    else:
+        # offset value setting before neighboring start
+        offsets = np.array(np.meshgrid(
+        np.arange(-(interval + 1), interval + 2),
+        np.arange(-(interval + 1), interval + 2),
+        np.arange(-(interval + 1), interval + 2),
+        )).T.reshape(-1, 3)
+        # Filter out the [0, 0, 0] offset since we want to skip it
+        offsets = offsets[np.any(offsets != 0, axis=1)]
+        # function for multiprocess
+        def process_chunk(start_k, end_k, file_name):
+            max_length_neighbors = 0
+            with open(file_name, 'w') as file:
+                for k in tqdm(range(start_k, end_k)): # z-axis
+                    for i in range(size_y): # y-axis
+                        for j in range(size_x): # x-axis
+                            tmp_nei = f"{int(img[i,j,k] + 1)} "
+                            # Compute the indices with wrapping around boundaries (using np.mod)
+                            indices = (np.array([i, j, k]) + offsets) % np.array([size_y, size_x, size_z])
+                            # Extract the values from 'img' using advanced indexing
+                            neighbour_values = img[indices[:, 0], indices[:, 1], indices[:, 2]].astype('int')
+                            # Convert values to 1-based indexing and concatenate into a string
+                            tmp_nei += ' '.join(map(str, neighbour_values + 1))
+                            max_length_neighbors = max(max_length_neighbors, len(tmp_nei))
+                            file.write(tmp_nei + "\n")
+            print(f"The max length of neighbor data line is {max_length_neighbors}")
+
+        # necessary init for multi cores writing
+        num_processes = mp.cpu_count() # or choose a number that suits your machine
+        chunk_size = size_z // num_processes
+        processes = []
+        temp_files = []
+        # Assign tasks for processors
+        for p in range(num_processes):
+            start_k = p * chunk_size
+            end_k = (p + 1) * chunk_size if p != num_processes - 1 else size_z
+            temp_file = f'{init_file_path_output}_temp_{p}.txt'
+            temp_files.append(temp_file)
+            process = mp.Process(target=process_chunk, args=(start_k, end_k, temp_file))
+            processes.append(process)
+            process.start()
+        # Wait for all processes to complete
+        for process in processes:
+            process.join()
+        # Concatenate all temporary files
+        with open(init_file_path_output, 'a') as outfile:
+            for fname in tqdm(temp_files, "Concatenating "):
+                with open(fname) as infile:
+                    outfile.write(infile.read())
+                os.remove(fname)  # Optional: remove temp file after concatenation
+            outfile.write("\n")
+    print("> Neighbors end writing")
+
+    print("> Values start writing")
+    with open(init_file_path_input, 'r') as f_read:
+        tmp_values = f_read.readlines()
+    print("> Values read done")
+    with open(init_file_path_output, 'a') as file:
+        file.writelines(tmp_values[1:])
+    print("> Values end writing")
+    return True
 
 
 
