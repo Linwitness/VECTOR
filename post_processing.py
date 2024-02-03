@@ -647,7 +647,7 @@ def output_init_neighbor_from_init_mp(interval, box_size, init_file_path_input, 
                         # Compute the indices with wrapping around boundaries (using np.mod)
                         indices = (np.array([i, j]) + offsets) % np.array([size_y, size_x])
                         # Extract the values from 'img' using advanced indexing
-                        neighbour_values = img[indices[:, 0], indices[:, 1]].astype('int')
+                        neighbour_values = img[indices[:, 0], indices[:, 1], 0].astype('int')
                         # Convert values to 1-based indexing and concatenate into a string
                         tmp_nei += ' '.join(map(str, neighbour_values + 1))
                         max_length_neighbors = max(max_length_neighbors, len(tmp_nei))
