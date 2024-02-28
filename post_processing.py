@@ -51,7 +51,7 @@ def plot_energy_video(timestep, energy_figure, figure_path, delta = 0):
     FFMpegWriter = animation.writers['ffmpeg']
     writer = animation.FFMpegWriter(fps=math.floor(len(timestep)/5), bitrate=10000)
     ani.save(figure_path+".mp4",writer=writer)
-    
+
 def plot_structure_figure(step, structure_figure, figure_path):
 
     plt.close()
@@ -671,7 +671,7 @@ def output_init_neighbor_from_init_mp(interval, box_size, init_file_path_input, 
                         # Compute the indices with wrapping around boundaries (using np.mod)
                         indices = (np.array([i, j]) + offsets) % np.array([size_y, size_x])
                         # Extract the values from 'img' using advanced indexing
-                        neighbour_values = img[indices[:, 0], indices[:, 1]].astype('int')
+                        neighbour_values = img[indices[:, 0], indices[:, 1],0].astype('int')
                         # Convert values to 1-based indexing and concatenate into a string
                         tmp_nei += ' '.join(map(str, neighbour_values + 1))
                         max_length_neighbors = max(max_length_neighbors, len(tmp_nei))
@@ -768,7 +768,7 @@ def get_grain_size_from_data(npy_data):
     num_steps = npy_data.shape[0]
     num_grains = int(npy_data[0].max())
     grain_size_array = np.zeros((num_steps, num_grains))
-    
+
     for i in tqdm(range(num_steps)):
         for j in range(num_grains):
             grain_id = j + 1
