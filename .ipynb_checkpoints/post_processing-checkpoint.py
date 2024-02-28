@@ -3,6 +3,7 @@
 
 from turtle import color
 import numpy as np
+import multiprocess as mp
 import os
 import math
 import matplotlib.pyplot as plt
@@ -50,13 +51,37 @@ def plot_energy_video(timestep, energy_figure, figure_path, delta = 0):
     FFMpegWriter = animation.writers['ffmpeg']
     writer = animation.FFMpegWriter(fps=math.floor(len(timestep)/5), bitrate=10000)
     ani.save(figure_path+".mp4",writer=writer)
+    
+def plot_structure_figure(step, structure_figure, figure_path):
 
-def plot_structure_video(timestep, structure_figure, figure_path):
+    plt.close()
+    fig, ax = plt.subplots()
+
+    cv_initial = np.squeeze(structure_figure[0])
+    cv0 = np.squeeze(structure_figure[step])
+    cv0 = np.rot90(cv0,1)
+    im = ax.imshow(cv0,vmin=np.min(cv_initial),vmax=np.max(cv_initial),cmap='rainbow',interpolation='none') #jet rainbow plasma
+    # cb = fig.colorbar(im)
+    # cb.set_ticks([10000,20000])
+    # cb.set_ticklabels([ '1e4', '2e4'])
+    # cb.ax.tick_params(labelsize=20)
+    ax.axes.get_xaxis().set_ticks([])
+    ax.axes.get_yaxis().set_ticks([])
+    ax.tick_params(which = 'both', size = 0, labelsize = 0)
+
+    plt.savefig(figure_path + f"_ts{step*30}.png", dpi=400,bbox_inches='tight')
+
+
+def plot_structure_video(timestep, structure_figure, figure_path, dimension = 2, depth = 0):
 
     imgs = []
     fig, ax = plt.subplots()
+    if dimension == 0: structure_2d_project = structure_figure[:,depth,:,:]
+    elif dimension == 1: structure_2d_project = structure_figure[:,:,depth,:]
+    elif dimension == 2: structure_2d_project = structure_figure[:,:,:,depth]
+    else: print("Please input the right dimension!")
 
-    cv0 = structure_figure[1,:,:,0] #np.squeeze(structure_figure[0])
+    cv0 = structure_2d_project[1,:,:] #np.squeeze(structure_figure[0])
     cv0 = np.rot90(cv0,1)
     im = ax.imshow(cv0,vmin=np.min(cv0),vmax=np.max(cv0),cmap='rainbow',interpolation='none') #jet rainbow plasma
     cb = fig.colorbar(im)
@@ -64,7 +89,7 @@ def plot_structure_video(timestep, structure_figure, figure_path):
     # plt.show()
 
     def animate(i):
-        arr=structure_figure[i,:,:,0] #np.squeeze(structure_figure[i])
+        arr=structure_2d_project[i,:,:] #np.squeeze(structure_figure[i])
         arr=np.rot90(arr,1)
         im.set_data(arr)
         tx.set_text(f'time step = {timestep[i]}')
@@ -72,12 +97,12 @@ def plot_structure_video(timestep, structure_figure, figure_path):
     ani = animation.FuncAnimation(fig, animate, frames=len(timestep))
     FFMpegWriter = animation.writers['ffmpeg']
     writer = animation.FFMpegWriter(fps=math.floor(len(timestep)/5), bitrate=10000)
-    ani.save(figure_path+".mp4",writer=writer)
+    ani.save(figure_path+".mp4",writer=writer,dpi=400)
 
 def dump2img(dump_path, num_steps=None, extract_data='type', extract_step=None):
     # Create grain structure figure from dump file with site ID.
     # if extarct_step is not None, function will extarct one step figrue (extract_step),
-    # only work for dump type 1 currently
+    # only work for dump_type 1 currently
 
     # dump file (type 0) or dump.* files (type 1)
     if os.path.exists(dump_path+".dump"):
@@ -347,13 +372,13 @@ def get_poly_statistical_radius(micro_matrix, sites_list, step):
         sites = sites_list[n]
 
         if ave_radius != 0:
-          for sitei in sites:
-              [i,j] = sitei
-              current_radius = np.sqrt((i - center[0])**2 + (j - center[1])**2)
-              radius_offset = abs(current_radius - ave_radius)
-              if radius_offset > max_radius_offset_list[n]: max_radius_offset_list[n] = radius_offset
+            for sitei in sites:
+                [i,j] = sitei
+                current_radius = np.sqrt((i - center[0])**2 + (j - center[1])**2)
+                radius_offset = abs(current_radius - ave_radius)
+                if radius_offset > max_radius_offset_list[n]: max_radius_offset_list[n] = radius_offset
 
-          max_radius_offset_list[n] = max_radius_offset_list[n] / ave_radius
+            max_radius_offset_list[n] = max_radius_offset_list[n] / ave_radius
 
     max_radius_offset = np.average(max_radius_offset_list[max_radius_offset_list!=0])
     area_list = np.pi*ave_radius_list*ave_radius_list
@@ -443,7 +468,7 @@ def output_init_from_dump(dump_file_path, euler_angle_array, init_file_path_outp
                 if atom_num>=0 and atom_num<num_sites:
                     line_split = np.array(line.split(), dtype=float)
                     grain_id = int(line_split[1])-1
-                    output_file.write(f"{int(line_split[0])} {int(line_split[1])} {euler_angle_array[grain_id, 0]} {euler_angle_array[grain_id, 0]} {euler_angle_array[grain_id, 0]}\n")
+                    output_file.write(f"{int(line_split[0])} {int(line_split[1])} {euler_angle_array[grain_id, 0]} {euler_angle_array[grain_id, 1]} {euler_angle_array[grain_id, 2]}\n")
 
     return box_size, entry_length
 
@@ -460,7 +485,7 @@ def output_init_neighbor_from_init(interval, box_size, init_file_path_input, ini
             for j in range(size_x): # x-axis
                 img[i,j,k] = int(k*size_x*size_y + i*size_x + j)
     print(f"> img matrix end")
-    
+
     # distinguish the 2D and 3D cases
     if size_z == 1:
         IC_nei = []
@@ -489,7 +514,7 @@ def output_init_neighbor_from_init(interval, box_size, init_file_path_input, ini
         with open(init_file_path_output, 'a') as file:
             file.writelines( IC_nei )
         IC_nei = []
-        
+
         print("> Neighbors start writing")
         max_length_neighbors = 0
         with open(init_file_path_output, 'a') as file:
@@ -516,7 +541,7 @@ def output_init_neighbor_from_init(interval, box_size, init_file_path_input, ini
         with open(init_file_path_output, 'a') as file:
             file.writelines(tmp_values[1:])
         print("> Values end writing")
-        
+
     else:
         IC_nei = []
         IC_nei.append("# This line is ignored\n")
@@ -568,16 +593,6 @@ def output_init_neighbor_from_init(interval, box_size, init_file_path_input, ini
                         neighbour_values = img[indices[:, 0], indices[:, 1], indices[:, 2]].astype('int')
                         # Convert values to 1-based indexing and concatenate into a string
                         tmp_nei += ' '.join(map(str, neighbour_values + 1))
-                        # tmp_nei = f"{int(img[i,j,k] + 1)}"
-                        # for p in range(-(interval+1),interval+2):
-                        #     for m in range(-(interval+1),interval+2):
-                        #         for n in range(-(interval+1),interval+2):
-                        #             if m==0 and n==0 and p==0: continue
-                        #             tmp_i = (i+m)%size_y
-                        #             tmp_j = (j+n)%size_x
-                        #             tmp_k = (k+p)%size_z
-                        #             tmp_nei += f" {int(img[tmp_i, tmp_j, tmp_k]+1)}"
-                        # IC_nei.append(tmp_nei+"\n")
                         if len(tmp_nei) > max_length_neighbors: max_length_neighbors = len(tmp_nei)
                         file.write(tmp_nei+"\n")
             file.write("\n")
@@ -593,8 +608,200 @@ def output_init_neighbor_from_init(interval, box_size, init_file_path_input, ini
         print("> Values end writing")
     return True
 
+def output_init_neighbor_from_init_mp(interval, box_size, init_file_path_input, init_file_path_output):
+    # Output the init_nighbor5 with init file
+    size_x,size_y,size_z = box_size
+    dimension = int(2 if size_z==1 else 3)
+    nei_num = (2*interval+3)**dimension-1
 
+    print(f"> img matrix start.")
+    # Create arrays representing the range of each dimension
+    k_range = np.arange(size_z).reshape(1, 1, size_z)
+    i_range = np.arange(size_y).reshape(size_y, 1, 1)
+    j_range = np.arange(size_x).reshape(1, size_x, 1)
+    img = (k_range * size_x * size_y + i_range * size_x + j_range).astype(int)
+    print(f"> img matrix end")
 
+    IC_nei = []
+    IC_nei.append("# This line is ignored\n")
+    IC_nei.append(f"{dimension} dimension\n")
+    IC_nei.append(f"{nei_num} max neighbors\n")
+    IC_nei.append(f"{size_x*size_y*size_z} sites\n")
+    IC_nei.append(f"0 {size_x} xlo xhi\n")
+    IC_nei.append(f"0 {size_y} ylo yhi\n")
+    IC_nei.append(f"0 {size_z} zlo zhi\n")
+    IC_nei.append("\n")
+    IC_nei.append("Sites\n")
+    IC_nei.append("\n")
+    with open(init_file_path_output, 'w') as file:
+        file.writelines( IC_nei )
+    IC_nei = []
+
+    print("> Sites start writing")
+    with open(init_file_path_output, 'a') as file:
+        for k in tqdm(range(size_z)): # z-axis
+            for i in range(size_y): # y-axis
+                for j in range(size_x): # x-axis
+                    file.write(f"{int(img[i,j,k] + 1)} {float(j)} {float(i)} {0.5 if dimension==2 else float(k)}\n")
+    print("> Sites end writing")
+    IC_nei.append("\n")
+    IC_nei.append("Neighbors\n")
+    IC_nei.append("\n")
+    with open(init_file_path_output, 'a') as file:
+        file.writelines( IC_nei )
+    IC_nei = []
+
+    # distinguish the 2D and 3D cases
+    print("> Neighbors start writing")
+    if dimension == 2:
+        # offset value setting before neighboring start
+        offsets = np.array(np.meshgrid(
+        np.arange(-(interval + 1), interval + 2),
+        np.arange(-(interval + 1), interval + 2),
+        )).T.reshape(-1, 2)
+        # Filter out the [0, 0, 0] offset since we want to skip it
+        offsets = offsets[np.any(offsets != 0, axis=1)]
+        # function for multiprocess
+        def process_chunk(start_k, end_k, file_name):
+            max_length_neighbors = 0
+            with open(file_name, 'w') as file:
+                for i in tqdm(range(start_k, end_k)): # y-axis
+                    for j in range(size_x): # x-axis
+                        tmp_nei = f"{int(img[i,j,0] + 1)} "
+                        # Compute the indices with wrapping around boundaries (using np.mod)
+                        indices = (np.array([i, j]) + offsets) % np.array([size_y, size_x])
+                        # Extract the values from 'img' using advanced indexing
+                        neighbour_values = img[indices[:, 0], indices[:, 1]].astype('int')
+                        # Convert values to 1-based indexing and concatenate into a string
+                        tmp_nei += ' '.join(map(str, neighbour_values + 1))
+                        max_length_neighbors = max(max_length_neighbors, len(tmp_nei))
+                        file.write(tmp_nei + "\n")
+            print(f"The max length of neighbor data line is {max_length_neighbors}")
+        # necessary init for multi cores writing
+        num_processes = mp.cpu_count() # or choose a number that suits your machine
+        chunk_size = size_y / num_processes
+        processes = []
+        temp_files = []
+        # Assign tasks for processors
+        for p in range(num_processes):
+            start_k = int(p * chunk_size)
+            end_k = int((p + 1) * chunk_size) if p != num_processes - 1 else size_y
+            temp_file = f'{init_file_path_output}_temp_{p}.txt'
+            temp_files.append(temp_file)
+            process = mp.Process(target=process_chunk, args=(start_k, end_k, temp_file))
+            processes.append(process)
+            process.start()
+        # Wait for all processes to complete
+        for process in processes:
+            process.join()
+        # Concatenate all temporary files
+        with open(init_file_path_output, 'a') as outfile:
+            for fname in tqdm(temp_files, "Concatenating "):
+                with open(fname) as infile:
+                    outfile.write(infile.read())
+                os.remove(fname)  # Optional: remove temp file after concatenation
+            outfile.write("\n")
+    else:
+        # offset value setting before neighboring start
+        offsets = np.array(np.meshgrid(
+        np.arange(-(interval + 1), interval + 2),
+        np.arange(-(interval + 1), interval + 2),
+        np.arange(-(interval + 1), interval + 2),
+        )).T.reshape(-1, 3)
+        # Filter out the [0, 0, 0] offset since we want to skip it
+        offsets = offsets[np.any(offsets != 0, axis=1)]
+        # function for multiprocess
+        def process_chunk(start_k, end_k, file_name):
+            max_length_neighbors = 0
+            with open(file_name, 'w') as file:
+                for k in tqdm(range(start_k, end_k)): # z-axis
+                    for i in range(size_y): # y-axis
+                        for j in range(size_x): # x-axis
+                            tmp_nei = f"{int(img[i,j,k] + 1)} "
+                            # Compute the indices with wrapping around boundaries (using np.mod)
+                            indices = (np.array([i, j, k]) + offsets) % np.array([size_y, size_x, size_z])
+                            # Extract the values from 'img' using advanced indexing
+                            neighbour_values = img[indices[:, 0], indices[:, 1], indices[:, 2]].astype('int')
+                            # Convert values to 1-based indexing and concatenate into a string
+                            tmp_nei += ' '.join(map(str, neighbour_values + 1))
+                            max_length_neighbors = max(max_length_neighbors, len(tmp_nei))
+                            file.write(tmp_nei + "\n")
+            print(f"The max length of neighbor data line is {max_length_neighbors}")
+
+        # necessary init for multi cores writing
+        num_processes = mp.cpu_count() # or choose a number that suits your machine
+        chunk_size = size_z / num_processes
+        processes = []
+        temp_files = []
+        # Assign tasks for processors
+        for p in range(num_processes):
+            start_k = int(p * chunk_size)
+            end_k = int((p + 1) * chunk_size) if p != num_processes - 1 else size_z
+            temp_file = f'{init_file_path_output}_temp_{p}.txt'
+            temp_files.append(temp_file)
+            process = mp.Process(target=process_chunk, args=(start_k, end_k, temp_file))
+            processes.append(process)
+            process.start()
+        # Wait for all processes to complete
+        for process in processes:
+            process.join()
+        # Concatenate all temporary files
+        with open(init_file_path_output, 'a') as outfile:
+            for fname in tqdm(temp_files, "Concatenating "):
+                with open(fname) as infile:
+                    outfile.write(infile.read())
+                os.remove(fname)  # Optional: remove temp file after concatenation
+            outfile.write("\n")
+    print("> Neighbors end writing")
+
+    print("> Values start writing")
+    with open(init_file_path_input, 'r') as f_read:
+        tmp_values = f_read.readlines()
+    print("> Values read done")
+    with open(init_file_path_output, 'a') as file:
+        file.writelines(tmp_values[1:])
+    print("> Values end writing")
+    return True
+
+def get_grain_size_from_data(npy_data):
+    """Get grain size for grainID from npy data"""
+    num_steps = npy_data.shape[0]
+    num_grains = int(npy_data[0].max())
+    grain_size_array = np.zeros((num_steps, num_grains))
+    
+    for i in tqdm(range(num_steps)):
+        for j in range(num_grains):
+            grain_id = j + 1
+            grain_size_array[i, j] = np.sum(npy_data[i] == grain_id)
+    grain_size_array = np.sqrt(grain_size_array/np.pi)
+    return grain_size_array
+
+def get_ave_grain_size_from_cluster(clname, grain_num):
+    """Get grain size and time for grainID from cluster file"""
+    Time = []
+    Size = []
+    # Open filename
+    with open(clname, 'r') as file:
+        line = file.readline()
+        while line:
+            eachline = line.split()
+            if len(eachline) == 3:
+                if eachline[0] == 'Time':
+                    if len(Time) != 0:
+                        reduced_grain_num = sum(Size_one_step > 0)
+                        Size.append(sum((Size_one_step / np.pi) ** 0.5) / reduced_grain_num)
+                    Time.append(float(eachline[2]))
+                    Size_one_step = np.zeros(grain_num)
+            if len(eachline) == 7:
+                if eachline[0].isdigit(): Size_one_step[int(eachline[1])-1] += float(eachline[3])
+            line = file.readline()
+    # Last Calculation of ave grain num
+    reduced_grain_num = sum(Size_one_step > 0)
+    Size.append(sum((Size_one_step / np.pi) ** 0.5) / reduced_grain_num)
+    Time = np.array(Time)
+    Size = np.array(Size)
+    if len(Time) != len(Size): print("Shouldn't happen! "+ str(len(Time) + " " + str(len(Size))))
+    return Time, Size
 
 
 if __name__ == '__main__':
