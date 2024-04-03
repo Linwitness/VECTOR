@@ -13,6 +13,11 @@ import PACKAGE_MP_3DLinear as smooth_3d
 import PACKAGE_MP_Linear as smooth
 import myInput
 
+def get_line(i, j):
+    """Get the row order of grain i and grain j in MisoEnergy.txt (i < j)"""
+    if i < j: return int(i+(j-1)*(j)/2)
+    else: return int(j+(i-1)*(i)/2)
+
 def plot_energy_figure(timestep, energy_figure, figure_path=None):
 
     imgs = []
@@ -322,7 +327,7 @@ def calculate_expected_step(input_npy_data, expected_grain_num=200):
         step_num = npy_data.shape[0]
         grain_num_list = np.zeros(step_num)
         for i in tqdm(range(step_num)):
-            grain_num_list[i] = len(set(npy_data[i,:].flatten()))
+            grain_num_list[i] = len(np.unique(npy_data[i,:].flatten()))
         special_step_distribution[input_i] = int(np.argmin(abs(grain_num_list - expected_grain_num)))
         microstructure_list.append(npy_data[int(special_step_distribution[input_i]),:])
     print("> Step calculation done")
@@ -433,6 +438,37 @@ def init2EAarray(init_file_path, grain_num):
             print("Missing grains here!")
             euler_angle_array[i] = np.array([0,0,0])
     return euler_angle_array
+
+def image2init(img, EulerAngles, fp):
+    # put image into init files
+    
+    # Set local variables
+    size = img.shape
+    dim = len(size)
+    IC = [0]*(np.product(size)+3)
+    # Write the information in the SPPARKS format and save the file
+    IC[0] = '# This line is ignored\n'
+    IC[1] = 'Values\n'
+    IC[2] = '\n'
+    k=0
+    if dim==3:
+        for i in tqdm(range(size[0])):
+            for j in range(size[1]):
+                for h in range(size[2]):
+                    SiteID = int(img[i,j,h])
+                    IC[k+3] = str(k+1) + ' ' + str(SiteID) + ' ' + str(EulerAngles[SiteID-1,0]) + ' ' + str(EulerAngles[SiteID-1,1]) + ' ' + str(EulerAngles[SiteID-1,2]) + '\n'
+                    k = k + 1
+    else:
+        for i in tqdm(range(size[0])):
+            for j in range(size[1]):
+                SiteID = int(img[i,j])
+                IC[k+3] = str(k+1) + ' ' + str(SiteID) + ' ' + str(EulerAngles[SiteID-1,0]) + ' ' + str(EulerAngles[SiteID-1,1]) + ' ' + str(EulerAngles[SiteID-1,2]) + '\n'
+                k = k + 1
+    with open(fp, 'w') as file:
+        file.writelines(IC)
+    # Completion message
+    print("NEW IC WRITTEN TO FILE: %s"%fp)
+    return
 
 def output_init_from_dump(dump_file_path, euler_angle_array, init_file_path_output):
     # output the init file with euler_angle_array and one dump file
@@ -802,6 +838,205 @@ def get_ave_grain_size_from_cluster(clname, grain_num):
     Size = np.array(Size)
     if len(Time) != len(Size): print("Shouldn't happen! "+ str(len(Time) + " " + str(len(Size))))
     return Time, Size
+
+def init2img(box_size, init_file_path_input):
+    # make init as a img matrix
+    
+    size_x,size_y,size_z = box_size
+    img_array = np.zeros(size_y*size_x*size_z)
+
+    with open(init_file_path_input, 'r') as file: 
+        for i, line in enumerate(file):
+            if i >= 3: img_array[int(line.split()[0])-1] = int(line.split()[1])
+
+    if size_z>1: fig = img_array.reshape(size_x,size_y,size_z)
+    else: fig = img_array.reshape(size_x,size_y)
+
+    return fig
+
+
+def euler2quaternion(yaw, pitch, roll):
+    """Convert euler angle into quaternion"""
+
+    qx = np.cos(pitch/2.)*np.cos((yaw+roll)/2.)
+    qy = np.sin(pitch/2.)*np.cos((yaw-roll)/2.)
+    qz = np.sin(pitch/2.)*np.sin((yaw-roll)/2.)
+    qw = np.cos(pitch/2.)*np.sin((yaw+roll)/2.)
+
+    return [qx, qy, qz, qw]
+
+
+def symquat(index, Osym = 24):
+    """Convert one(index) symmetric matrix into a quaternion """
+
+    q = np.zeros(4)
+
+    if Osym == 24:
+        SYM = np.array([[1, 0, 0,  0, 1, 0,  0, 0, 1],
+                        [1, 0, 0,  0, -1, 0,  0, 0, -1],
+                        [1, 0, 0,  0, 0, -1,  0, 1, 0],
+                        [1, 0, 0,  0, 0, 1,  0, -1, 0],
+                        [-1, 0, 0,  0, 1, 0,  0, 0, -1],
+                        [-1, 0, 0,  0, -1, 0,  0, 0, 1],
+                        [-1, 0, 0,  0, 0, -1,  0, -1, 0],
+                        [-1, 0, 0,  0, 0, 1,  0, 1, 0],
+                        [0, 1, 0, -1, 0, 0,  0, 0, 1],
+                        [0, 1, 0,  0, 0, -1, -1, 0, 0],
+                        [0, 1, 0,  1, 0, 0,  0, 0, -1],
+                        [0, 1, 0,  0, 0, 1,  1, 0, 0],
+                        [0, -1, 0,  1, 0, 0,  0, 0, 1],
+                        [0, -1, 0,  0, 0, -1,  1, 0, 0],
+                        [0, -1, 0, -1, 0, 0,  0, 0, -1],
+                        [0, -1, 0,  0, 0, 1, -1, 0, 0],
+                        [0, 0, 1,  0, 1, 0, -1, 0, 0],
+                        [0, 0, 1,  1, 0, 0,  0, 1, 0],
+                        [0, 0, 1,  0, -1, 0,  1, 0, 0],
+                        [0, 0, 1, -1, 0, 0,  0, -1, 0],
+                        [0, 0, -1,  0, 1, 0,  1, 0, 0],
+                        [0, 0, -1, -1, 0, 0,  0, 1, 0],
+                        [0, 0, -1,  0, -1, 0, -1, 0, 0],
+                        [0, 0, -1,  1, 0, 0,  0, -1, 0]])
+    elif Osym == 12:
+        a = np.sqrt(3)/2
+        SYM = np.array([[1,  0, 0,  0,   1, 0,  0, 0,  1],
+                        [-0.5,  a, 0, -a, -0.5, 0,  0, 0,  1],
+                        [-0.5, -a, 0,  a, -0.5, 0,  0, 0,  1],
+                        [0.5,  a, 0, -a, 0.5, 0,  0, 0,  1],
+                        [-1,  0, 0,  0,  -1, 0,  0, 0,  1],
+                        [0.5, -a, 0,  a, 0.5, 0,  0, 0,  1],
+                        [-0.5, -a, 0, -a, 0.5, 0,  0, 0, -1],
+                        [1,  0, 0,  0,  -1, 0,  0, 0, -1],
+                        [-0.5,  a, 0,  a, 0.5, 0,  0, 0, -1],
+                        [0.5,  a, 0,  a, -0.5, 0,  0, 0, -1],
+                        [-1,  0, 0,  0,   1, 0,  0, 0, -1],
+                        [0.5, -a, 0, -a, -0.5, 0,  0, 0, -1]])
+
+    if (1+SYM[index, 0]+SYM[index, 4]+SYM[index, 8]) > 0:
+        q4 = np.sqrt(1+SYM[index, 0]+SYM[index, 4]+SYM[index, 8])/2
+        q[0] = q4
+        q[1] = (SYM[index, 7]-SYM[index, 5])/(4*q4)
+        q[2] = (SYM[index, 2]-SYM[index, 6])/(4*q4)
+        q[3] = (SYM[index, 3]-SYM[index, 1])/(4*q4)
+    elif (1+SYM[index, 0]-SYM[index, 4]-SYM[index, 8]) > 0:
+        q4 = np.sqrt(1+SYM[index, 0]-SYM[index, 4]-SYM[index, 8])/2
+        q[0] = (SYM[index, 7]-SYM[index, 5])/(4*q4)
+        q[1] = q4
+        q[2] = (SYM[index, 3]+SYM[index, 1])/(4*q4)
+        q[3] = (SYM[index, 2]+SYM[index, 6])/(4*q4)
+    elif (1-SYM[index, 0]+SYM[index, 4]-SYM[index, 8]) > 0:
+        q4 = np.sqrt(1-SYM[index, 0]+SYM[index, 4]-SYM[index, 8])/2
+        q[0] = (SYM[index, 2]-SYM[index, 6])/(4*q4)
+        q[1] = (SYM[index, 3]+SYM[index, 1])/(4*q4)
+        q[2] = q4
+        q[3] = (SYM[index, 7]+SYM[index, 5])/(4*q4)
+    elif (1-SYM[index, 0]-SYM[index, 4]+SYM[index, 8]) > 0:
+        q4 = np.sqrt(1-SYM[index, 0]-SYM[index, 4]+SYM[index, 8])/2
+        q[0] = (SYM[index, 3]-SYM[index, 1])/(4*q4)
+        q[1] = (SYM[index, 2]+SYM[index, 6])/(4*q4)
+        q[2] = (SYM[index, 7]+SYM[index, 5])/(4*q4)
+        q[3] = q4
+
+    return q
+
+
+def quat_Multi(q1, q2):
+    """Return the product of two quaternion"""
+
+    q = np.zeros(4)
+    q[0] = q1[0]*q2[0] - q1[1]*q2[1] - q1[2]*q2[2] - q1[3]*q2[3]
+    q[1] = q1[0]*q2[1] + q1[1]*q2[0] + q1[2]*q2[3] - q1[3]*q2[2]
+    q[2] = q1[0]*q2[2] - q1[1]*q2[3] + q1[2]*q2[0] + q1[3]*q2[1]
+    q[3] = q1[0]*q2[3] + q1[1]*q2[2] - q1[2]*q2[1] + q1[3]*q2[0]
+
+    return q
+
+def in_cubic_fz(m_axis):
+    # check if the misoreintation axis in fundamental zone
+    # three core axis
+    axis_a = np.array([1,0,0])
+    axis_b = np.array([1,1,0])/np.sqrt(2)
+    axis_c = np.array([1,1,1])/np.sqrt(3)
+    # if in fz
+    judgement_0 = np.dot(np.cross(axis_a, axis_b), m_axis) >= 0
+    judgement_1 = np.dot(np.cross(axis_b, axis_c), m_axis) >= 0
+    judgement_2 = np.dot(np.cross(axis_c, axis_a), m_axis) >= 0
+    # print(f"{judgement_0}, {judgement_1}, {judgement_2}")
+    return judgement_0*judgement_1*judgement_2
+
+
+def quaternions_fz(q1, q2, symm2quat_matrix, Osym=24):
+    """Return the misorientation of two quaternion"""
+
+    q = np.zeros(4)
+    misom = 2*np.pi
+    axis = np.array([1, 0, 0])
+    # print(f"q1: {q1}, q2: {q2}")
+    for i in range(0, Osym):
+        for j in range(0, Osym):
+            # get misorientation quaternion q
+            q1b = quat_Multi(symm2quat_matrix[i], q1)
+            q2b = quat_Multi(symm2quat_matrix[j], q2)
+            q2b[1:] = -q2b[1:]
+            q = quat_Multi(q1b, q2b)
+            # print(q)
+            # get the q and inverse of q
+            q_and_inverse = np.array([q,q])
+            q_and_inverse[1,1:] = -q_and_inverse[1,1:]
+            # get m_axis and inverse m_axis
+            base = np.sqrt(1-q[0]*q[0])
+            if base: axis_tmp = q_and_inverse[:,1:]/base
+            else: axis_tmp = np.array([[1, 0, 0],[1, 0, 0]])
+            # judge if the m_axis in fundamental zone or not
+            in_cubic_fz_result = in_cubic_fz(axis_tmp.T)
+            if not np.sum(in_cubic_fz_result): continue
+            
+            # find the index of m_axis in fundamental zone or not
+            true_index = np.squeeze(np.where(in_cubic_fz_result))
+            # find the minimal miso angle
+            miso0 = 2*math.acos(round(q[0], 5))
+            if miso0 > np.pi: miso0 = miso0 - 2*np.pi
+            if abs(miso0) < misom:
+                misom = abs(miso0)
+                qmin = q_and_inverse[true_index]
+                axis = axis_tmp[true_index]
+
+    return misom, axis
+
+
+def multiP_calM(i, quartAngle, symm2quat_matrix, Osym):
+    """output the value of MisoEnergy by inout the two grain ID: i[0] and i[1]"""
+
+    qi = quartAngle[i[0]-1, :]
+    qj = quartAngle[i[1]-1, :]
+
+    theta, axis = quaternions_fz(qi, qj, symm2quat_matrix, Osym)
+    # theta = theta*(theta<1)+(theta>1)
+    # gamma = theta*(1-np.log(theta))
+    gamma = theta
+    return np.insert(axis, 0, gamma)
+
+def pre_operation_misorientation(grainNum, init_filename, Osym=24):
+    # create the marix to store euler angle and misorientation
+    quartAngle = np.ones((grainNum, 4))*-2
+
+    # Create a quaternion matrix to show symmetry
+    symm2quat_matrix = np.zeros((Osym, 4))
+    for i in range(0, Osym):
+        symm2quat_matrix[i, :] = symquat(i, Osym)
+
+    # read the input euler angle from *.init
+    with open(init_filename, 'r', encoding='utf-8') as f:
+        for line in f:
+            eachline = line.split()
+
+            if len(eachline) == 5 and eachline[0] != '#':
+                lineN = int(eachline[1])-1
+                if quartAngle[lineN, 0] == -2:
+                    quartAngle[lineN, :] = euler2quaternion(float(eachline[2]), float(eachline[3]), float(eachline[4]))
+
+    return symm2quat_matrix, quartAngle
+
+
 
 
 if __name__ == '__main__':

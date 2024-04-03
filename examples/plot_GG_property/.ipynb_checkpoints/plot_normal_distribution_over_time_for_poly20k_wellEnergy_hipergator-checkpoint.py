@@ -60,6 +60,15 @@ def find_fittingEllipse2(array): #failure
 
     return X_mat
 
+def find_fittingEllipse3(array): 
+
+    import cv2
+    # Fit ellipse to the points
+    ellipse = cv2.fitEllipse(array)
+    # print(f"aspect ratio: {ellipse[1][0]/ellipse[1][1]}")
+
+    return ellipse
+
 def get_poly_center(micro_matrix, step):
     # Get the center of all non-periodic grains in matrix
     num_grains = int(np.max(micro_matrix[step,:]))
@@ -225,7 +234,7 @@ def get_normal_vector_slope(P, sites, step, para_name, bias=None):
 
 if __name__ == '__main__':
     # File name
-    npy_file_folder_iso = "/blue/michael.tonks/lin.yang/SPPARKS-VirtualIncEnergy/2d_poly_multiCoreCompare/results/"
+    # npy_file_folder_iso = "/blue/michael.tonks/lin.yang/SPPARKS-VirtualIncEnergy/2d_poly_multiCoreCompare/results/"
     npy_file_folder = "/blue/michael.tonks/lin.yang/SPPARKS-VirtualIncEnergy/2d_poly_wellEnergy/results/"
     TJ_energy_type_070 = "0.7"
     TJ_energy_type_080 = "0.8"
@@ -233,9 +242,10 @@ if __name__ == '__main__':
     # TJ_energy_type_095 = "0.95"
     # TJ_energy_type_099 = "0.99"
 
-    # energy_function = "Cos"
-    energy_function = "Cosmin1"
-    npy_file_name_iso = "p_ori_ave_aveE_20000_multiCore32_delta0.0_m2_J1_refer_1_0_0_seed56689_kt066.npy"
+    energy_function = "Cos"
+    # energy_function = "Well"
+    # energy_function = "CosMin1"
+    npy_file_name_iso = "p_aveE_20000_Cos_delta0.0_J1_refer_1_0_0_seed56689_kt0.66.npy"
     npy_file_name_aniso_070 = f"p_aveE_20000_{energy_function}_delta{TJ_energy_type_070}_J1_refer_1_0_0_seed56689_kt0.66.npy"
     npy_file_name_aniso_080 = f"p_aveE_20000_{energy_function}_delta{TJ_energy_type_080}_J1_refer_1_0_0_seed56689_kt0.66.npy"
     npy_file_name_aniso_090 = f"p_aveE_20000_{energy_function}_delta{TJ_energy_type_090}_J1_refer_1_0_0_seed56689_kt0.66.npy"
@@ -244,7 +254,7 @@ if __name__ == '__main__':
 
 
     # Initial data
-    npy_file_iso = np.load(npy_file_folder_iso + npy_file_name_iso)
+    npy_file_iso = np.load(npy_file_folder + npy_file_name_iso)
     npy_file_aniso_070 = np.load(npy_file_folder + npy_file_name_aniso_070)
     npy_file_aniso_080 = np.load(npy_file_folder + npy_file_name_aniso_080)
     npy_file_aniso_090 = np.load(npy_file_folder + npy_file_name_aniso_090)
@@ -252,7 +262,7 @@ if __name__ == '__main__':
     # npy_file_aniso_099 = np.load(npy_file_folder + npy_file_name_aniso_099)
     print(f"The 0.7 data size is: {npy_file_aniso_070.shape}")
     print(f"The 0.8 data size is: {npy_file_aniso_080.shape}")
-    print(f"The 0.90 data size is: {npy_file_aniso_090.shape}")
+    print(f"The 0.9 data size is: {npy_file_aniso_090.shape}")
     # print(f"The 0.95 data size is: {npy_file_aniso_095.shape}")
     # print(f"The 0.99 data size is: {npy_file_aniso_099.shape}")
     print(f"The iso data size is: {npy_file_iso.shape}")
@@ -260,70 +270,71 @@ if __name__ == '__main__':
 
     # Initial container
     initial_grain_num = 20000
-    step_num = npy_file_aniso_090.shape[0]
-    grain_num_aniso_070 = np.zeros(step_num)
-    grain_num_aniso_080 = np.zeros(step_num)
-    grain_num_aniso_090 = np.zeros(step_num)
+    step_num = npy_file_aniso_070.shape[0]
+    grain_num_aniso_070 = np.zeros(npy_file_aniso_070.shape[0])
+    grain_num_aniso_080 = np.zeros(npy_file_aniso_080.shape[0])
+    grain_num_aniso_090 = np.zeros(npy_file_aniso_090.shape[0])
     # grain_num_aniso_095 = np.zeros(step_num)
     # grain_num_aniso_099 = np.zeros(step_num)
-    grain_num_iso = np.zeros(step_num)
+    grain_num_iso = np.zeros(npy_file_iso.shape[0])
 
     # Calculate the number of grains
-    for i in range(11,step_num):
-        grain_num_aniso_070[i] = len(set(npy_file_aniso_070[i,:].flatten()))
-        grain_num_aniso_080[i] = len(set(npy_file_aniso_080[i,:].flatten()))
-        grain_num_aniso_090[i] = len(set(npy_file_aniso_090[i,:].flatten()))
+    for i in range(npy_file_aniso_070.shape[0]):
+        grain_num_aniso_070[i] = len(np.unique(npy_file_aniso_070[i,:].flatten()))
+        grain_num_aniso_080[i] = len(np.unique(npy_file_aniso_080[i,:].flatten()))
         # grain_num_aniso_095[i] = len(set(npy_file_aniso_095[i,:].flatten()))
         # grain_num_aniso_099[i] = len(set(npy_file_aniso_099[i,:].flatten()))
-        grain_num_iso[i] = len(set(npy_file_iso[i,:].flatten()))
+        grain_num_iso[i] = len(np.unique(npy_file_iso[i,:].flatten()))
+    for i in range(npy_file_aniso_090.shape[0]):
+        grain_num_aniso_090[i] = len(np.unique(npy_file_aniso_090[i,:].flatten()))
 
-    expected_grain_num = 200
+    expected_grain_num = 1000
     special_step_distribution_070 = int(np.argmin(abs(grain_num_aniso_070 - expected_grain_num)))
-    special_step_distribution_080 = int(np.argmin(abs(grain_num_aniso_080[11:] - expected_grain_num)))
-    special_step_distribution_090 = int(np.argmin(abs(grain_num_aniso_090[11:] - expected_grain_num)))
-    # special_step_distribution_095 = int(np.argmin(abs(grain_num_aniso_095[11:] - expected_grain_num)))
-    # special_step_distribution_099 = int(np.argmin(abs(grain_num_aniso_099[11:] - expected_grain_num)))
-    special_step_distribution_iso = int(np.argmin(abs(grain_num_iso[11:] - expected_grain_num)))
+    special_step_distribution_080 = int(np.argmin(abs(grain_num_aniso_080 - expected_grain_num)))
+    special_step_distribution_090 = int(np.argmin(abs(grain_num_aniso_090 - expected_grain_num)))
+    # special_step_distribution_095 = int(np.argmin(abs(grain_num_aniso_095- expected_grain_num)))
+    # special_step_distribution_099 = int(np.argmin(abs(grain_num_aniso_099 - expected_grain_num)))
+    special_step_distribution_iso = int(np.argmin(abs(grain_num_iso - expected_grain_num)))
     print("Found time steps")
 
     # Aniso - iso
-    # data_file_name_P = f'/well_normal_data/normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
-    # data_file_name_sites = f'/well_normal_data/normal_distribution_iso_sites_step{special_step_distribution_iso}.npy'
+    data_file_name_P = f'/well_normal_data/normal_distribution_iso_P_step{special_step_distribution_iso}.npy'
+    data_file_name_sites = f'/well_normal_data/normal_distribution_iso_sites_step{special_step_distribution_iso}.npy'
     # if os.path.exists(current_path + data_file_name_P):
     #     P = np.load(current_path + data_file_name_P)
     #     sites = np.load(current_path + data_file_name_sites)
     # else:
-    #     newplace = np.rot90(npy_file_iso[special_step_distribution_iso,:,:,:], 1, (0,1))
-    #     P, sites = get_normal_vector(newplace, initial_grain_num)
-    #     np.save(current_path + data_file_name_P, P)
-    #     np.save(current_path + data_file_name_sites, sites)
+    newplace = np.rot90(npy_file_iso[special_step_distribution_iso,:,:,:], 1, (0,1))
+    P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+        # np.save(current_path + data_file_name_P, P)
+        # np.save(current_path + data_file_name_sites, sites)
 
-    # slope_list = get_normal_vector_slope(P, sites, special_step_distribution_iso, "Iso")
-    # # For bias
-    # xLim = [0, 360]
-    # binValue = 10.01
-    # binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
-    # freqArray_circle = np.ones(binNum)
-    # freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
-    # slope_list_bias = freqArray_circle - slope_list
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_iso, "Iso")
+    # For bias
+    xLim = [0, 360]
+    binValue = 10.01
+    binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
+    freqArray_circle = np.ones(binNum)
+    freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
+    slope_list_bias = freqArray_circle - slope_list
 
 
     # Start polar figure
-    # plt.close()
-    # fig = plt.figure(figsize=(5, 5))
-    # ax = plt.gca(projection='polar')
+    plt.close()
+    fig = plt.figure(figsize=(5, 5))
+    ax = plt.gca(projection='polar')
 
-    # ax.set_thetagrids(np.arange(0.0, 360.0, 45.0),fontsize=16)
-    # ax.set_thetamin(0.0)
-    # ax.set_thetamax(360.0)
+    ax.set_thetagrids(np.arange(0.0, 360.0, 45.0),fontsize=16)
+    ax.set_thetamin(0.0)
+    ax.set_thetamax(360.0)
 
-    # ax.set_rgrids(np.arange(0, 0.01, 0.004))
-    # ax.set_rlabel_position(0.0)  # 标签显示在0°
-    # ax.set_rlim(0.0, 0.01)  # 标签范围为[0, 5000)
-    # ax.set_yticklabels(['0', '4e-3', '8e-3'],fontsize=16)
+    ax.set_rgrids(np.arange(0, 0.015, 0.004))
+    ax.set_rlabel_position(0.0)  # 标签显示在0°
+    ax.set_rlim(0.0, 0.015)  # 标签范围为[0, 5000)
+    ax.set_yticklabels(['0', '4e-3', '8e-3', '1.2e-3'],fontsize=16)
 
-    # ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
-    # ax.set_axisbelow('True')
+    ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
+    ax.set_axisbelow('True')
 
     # Get bias from kT test
     label_list = ["0.0", "0.7", "0.8", "0.9"]
@@ -332,116 +343,93 @@ if __name__ == '__main__':
     aniso_rs = np.zeros(len(label_list))
 
     # Iso
-    # slope_list = get_normal_vector_slope(P, sites, special_step_distribution_iso, "Iso",slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_iso, "Iso",slope_list_bias)
     # aniso_mag[0], aniso_mag_stand[0] = simple_magnitude(slope_list)
-    aniso_rs[0] = get_poly_statistical_ar(npy_file_iso, special_step_distribution_iso)
+    # aniso_rs[0] = get_poly_statistical_ar(npy_file_iso, special_step_distribution_iso)
+    as_list = []
+    for n in range(len(sites_list)):
+        if len(sites_list[n]) < 10: continue
+        ellipse = find_fittingEllipse3(np.array(sites_list[n]))
+        as_list.append(ellipse[1][0]/ellipse[1][1])
+    aniso_rs[0] = np.average(as_list)
     print("iso done")
 
     # Aniso - 070
-    # data_file_name_P = f'/well_normal_data/normal_distribution_070_P_step{special_step_distribution_070}.npy'
-    # data_file_name_sites = f'/well_normal_data/normal_distribution_070_sites_step{special_step_distribution_070}.npy'
+    data_file_name_P = f'/well_normal_data/normal_distribution_070_P_{energy_function}_step{special_step_distribution_070}.npy'
+    data_file_name_sites = f'/well_normal_data/normal_distribution_070_sites_{energy_function}_step{special_step_distribution_070}.npy'
     # if os.path.exists(current_path + data_file_name_P):
     #     P = np.load(current_path + data_file_name_P)
     #     sites = np.load(current_path + data_file_name_sites)
     # else:
-    #     newplace = np.rot90(npy_file_aniso_070[special_step_distribution_070,:,:,:], 1, (0,1))
-    #     P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-    #     np.save(current_path + data_file_name_P, P)
-    #     np.save(current_path + data_file_name_sites, sites)
+    newplace = np.rot90(npy_file_aniso_070[special_step_distribution_070,:,:,:], 1, (0,1))
+    P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+        # np.save(current_path + data_file_name_P, P)
+        # np.save(current_path + data_file_name_sites, sites)
 
-    # slope_list = get_normal_vector_slope(P, sites, special_step_distribution_070, "0.6",slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_070, r"$\sigma$=0.7",slope_list_bias)
     # aniso_mag[1], aniso_mag_stand[1] = simple_magnitude(slope_list)
-    aniso_rs[1] = get_poly_statistical_ar(npy_file_aniso_070, special_step_distribution_070)
+    # aniso_rs[1] = get_poly_statistical_ar(npy_file_aniso_070, special_step_distribution_070)
+    as_list = []
+    for n in range(len(sites_list)):
+        if len(sites_list[n]) < 10: continue
+        ellipse = find_fittingEllipse3(np.array(sites_list[n]))
+        as_list.append(ellipse[1][0]/ellipse[1][1])
+    aniso_rs[1] = np.average(as_list)
     print("070 done")
 
     # Aniso - 0.8
-    # data_file_name_P = f'/well_normal_data/normal_distribution_080_P_step{special_step_distribution_080}.npy'
-    # data_file_name_sites = f'/well_normal_data/normal_distribution_080_sites_step{special_step_distribution_080}.npy'
+    data_file_name_P = f'/well_normal_data/normal_distribution_080_P_{energy_function}_step{special_step_distribution_080}.npy'
+    data_file_name_sites = f'/well_normal_data/normal_distribution_080_sites_{energy_function}_step{special_step_distribution_080}.npy'
     # if os.path.exists(current_path + data_file_name_P):
     #     P = np.load(current_path + data_file_name_P)
     #     sites = np.load(current_path + data_file_name_sites)
     # else:
-    #     newplace = np.rot90(npy_file_aniso_080[special_step_distribution_080,:,:,:], 1, (0,1))
-    #     P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-    #     np.save(current_path + data_file_name_P, P)
-    #     np.save(current_path + data_file_name_sites, sites)
+    newplace = np.rot90(npy_file_aniso_080[special_step_distribution_080,:,:,:], 1, (0,1))
+    P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+        # np.save(current_path + data_file_name_P, P)
+        # np.save(current_path + data_file_name_sites, sites)
 
-    # slope_list = get_normal_vector_slope(P, sites, special_step_distribution_080, "0.8",slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_080, r"$\sigma$=0.8",slope_list_bias)
     # aniso_mag[1], aniso_mag_stand[1] = simple_magnitude(slope_list)
-    aniso_rs[2] = get_poly_statistical_ar(npy_file_aniso_080, special_step_distribution_080)
+    # aniso_rs[2] = get_poly_statistical_ar(npy_file_aniso_080, special_step_distribution_080)
+    as_list = []
+    for n in range(len(sites_list)):
+        if len(sites_list[n]) < 10: continue
+        ellipse = find_fittingEllipse3(np.array(sites_list[n]))
+        as_list.append(ellipse[1][0]/ellipse[1][1])
+    aniso_rs[2] = np.average(as_list)
     print("080 done")
 
     # Aniso - 090
-    # data_file_name_P = f'/well_normal_data/normal_distribution_090_P_step{special_step_distribution_090}.npy'
-    # data_file_name_sites = f'/well_normal_data/normal_distribution_090_sites_step{special_step_distribution_090}.npy'
+    data_file_name_P = f'/well_normal_data/normal_distribution_090_P_{energy_function}_step{special_step_distribution_090}.npy'
+    data_file_name_sites = f'/well_normal_data/normal_distribution_090_sites_{energy_function}_step{special_step_distribution_090}.npy'
     # if os.path.exists(current_path + data_file_name_P):
     #     P = np.load(current_path + data_file_name_P)
     #     sites = np.load(current_path + data_file_name_sites)
     # else:
-    #     newplace = np.rot90(npy_file_aniso_090[special_step_distribution_090,:,:,:], 1, (0,1))
-    #     P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-    #     np.save(current_path + data_file_name_P, P)
-    #     np.save(current_path + data_file_name_sites, sites)
+    newplace = np.rot90(npy_file_aniso_090[special_step_distribution_090,:,:,:], 1, (0,1))
+    P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
+        # np.save(current_path + data_file_name_P, P)
+        # np.save(current_path + data_file_name_sites, sites)
 
-    # slope_list = get_normal_vector_slope(P, sites, special_step_distribution_090, "0.9",slope_list_bias)
+    slope_list = get_normal_vector_slope(P, sites, special_step_distribution_090, r"$\sigma$=0.9",slope_list_bias)
     # aniso_mag[2], aniso_mag_stand[2] = simple_magnitude(slope_list)
-    aniso_rs[3] = get_poly_statistical_ar(npy_file_aniso_090, special_step_distribution_090)
+    # aniso_rs[3] = get_poly_statistical_ar(npy_file_aniso_090, special_step_distribution_090)
+    as_list = []
+    for n in range(len(sites_list)):
+        if len(sites_list[n]) < 10: continue
+        ellipse = find_fittingEllipse3(np.array(sites_list[n]))
+        as_list.append(ellipse[1][0]/ellipse[1][1])
+    aniso_rs[3] = np.average(as_list)
     print("090 done")
-
-    # Aniso - 095
-    # data_file_name_P = f'/well_normal_data/normal_distribution_095_P_step{special_step_distribution_095}.npy'
-    # data_file_name_sites = f'/well_normal_data/normal_distribution_095_sites_step{special_step_distribution_095}.npy'
-    # if os.path.exists(current_path + data_file_name_P):
-    #     P = np.load(current_path + data_file_name_P)
-    #     sites = np.load(current_path + data_file_name_sites)
-    # else:
-    #     newplace = np.rot90(npy_file_aniso_095[special_step_distribution_095,:,:,:], 1, (0,1))
-    #     P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-    #     np.save(current_path + data_file_name_P, P)
-    #     np.save(current_path + data_file_name_sites, sites)
-
-    # slope_list = get_normal_vector_slope(P, sites, special_step_distribution_095, "0.95",slope_list_bias)
-    # aniso_mag[3], aniso_mag_stand[3] = simple_magnitude(slope_list)
-    # aniso_rs[4] = get_poly_statistical_ar(npy_file_aniso_095, special_step_distribution_095)
-    # print("095 done")
-
-    # Aniso - 0.99
-    # data_file_name_P = f'/well_normal_data/normal_distribution_099_P_step{special_step_distribution_099}.npy'
-    # data_file_name_sites = f'/well_normal_data/normal_distribution_099_sites_step{special_step_distribution_099}.npy'
-    # if os.path.exists(current_path + data_file_name_P):
-    #     P = np.load(current_path + data_file_name_P)
-    #     sites = np.load(current_path + data_file_name_sites)
-    # else:
-    #     newplace = np.rot90(npy_file_aniso_099[special_step_distribution_099,:,:,:], 1, (0,1))
-    #     P, sites, sites_list = get_normal_vector(newplace, initial_grain_num)
-    #     np.save(current_path + data_file_name_P, P)
-    #     np.save(current_path + data_file_name_sites, sites)
-
-    # slope_list = get_normal_vector_slope(P, sites, special_step_distribution_099, "0.99",slope_list_bias)
-    # aniso_mag[4], aniso_mag_stand[4] = simple_magnitude(slope_list)
-    # aniso_rs[5] = get_poly_statistical_ar(npy_file_aniso_099, special_step_distribution_099)
-    # print("099 done")
     
 
-    # plt.legend(loc=(-0.12,-0.35),fontsize=16,ncol=3)
-    # plt.savefig(current_path + "/figures/normal_distribution_poly_20k_after_removing_bias.png", dpi=400,bbox_inches='tight')
-
-    # plt.close()
-    # fig = plt.figure(figsize=(5, 5))
-    # label_list = ["0.0", "0.8", "0.9", "0.95", "0.99"]
-    # plt.plot(np.linspace(0,len(label_list)-1,len(label_list)), aniso_mag, '.-', markersize=8, label=f'around {expected_grain_num} grains', linewidth=2)
-    # plt.xlabel(r"$\sigma$", fontsize=16)
-    # plt.ylabel("Anisotropic Magnitude", fontsize=16)
-    # plt.xticks([0,1,2,3,4],label_list)
-    # # plt.legend(fontsize=16)
-    # plt.ylim([-0.05,1.0])
-    # plt.xticks(fontsize=16)
-    # plt.yticks(fontsize=16)
-    # plt.savefig(current_path + f"/figures/anisotropic_poly_20k_magnitude_polar_{energy_function}.png", dpi=400,bbox_inches='tight')
+    plt.legend(loc=(-0.12,-0.35),fontsize=16,ncol=3)
+    plt.savefig(current_path + f"/figures/normal_distribution_poly_20k_after_removing_bias_{energy_function}_{expected_grain_num}grains.png", dpi=400,bbox_inches='tight')
 
     plt.close()
     fig = plt.figure(figsize=(5, 5))
-    plt.plot(np.linspace(0,len(label_list)-1,len(label_list)), 1/aniso_rs, '.-', markersize=8, label=f'around {expected_grain_num} grains', linewidth=2)
+    plt.plot(np.linspace(0,len(label_list)-1,len(label_list)), aniso_rs, '.-', markersize=8, linewidth=2)
     plt.xlabel(r"$\sigma$", fontsize=16)
     plt.ylabel("Aspect Ratio", fontsize=16)
     plt.xticks(np.linspace(0,len(label_list)-1,len(label_list)),label_list)
@@ -449,7 +437,7 @@ if __name__ == '__main__':
     plt.ylim([-0.05,1.0])
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-    plt.savefig(current_path + f"/figures/anisotropic_poly_20k_aspect_ratio_{energy_function}.png", dpi=400,bbox_inches='tight')
+    plt.savefig(current_path + f"/figures/anisotropic_poly_p_20k_aspect_ratio_{energy_function}_{expected_grain_num}grains.png", dpi=400,bbox_inches='tight')
 
 
 

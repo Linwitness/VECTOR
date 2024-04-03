@@ -13,6 +13,11 @@ import PACKAGE_MP_3DLinear as smooth_3d
 import PACKAGE_MP_Linear as smooth
 import myInput
 
+def get_line(i, j):
+    """Get the row order of grain i and grain j in MisoEnergy.txt (i < j)"""
+    if i < j: return int(i+(j-1)*(j)/2)
+    else: return int(j+(i-1)*(i)/2)
+
 def plot_energy_figure(timestep, energy_figure, figure_path=None):
 
     imgs = []
@@ -51,7 +56,7 @@ def plot_energy_video(timestep, energy_figure, figure_path, delta = 0):
     FFMpegWriter = animation.writers['ffmpeg']
     writer = animation.FFMpegWriter(fps=math.floor(len(timestep)/5), bitrate=10000)
     ani.save(figure_path+".mp4",writer=writer)
-    
+
 def plot_structure_figure(step, structure_figure, figure_path):
 
     plt.close()
@@ -322,7 +327,7 @@ def calculate_expected_step(input_npy_data, expected_grain_num=200):
         step_num = npy_data.shape[0]
         grain_num_list = np.zeros(step_num)
         for i in tqdm(range(step_num)):
-            grain_num_list[i] = len(set(npy_data[i,:].flatten()))
+            grain_num_list[i] = len(np.unique(npy_data[i,:].flatten()))
         special_step_distribution[input_i] = int(np.argmin(abs(grain_num_list - expected_grain_num)))
         microstructure_list.append(npy_data[int(special_step_distribution[input_i]),:])
     print("> Step calculation done")
@@ -433,6 +438,37 @@ def init2EAarray(init_file_path, grain_num):
             print("Missing grains here!")
             euler_angle_array[i] = np.array([0,0,0])
     return euler_angle_array
+
+def image2init(img, EulerAngles, fp):
+    # put image into init files
+    
+    # Set local variables
+    size = img.shape
+    dim = len(size)
+    IC = [0]*(np.product(size)+3)
+    # Write the information in the SPPARKS format and save the file
+    IC[0] = '# This line is ignored\n'
+    IC[1] = 'Values\n'
+    IC[2] = '\n'
+    k=0
+    if dim==3:
+        for i in tqdm(range(size[0])):
+            for j in range(size[1]):
+                for h in range(size[2]):
+                    SiteID = int(img[i,j,h])
+                    IC[k+3] = str(k+1) + ' ' + str(SiteID) + ' ' + str(EulerAngles[SiteID-1,0]) + ' ' + str(EulerAngles[SiteID-1,1]) + ' ' + str(EulerAngles[SiteID-1,2]) + '\n'
+                    k = k + 1
+    else:
+        for i in tqdm(range(size[0])):
+            for j in range(size[1]):
+                SiteID = int(img[i,j])
+                IC[k+3] = str(k+1) + ' ' + str(SiteID) + ' ' + str(EulerAngles[SiteID-1,0]) + ' ' + str(EulerAngles[SiteID-1,1]) + ' ' + str(EulerAngles[SiteID-1,2]) + '\n'
+                k = k + 1
+    with open(fp, 'w') as file:
+        file.writelines(IC)
+    # Completion message
+    print("NEW IC WRITTEN TO FILE: %s"%fp)
+    return
 
 def output_init_from_dump(dump_file_path, euler_angle_array, init_file_path_output):
     # output the init file with euler_angle_array and one dump file
@@ -671,7 +707,7 @@ def output_init_neighbor_from_init_mp(interval, box_size, init_file_path_input, 
                         # Compute the indices with wrapping around boundaries (using np.mod)
                         indices = (np.array([i, j]) + offsets) % np.array([size_y, size_x])
                         # Extract the values from 'img' using advanced indexing
-                        neighbour_values = img[indices[:, 0], indices[:, 1]].astype('int')
+                        neighbour_values = img[indices[:, 0], indices[:, 1],0].astype('int')
                         # Convert values to 1-based indexing and concatenate into a string
                         tmp_nei += ' '.join(map(str, neighbour_values + 1))
                         max_length_neighbors = max(max_length_neighbors, len(tmp_nei))
@@ -768,7 +804,7 @@ def get_grain_size_from_data(npy_data):
     num_steps = npy_data.shape[0]
     num_grains = int(npy_data[0].max())
     grain_size_array = np.zeros((num_steps, num_grains))
-    
+
     for i in tqdm(range(num_steps)):
         for j in range(num_grains):
             grain_id = j + 1
@@ -802,6 +838,22 @@ def get_ave_grain_size_from_cluster(clname, grain_num):
     Size = np.array(Size)
     if len(Time) != len(Size): print("Shouldn't happen! "+ str(len(Time) + " " + str(len(Size))))
     return Time, Size
+
+def init2img(box_size, init_file_path_input):
+    # make init as a img matrix
+    
+    size_x,size_y,size_z = box_size
+    img_array = np.zeros(size_y*size_x*size_z)
+
+    with open(init_file_path_input, 'r') as file: 
+        for i, line in enumerate(file):
+            if i >= 3: img_array[int(line.split()[0])-1] = int(line.split()[1])
+
+    if size_z>1: fig = img_array.reshape(size_x,size_y,size_z)
+    else: fig = img_array.reshape(size_x,size_y)
+
+    return fig
+
 
 
 if __name__ == '__main__':

@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     # File name
     # dump file of last time step
-    last_step = 5
+    last_step = 16
     dump_file_foler = "/blue/michael.tonks/lin.yang/SPPARKS-VirtualIncEnergy/3d_poly_fully/"
     # dump_file_foler = "/Users/lin/projects/SPPARKS-AGG/examples/Test_SimplifyIncE/3d_poly_for_GG/"
     dump_file_name = f"p_ori_fully5d_fz_aveE_f1.0_t1.0_450_5k_multiCore64_J1_refer_1_0_0_seed56689_kt1.95"
@@ -53,5 +53,5 @@ if __name__ == '__main__':
     print(f"The converting is {output_neighbr_init} success.")
     # output_neighbr_init = output_init_neighbor_from_init(interval, box_size, init_file_folder+init_file_name, init_file_folder+init_file_name_final+"test")
     
-    # pigz -p 128 -k poly_IC450_5k_s5_neighbor5.init
+    # pigz -p 128 -k poly_IC450_5k_s16_neighbor5.init
 

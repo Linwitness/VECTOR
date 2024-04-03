@@ -39,9 +39,13 @@ class linear3d_class(object):
         # convert individual grains map into one grain map
         self.P = np.zeros((4,nx,ny,nz)) # matrix to store IC and normal vector results
         self.C = np.zeros((2,nx,ny,nz)) # curvature result matrix
-        for i in range(0,np.shape(P0)[3]):
-            self.P[0,:,:,:] += P0[:,:,:,i]*(i+1)
-            self.C[0,:,:,:] += P0[:,:,:,i]*(i+1)
+        if len(P0.shape) == 3:
+            self.P[0,:,:,:] = np.array(P0)
+            self.C[0,:,:,:] = np.array(P0)
+        else:
+            for i in range(0,np.shape(P0)[3]):
+                self.P[0,:,:,:] += P0[:,:,:,i]*(i+1)
+                self.C[0,:,:,:] += P0[:,:,:,i]*(i+1)
         self.bc = bc
 
         # data for multiprocessing
