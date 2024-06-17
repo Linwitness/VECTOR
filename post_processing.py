@@ -18,6 +18,81 @@ def get_line(i, j):
     if i < j: return int(i+(j-1)*(j)/2)
     else: return int(j+(i-1)*(i)/2)
 
+# I_O curvature method
+def IO_curvature(microstructure):
+    voxel_and_face_num_edge = dict() # each GB: voxel_inner, voxel_outer, face_num, curvature
+    nx, ny, nz = microstructure.shape
+    edge_list = [0,1,3,5,8,12]
+    for i in (range(nx)):
+        for j in range(ny):
+            for k in range(nz):
+                ip,im,jp,jm,kp,km = myInput.periodic_bc3d(nx,ny,nz,i,j,k)
+                nn_id = np.array([microstructure[ip,j,k],microstructure[im,j,k],microstructure[i,jp,k],microstructure[i,jm,k],microstructure[i,j,kp],microstructure[i,j,km]])
+                nn_id_include_i = np.array([microstructure[ip,j,k],microstructure[im,j,k],microstructure[i,jp,k],microstructure[i,jm,k],microstructure[i,j,kp],microstructure[i,j,km],microstructure[i,j,k]])
+                nn_id_include_i_unique_id = np.unique(nn_id_include_i)
+                if len(nn_id_include_i_unique_id) > 2: continue # ignore the TJs and QJs
+                nn_id_connect = (nn_id - microstructure[i,j,k]) != 0 # check the connection with neighboring site
+                if np.sum(nn_id_connect) > 0:
+                    pair_id = get_line(nn_id_include_i_unique_id[0],nn_id_include_i_unique_id[1])
+                    if pair_id not in voxel_and_face_num_edge: voxel_and_face_num_edge[pair_id] = np.zeros(4)
+                    # figure out the num of faces for each sites
+                    num_faces = np.sum(nn_id_connect)
+                    voxel_and_face_num_edge[pair_id][2] += num_faces # add the face to dict
+                    # figure out the number of edges
+                    if microstructure[i,j,k] == nn_id_include_i_unique_id[0]: # smaller
+                        voxel_and_face_num_edge[pair_id][0] += edge_list[int(num_faces-1)]
+                    else: # larger
+                        voxel_and_face_num_edge[pair_id][1] += edge_list[int(num_faces-1)]
+    # curvature point to the center of smaller grain id is positive
+    for i in voxel_and_face_num_edge:
+        voxel_and_face_num_edge[i][2] = voxel_and_face_num_edge[i][2]/2 # get the true face number
+        # print(voxel_and_face_num_edge[i])
+        voxel_and_face_num_edge[i][3] = np.pi/4 * (voxel_and_face_num_edge[i][1] - voxel_and_face_num_edge[i][0]) / voxel_and_face_num_edge[i][2]
+    
+    return voxel_and_face_num_edge
+
+# I_O curvature method
+def IO_curvature_high_efficiency(microstructure):
+    voxel_and_face_num_edge = {} # each GB: voxel_inner, voxel_outer, face_num, curvature
+    nx, ny, nz = microstructure.shape
+    edge_list = [0,1,3,5,8,12]
+    
+    # for periodic boundary conditions
+    offsets = np.array([[0, 0, 0],[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]])
+    idx = np.indices((nx, ny, nz)).reshape(3, -1).T
+    
+    all_neighbors = np.zeros((1000,len(offsets)))
+    for i in range(len(offsets)):
+        neighbor_idx = idx + offsets[i]
+        neighbor_idx = np.mod(neighbor_idx, [nx, ny, nz])
+        all_neighbors[:,i] = microstructure[tuple(neighbor_idx.T)]
+    num_faces = np.sum((all_neighbors - np.repeat(microstructure[tuple(idx.T)][:,np.newaxis],7,1)) != 0,axis=1)
+    
+    for i in range(len(all_neighbors)):
+        neighbors_unique_id = np.unique(all_neighbors[i])
+        if len(neighbors_unique_id) == 2:
+            pair_id = get_line(neighbors_unique_id[0],neighbors_unique_id[1])
+            
+            if pair_id not in voxel_and_face_num_edge: example = np.zeros(4)
+            else: example = voxel_and_face_num_edge[pair_id]
+            # figure out the num of faces for each sites
+            example[2] += num_faces[i]/2 # add the true face to dict
+            # figure out the number of edges
+            if microstructure[tuple(idx[i])] == neighbors_unique_id[0]: # smaller
+                example[0] += edge_list[int(num_faces[i]-1)]
+            else: # larger
+                example[1] += edge_list[int(num_faces[i]-1)]
+            voxel_and_face_num_edge[pair_id] = example
+    
+    # curvature point to the center of smaller grain id is positive
+    for i in voxel_and_face_num_edge:
+        example = voxel_and_face_num_edge[i]
+        example[i][3] = np.pi/4 * (example[i][1] - example[i][0]) / example[i][2]
+        voxel_and_face_num_edge[i] = example
+    
+    return voxel_and_face_num_edge
+
+
 def plot_energy_figure(timestep, energy_figure, figure_path=None):
 
     imgs = []
@@ -212,16 +287,16 @@ def get_normal_vector(grain_structure_figure_one):
 
     return P, sites_together, sites
 
-def get_normal_vector_3d(grain_structure_figure_one):
+def get_normal_vector_3d(grain_structure_figure_one,verification_system = True):
     nx = grain_structure_figure_one.shape[0]
     ny = grain_structure_figure_one.shape[1]
     nz = grain_structure_figure_one.shape[2]
     ng = np.max(grain_structure_figure_one)
-    cores = 8
+    cores = 16
     loop_times = 5
     P0 = grain_structure_figure_one[:,:,:,np.newaxis]
     R = np.zeros((nx,ny,nz,3))
-    smooth_class = smooth_3d.linear3d_class(nx,ny,nz,ng,cores,loop_times,P0,R,'p')
+    smooth_class = smooth_3d.linear3d_class(nx,ny,nz,ng,cores,loop_times,P0,R,'p',verification_system)
 
     smooth_class.linear3d_main("inclination")
     P = smooth_class.get_P()

@@ -20,7 +20,7 @@ import multiprocessing as mp
 
 class linear_class(object):
 
-    def __init__(self,nx,ny,ng,cores,loop_times,P0,R,clip = 0,verification_system = True):
+    def __init__(self,nx,ny,ng,cores,loop_times,P0,R,clip = 0,verification_system = True, curvature_sign = False):
         # V_matrix init value; runnning time and error for the algorithm
         self.running_time = 0
         self.running_coreTime = 0
@@ -60,6 +60,7 @@ class linear_class(object):
         # linear smoothing matrix
         self.smoothed_vector_i, self.smoothed_vector_j = myInput.output_linear_vector_matrix(self.loop_times, self.clip)
         self.verification_system = verification_system
+        self.curvature_sign = curvature_sign
 
     #%% Functions
     def get_P(self):
@@ -212,8 +213,11 @@ class linear_class(object):
 
         if (Ii**2 + Ij**2) == 0:
             return 0
-
-        return abs(Ii**2 * Ijj - 2*Ii*Ij*Iij + Ij**2 * Iii) / (Ii**2 + Ij**2)**1.5
+        
+        if self.curvature_sign == True:
+            return -(Ii**2 * Ijj - 2*Ii*Ij*Iij + Ij**2 * Iii) / (Ii**2 + Ij**2)**1.5
+        else:
+            return abs(Ii**2 * Ijj - 2*Ii*Ij*Iij + Ij**2 * Iii) / (Ii**2 + Ij**2)**1.5
     #%%
     # Core
     def linear_curvature_core(self,core_input):

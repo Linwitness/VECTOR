@@ -21,13 +21,15 @@ import multiprocessing as mp
 
 class linear3d_class(object):
 
-    def __init__(self,nx,ny,nz,ng,cores,loop_times,P0,R,bc,clip=0):
+    def __init__(self,nx,ny,nz,ng,cores,loop_times,P0,R,bc,clip=0,verification_system = True, curvature_sign = False):
         # V_matrix init value; runnning time and error for the algorithm
         self.matrix_value = 10
         self.running_time = 0
         self.running_coreTime = 0
         self.errors = 0
         self.errors_per_site = 0
+        self.relative_errors = 0
+        self.relative_errors_per_site = 0
         self.clip = clip
 
         # initial condition data
@@ -62,6 +64,8 @@ class linear3d_class(object):
         # some attributes
         # linear smoothing matrix
         self.smoothed_vector_i, self.smoothed_vector_j, self.smoothed_vector_k = myInput.output_linear_vector_matrix3D(self.loop_times, self.clip)
+        self.verification_system = verification_system
+        self.curvature_sign = curvature_sign
 
     #%% Functions
     def get_P(self):
@@ -233,7 +237,11 @@ class linear3d_class(object):
         Ijk = (Ipjk-Imjk)/2
 
         if (Ii**2 + Ij**2 + Ik**2) == 0: return 0
-        return abs((Ij**2+Ik**2)*Iii + (Ik**2+Ii**2)*Ijj + (Ii**2+Ij**2)*Ikk - 2*Ii*Ij*Iij - 2*Ij*Ik*Ijk - 2*Ik*Ii*Iik) / (2*(Ii**2 + Ij**2 + Ik**2)**(1.5))
+    
+        if self.curvature_sign == True:
+            return -((Ij**2+Ik**2)*Iii + (Ik**2+Ii**2)*Ijj + (Ii**2+Ij**2)*Ikk - 2*Ii*Ij*Iij - 2*Ij*Ik*Ijk - 2*Ik*Ii*Iik) / (2*(Ii**2 + Ij**2 + Ik**2)**(1.5))
+        else:
+            return abs((Ij**2+Ik**2)*Iii + (Ik**2+Ii**2)*Ijj + (Ii**2+Ij**2)*Ikk - 2*Ii*Ij*Iij - 2*Ij*Ik*Ijk - 2*Ik*Ii*Iik) / (2*(Ii**2 + Ij**2 + Ik**2)**(1.5))
 
     #%%
     # Core
@@ -277,7 +285,7 @@ class linear3d_class(object):
 
 
         core_etime = datetime.datetime.now()
-        print("my core time is " + str((core_etime - core_stime).total_seconds()))
+        if self.verification_system == True: print("my core time is " + str((core_etime - core_stime).total_seconds()))
         return (fval,(core_etime - core_stime).total_seconds())
 
     def linear3d_normal_vector_core(self,core_input, core_all_queue):
@@ -314,7 +322,7 @@ class linear3d_class(object):
 
 
         core_etime = datetime.datetime.now()
-        print("my core time is " + str((core_etime - core_stime).total_seconds()))
+        if self.verification_system == True: print("my core time is " + str((core_etime - core_stime).total_seconds()))
         return (fval,(core_etime - core_stime).total_seconds())
 
 
@@ -324,7 +332,7 @@ class linear3d_class(object):
         if core_time > self.running_coreTime:
             self.running_coreTime = core_time
 
-        print("res_back start...")
+        if self.verification_system == True: print("res_back start...")
         if fval.shape[3] == 1:
             self.C[1,:,:,:] += fval[:,:,:,0]
         elif fval.shape[3] == 3:
@@ -332,7 +340,7 @@ class linear3d_class(object):
             self.P[2,:,:,:] += fval[:,:,:,1]
             self.P[3,:,:,:] += fval[:,:,:,2]
         res_etime = datetime.datetime.now()
-        print("my res time is " + str((res_etime - res_stime).total_seconds()))
+        if self.verification_system == True: print("my res time is " + str((res_etime - res_stime).total_seconds()))
 
     def linear3d_main(self, purpose ="inclination"):
 
@@ -377,7 +385,7 @@ class linear3d_class(object):
         pool.close()
         pool.join()
 
-        print("core done!")
+        if self.verification_system == True: print("core done!")
         # print(res_list[0].get())
 
         # calculate time

@@ -18,6 +18,81 @@ def get_line(i, j):
     if i < j: return int(i+(j-1)*(j)/2)
     else: return int(j+(i-1)*(i)/2)
 
+# I_O curvature method
+def IO_curvature(microstructure):
+    voxel_and_face_num_edge = dict() # each GB: voxel_inner, voxel_outer, face_num, curvature
+    nx, ny, nz = microstructure.shape
+    edge_list = [0,1,3,5,8,12]
+    for i in (range(nx)):
+        for j in range(ny):
+            for k in range(nz):
+                ip,im,jp,jm,kp,km = myInput.periodic_bc3d(nx,ny,nz,i,j,k)
+                nn_id = np.array([microstructure[ip,j,k],microstructure[im,j,k],microstructure[i,jp,k],microstructure[i,jm,k],microstructure[i,j,kp],microstructure[i,j,km]])
+                nn_id_include_i = np.array([microstructure[ip,j,k],microstructure[im,j,k],microstructure[i,jp,k],microstructure[i,jm,k],microstructure[i,j,kp],microstructure[i,j,km],microstructure[i,j,k]])
+                nn_id_include_i_unique_id = np.unique(nn_id_include_i)
+                if len(nn_id_include_i_unique_id) > 2: continue # ignore the TJs and QJs
+                nn_id_connect = (nn_id - microstructure[i,j,k]) != 0 # check the connection with neighboring site
+                if np.sum(nn_id_connect) > 0:
+                    pair_id = get_line(nn_id_include_i_unique_id[0],nn_id_include_i_unique_id[1])
+                    if pair_id not in voxel_and_face_num_edge: voxel_and_face_num_edge[pair_id] = np.zeros(4)
+                    # figure out the num of faces for each sites
+                    num_faces = np.sum(nn_id_connect)
+                    voxel_and_face_num_edge[pair_id][2] += num_faces # add the face to dict
+                    # figure out the number of edges
+                    if microstructure[i,j,k] == nn_id_include_i_unique_id[0]: # smaller
+                        voxel_and_face_num_edge[pair_id][0] += edge_list[int(num_faces-1)]
+                    else: # larger
+                        voxel_and_face_num_edge[pair_id][1] += edge_list[int(num_faces-1)]
+    # curvature point to the center of smaller grain id is positive
+    for i in voxel_and_face_num_edge:
+        voxel_and_face_num_edge[i][2] = voxel_and_face_num_edge[i][2]/2 # get the true face number
+        # print(voxel_and_face_num_edge[i])
+        voxel_and_face_num_edge[i][3] = np.pi/4 * (voxel_and_face_num_edge[i][1] - voxel_and_face_num_edge[i][0]) / voxel_and_face_num_edge[i][2]
+    
+    return voxel_and_face_num_edge
+
+# I_O curvature method
+def IO_curvature_high_efficiency(microstructure):
+    voxel_and_face_num_edge = {} # each GB: voxel_inner, voxel_outer, face_num, curvature
+    nx, ny, nz = microstructure.shape
+    edge_list = [0,1,3,5,8,12]
+    
+    # for periodic boundary conditions
+    offsets = np.array([[0, 0, 0],[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]])
+    idx = np.indices((nx, ny, nz)).reshape(3, -1).T
+    
+    all_neighbors = np.zeros((1000,len(offsets)))
+    for i in range(len(offsets)):
+        neighbor_idx = idx + offsets[i]
+        neighbor_idx = np.mod(neighbor_idx, [nx, ny, nz])
+        all_neighbors[:,i] = microstructure[tuple(neighbor_idx.T)]
+    num_faces = np.sum((all_neighbors - np.repeat(microstructure[tuple(idx.T)][:,np.newaxis],7,1)) != 0,axis=1)
+    
+    for i in range(len(all_neighbors)):
+        neighbors_unique_id = np.unique(all_neighbors[i])
+        if len(neighbors_unique_id) == 2:
+            pair_id = get_line(neighbors_unique_id[0],neighbors_unique_id[1])
+            
+            if pair_id not in voxel_and_face_num_edge: example = np.zeros(4)
+            else: example = voxel_and_face_num_edge[pair_id]
+            # figure out the num of faces for each sites
+            example[2] += num_faces[i]/2 # add the true face to dict
+            # figure out the number of edges
+            if microstructure[tuple(idx[i])] == neighbors_unique_id[0]: # smaller
+                example[0] += edge_list[int(num_faces[i]-1)]
+            else: # larger
+                example[1] += edge_list[int(num_faces[i]-1)]
+            voxel_and_face_num_edge[pair_id] = example
+    
+    # curvature point to the center of smaller grain id is positive
+    for i in voxel_and_face_num_edge:
+        example = voxel_and_face_num_edge[i]
+        example[i][3] = np.pi/4 * (example[i][1] - example[i][0]) / example[i][2]
+        voxel_and_face_num_edge[i] = example
+    
+    return voxel_and_face_num_edge
+
+
 def plot_energy_figure(timestep, energy_figure, figure_path=None):
 
     imgs = []
@@ -212,16 +287,16 @@ def get_normal_vector(grain_structure_figure_one):
 
     return P, sites_together, sites
 
-def get_normal_vector_3d(grain_structure_figure_one):
+def get_normal_vector_3d(grain_structure_figure_one,verification_system = True):
     nx = grain_structure_figure_one.shape[0]
     ny = grain_structure_figure_one.shape[1]
     nz = grain_structure_figure_one.shape[2]
     ng = np.max(grain_structure_figure_one)
-    cores = 8
+    cores = 16
     loop_times = 5
     P0 = grain_structure_figure_one[:,:,:,np.newaxis]
     R = np.zeros((nx,ny,nz,3))
-    smooth_class = smooth_3d.linear3d_class(nx,ny,nz,ng,cores,loop_times,P0,R,'p')
+    smooth_class = smooth_3d.linear3d_class(nx,ny,nz,ng,cores,loop_times,P0,R,'p',verification_system)
 
     smooth_class.linear3d_main("inclination")
     P = smooth_class.get_P()
@@ -853,6 +928,189 @@ def init2img(box_size, init_file_path_input):
     else: fig = img_array.reshape(size_x,size_y)
 
     return fig
+
+
+def euler2quaternion(yaw, pitch, roll):
+    """Convert euler angle into quaternion"""
+
+    qx = np.cos(pitch/2.)*np.cos((yaw+roll)/2.)
+    qy = np.sin(pitch/2.)*np.cos((yaw-roll)/2.)
+    qz = np.sin(pitch/2.)*np.sin((yaw-roll)/2.)
+    qw = np.cos(pitch/2.)*np.sin((yaw+roll)/2.)
+
+    return [qx, qy, qz, qw]
+
+
+def symquat(index, Osym = 24):
+    """Convert one(index) symmetric matrix into a quaternion """
+
+    q = np.zeros(4)
+
+    if Osym == 24:
+        SYM = np.array([[1, 0, 0,  0, 1, 0,  0, 0, 1],
+                        [1, 0, 0,  0, -1, 0,  0, 0, -1],
+                        [1, 0, 0,  0, 0, -1,  0, 1, 0],
+                        [1, 0, 0,  0, 0, 1,  0, -1, 0],
+                        [-1, 0, 0,  0, 1, 0,  0, 0, -1],
+                        [-1, 0, 0,  0, -1, 0,  0, 0, 1],
+                        [-1, 0, 0,  0, 0, -1,  0, -1, 0],
+                        [-1, 0, 0,  0, 0, 1,  0, 1, 0],
+                        [0, 1, 0, -1, 0, 0,  0, 0, 1],
+                        [0, 1, 0,  0, 0, -1, -1, 0, 0],
+                        [0, 1, 0,  1, 0, 0,  0, 0, -1],
+                        [0, 1, 0,  0, 0, 1,  1, 0, 0],
+                        [0, -1, 0,  1, 0, 0,  0, 0, 1],
+                        [0, -1, 0,  0, 0, -1,  1, 0, 0],
+                        [0, -1, 0, -1, 0, 0,  0, 0, -1],
+                        [0, -1, 0,  0, 0, 1, -1, 0, 0],
+                        [0, 0, 1,  0, 1, 0, -1, 0, 0],
+                        [0, 0, 1,  1, 0, 0,  0, 1, 0],
+                        [0, 0, 1,  0, -1, 0,  1, 0, 0],
+                        [0, 0, 1, -1, 0, 0,  0, -1, 0],
+                        [0, 0, -1,  0, 1, 0,  1, 0, 0],
+                        [0, 0, -1, -1, 0, 0,  0, 1, 0],
+                        [0, 0, -1,  0, -1, 0, -1, 0, 0],
+                        [0, 0, -1,  1, 0, 0,  0, -1, 0]])
+    elif Osym == 12:
+        a = np.sqrt(3)/2
+        SYM = np.array([[1,  0, 0,  0,   1, 0,  0, 0,  1],
+                        [-0.5,  a, 0, -a, -0.5, 0,  0, 0,  1],
+                        [-0.5, -a, 0,  a, -0.5, 0,  0, 0,  1],
+                        [0.5,  a, 0, -a, 0.5, 0,  0, 0,  1],
+                        [-1,  0, 0,  0,  -1, 0,  0, 0,  1],
+                        [0.5, -a, 0,  a, 0.5, 0,  0, 0,  1],
+                        [-0.5, -a, 0, -a, 0.5, 0,  0, 0, -1],
+                        [1,  0, 0,  0,  -1, 0,  0, 0, -1],
+                        [-0.5,  a, 0,  a, 0.5, 0,  0, 0, -1],
+                        [0.5,  a, 0,  a, -0.5, 0,  0, 0, -1],
+                        [-1,  0, 0,  0,   1, 0,  0, 0, -1],
+                        [0.5, -a, 0, -a, -0.5, 0,  0, 0, -1]])
+
+    if (1+SYM[index, 0]+SYM[index, 4]+SYM[index, 8]) > 0:
+        q4 = np.sqrt(1+SYM[index, 0]+SYM[index, 4]+SYM[index, 8])/2
+        q[0] = q4
+        q[1] = (SYM[index, 7]-SYM[index, 5])/(4*q4)
+        q[2] = (SYM[index, 2]-SYM[index, 6])/(4*q4)
+        q[3] = (SYM[index, 3]-SYM[index, 1])/(4*q4)
+    elif (1+SYM[index, 0]-SYM[index, 4]-SYM[index, 8]) > 0:
+        q4 = np.sqrt(1+SYM[index, 0]-SYM[index, 4]-SYM[index, 8])/2
+        q[0] = (SYM[index, 7]-SYM[index, 5])/(4*q4)
+        q[1] = q4
+        q[2] = (SYM[index, 3]+SYM[index, 1])/(4*q4)
+        q[3] = (SYM[index, 2]+SYM[index, 6])/(4*q4)
+    elif (1-SYM[index, 0]+SYM[index, 4]-SYM[index, 8]) > 0:
+        q4 = np.sqrt(1-SYM[index, 0]+SYM[index, 4]-SYM[index, 8])/2
+        q[0] = (SYM[index, 2]-SYM[index, 6])/(4*q4)
+        q[1] = (SYM[index, 3]+SYM[index, 1])/(4*q4)
+        q[2] = q4
+        q[3] = (SYM[index, 7]+SYM[index, 5])/(4*q4)
+    elif (1-SYM[index, 0]-SYM[index, 4]+SYM[index, 8]) > 0:
+        q4 = np.sqrt(1-SYM[index, 0]-SYM[index, 4]+SYM[index, 8])/2
+        q[0] = (SYM[index, 3]-SYM[index, 1])/(4*q4)
+        q[1] = (SYM[index, 2]+SYM[index, 6])/(4*q4)
+        q[2] = (SYM[index, 7]+SYM[index, 5])/(4*q4)
+        q[3] = q4
+
+    return q
+
+
+def quat_Multi(q1, q2):
+    """Return the product of two quaternion"""
+
+    q = np.zeros(4)
+    q[0] = q1[0]*q2[0] - q1[1]*q2[1] - q1[2]*q2[2] - q1[3]*q2[3]
+    q[1] = q1[0]*q2[1] + q1[1]*q2[0] + q1[2]*q2[3] - q1[3]*q2[2]
+    q[2] = q1[0]*q2[2] - q1[1]*q2[3] + q1[2]*q2[0] + q1[3]*q2[1]
+    q[3] = q1[0]*q2[3] + q1[1]*q2[2] - q1[2]*q2[1] + q1[3]*q2[0]
+
+    return q
+
+def in_cubic_fz(m_axis):
+    # check if the misoreintation axis in fundamental zone
+    # three core axis
+    axis_a = np.array([1,0,0])
+    axis_b = np.array([1,1,0])/np.sqrt(2)
+    axis_c = np.array([1,1,1])/np.sqrt(3)
+    # if in fz
+    judgement_0 = np.dot(np.cross(axis_a, axis_b), m_axis) >= 0
+    judgement_1 = np.dot(np.cross(axis_b, axis_c), m_axis) >= 0
+    judgement_2 = np.dot(np.cross(axis_c, axis_a), m_axis) >= 0
+    # print(f"{judgement_0}, {judgement_1}, {judgement_2}")
+    return judgement_0*judgement_1*judgement_2
+
+
+def quaternions_fz(q1, q2, symm2quat_matrix, Osym=24):
+    """Return the misorientation of two quaternion"""
+
+    q = np.zeros(4)
+    misom = 2*np.pi
+    axis = np.array([1, 0, 0])
+    # print(f"q1: {q1}, q2: {q2}")
+    for i in range(0, Osym):
+        for j in range(0, Osym):
+            # get misorientation quaternion q
+            q1b = quat_Multi(symm2quat_matrix[i], q1)
+            q2b = quat_Multi(symm2quat_matrix[j], q2)
+            q2b[1:] = -q2b[1:]
+            q = quat_Multi(q1b, q2b)
+            # print(q)
+            # get the q and inverse of q
+            q_and_inverse = np.array([q,q])
+            q_and_inverse[1,1:] = -q_and_inverse[1,1:]
+            # get m_axis and inverse m_axis
+            base = np.sqrt(1-q[0]*q[0])
+            if base: axis_tmp = q_and_inverse[:,1:]/base
+            else: axis_tmp = np.array([[1, 0, 0],[1, 0, 0]])
+            # judge if the m_axis in fundamental zone or not
+            in_cubic_fz_result = in_cubic_fz(axis_tmp.T)
+            if not np.sum(in_cubic_fz_result): continue
+            
+            # find the index of m_axis in fundamental zone or not
+            true_index = np.squeeze(np.where(in_cubic_fz_result))
+            # find the minimal miso angle
+            miso0 = 2*math.acos(round(q[0], 5))
+            if miso0 > np.pi: miso0 = miso0 - 2*np.pi
+            if abs(miso0) < misom:
+                misom = abs(miso0)
+                qmin = q_and_inverse[true_index]
+                axis = axis_tmp[true_index]
+
+    return misom, axis
+
+
+def multiP_calM(i, quartAngle, symm2quat_matrix, Osym):
+    """output the value of MisoEnergy by inout the two grain ID: i[0] and i[1]"""
+
+    qi = quartAngle[i[0]-1, :]
+    qj = quartAngle[i[1]-1, :]
+
+    theta, axis = quaternions_fz(qi, qj, symm2quat_matrix, Osym)
+    # theta = theta*(theta<1)+(theta>1)
+    # gamma = theta*(1-np.log(theta))
+    gamma = theta
+    return np.insert(axis, 0, gamma)
+
+def pre_operation_misorientation(grainNum, init_filename, Osym=24):
+    # create the marix to store euler angle and misorientation
+    quartAngle = np.ones((grainNum, 4))*-2
+
+    # Create a quaternion matrix to show symmetry
+    symm2quat_matrix = np.zeros((Osym, 4))
+    for i in range(0, Osym):
+        symm2quat_matrix[i, :] = symquat(i, Osym)
+
+    # read the input euler angle from *.init
+    with open(init_filename, 'r', encoding='utf-8') as f:
+        for line in f:
+            eachline = line.split()
+
+            if len(eachline) == 5 and eachline[0] != '#':
+                lineN = int(eachline[1])-1
+                if quartAngle[lineN, 0] == -2:
+                    quartAngle[lineN, :] = euler2quaternion(float(eachline[2]), float(eachline[3]), float(eachline[4]))
+
+    return symm2quat_matrix, quartAngle
+
 
 
 
