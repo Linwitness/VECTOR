@@ -1,9 +1,34 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jul 14 11:13:02 2021
+3D Allen-Cahn Method Implementation for Interface Analysis
 
-@author: lin.yang
+This module implements the 3D Allen-Cahn method for calculating grain boundary 
+normal vectors and curvature in 3D polycrystalline materials. The method uses
+phase field evolution with these features:
+
+1. Phase Field Evolution:
+   - Models interface motion using Allen-Cahn equation
+   - Implements double-well potential for phase separation
+   - Uses efficient sparse matrix operations
+
+2. Normal Vector Calculation:
+   - Computes gradients of phase field variables
+   - Handles multiple grain boundaries simultaneously
+   - Provides accurate normals at triple lines
+
+3. Curvature Calculation:
+   - Uses second derivatives of phase field
+   - Maintains numerical stability at singularities
+   - Computes mean and Gaussian curvature
+
+Key Features:
+- Parallel implementation for large 3D datasets
+- Automatic timestep selection
+- Energy minimization tracking
+- Error calculation against analytical solutions
+
+Author: Lin Yang
 """
 
 import os
@@ -20,7 +45,17 @@ import datetime
 
 class allenCahn3d_class(object):
 
-    def __init__(self,nx,ny,nz,ng,cores,nsteps,P0,R,switch=False):
+    def __init__(self,nx,ny,nz,ng,cores,nsteps,P0,R,bc='p',clip=0,verification_system = True, curvature_sign = False):
+        """Initialize the 3D Allen-Cahn algorithm.
+        
+        Args:
+            nx,ny,nz (int): Grid dimensions
+            ng (int): Number of grains
+            cores (int): Number of CPU cores for parallel processing
+            nsteps (int): Number of evolution timesteps
+            P0 (ndarray): Initial 3D microstructure
+            R (ndarray): Reference solution for validation
+        """
         # V_matrix init value; runnning time and error for the algorithm
         self.k = 1
         self.m = 1
@@ -30,7 +65,6 @@ class allenCahn3d_class(object):
         self.running_coreTime = 0
         self.errors = 0
         self.errors_per_site = 0
-        self.switch = switch
 
         # initial condition data
         self.nx,self.ny,self.nz = nx, ny, nz
@@ -102,6 +136,14 @@ class allenCahn3d_class(object):
         plt.savefig(f'{init}-{algo}.{String}.png',dpi=1000,bbox_inches='tight')
 
     def get_gb_list(self,grainID=1):
+        """Get list of grain boundary voxels.
+        
+        Args:
+            grainID (int): ID of grain to find boundaries for
+            
+        Returns:
+            list: List of [i,j,k] coordinates of boundary voxels
+        """
         ggn_gbsites = []
         edge_l = 1
         for i in range(0+edge_l,self.nx-edge_l):
@@ -131,6 +173,17 @@ class allenCahn3d_class(object):
         print("my res time is " + str((res_etime - res_stime).total_seconds()))
 
     def allenCahn3d_normal_vector_core(self,core_input, core_all_queue):
+        """Core function for normal vector calculation.
+        
+        Implements Allen-Cahn evolution and calculates interface normals
+        using phase field gradients.
+        
+        Args:
+            core_input: Subset of voxels to process
+            
+        Returns:
+            tuple: (Normal vector array, Computation time)
+        """
         core_stime = datetime.datetime.now()
         li,lj,lk,lp=np.shape(core_input)
         fval = np.zeros((self.nx,self.ny,self.nz,3))
@@ -195,7 +248,15 @@ class allenCahn3d_class(object):
         print("my core time is " + str((core_etime - core_stime).total_seconds()))
         return (fval,(core_etime - core_stime).total_seconds(),self.V)
 
-    def allenCahn3d_main(self):
+    def allenCahn3d_main(self,purpose='inclination'):
+        """Main execution function for 3D Allen-Cahn algorithm.
+        
+        Controls the overall workflow including:
+        - Parallel processing setup
+        - Phase field evolution
+        - Normal vector calculation
+        - Error validation
+        """
         # calculate time
         starttime = datetime.datetime.now()
 

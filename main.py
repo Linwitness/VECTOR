@@ -20,7 +20,7 @@ import PACKAGE_MP_Linear     #2D Bilinear smooth algorithm
 import PACKAGE_MP_AllenCahn    #2D Allen-Cahn smooth algorithm
 import PACKAGE_MP_LevelSet     #2D Level Set smooth algorithm
 import PACKAGE_MP_3DVertex     #3D Vertex smooth algorithm
-import PACKAGE_MP_3DBilinear   #3D Bilinear smooth algorithm
+import PACKAGE_MP_3DLinear   #3D Bilinear smooth algorithm
 import PACKAGE_MP_3DAllenCahn  #3D Allen-Cahn smooth algorithm
 import PACKAGE_MP_3DLevelSet   #3D Level Set smooth algorithm
 

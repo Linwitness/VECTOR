@@ -1,9 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jul  7 15:29:17 2021
+3D Linear Method Implementation for Interface Analysis
 
-@author: lin.yang
+This module implements the 3D extension of the linear smoothing algorithm for calculating 
+grain boundary normal vectors and curvature in 3D polycrystalline materials. 
+Key features include:
+
+1. Normal Vector Calculation:
+   - Uses 3D linear smoothing matrix
+   - Handles triple junctions and quadruple points
+   - Supports both periodic and non-periodic boundary conditions
+
+2. Curvature Calculation:
+   - Computes mean curvature from smoothed normal vectors
+   - Uses larger smoothing window than normal vector calculation
+   - Handles complex 3D grain boundary topologies
+
+Key Features:
+- Parallel implementation for large 3D datasets
+- Configurable smoothing window size
+- Error calculation against analytical solutions
+- Visualization tools for 2D slices
+
+Author: Lin Yang
 """
 
 import os
@@ -22,6 +42,20 @@ import multiprocessing as mp
 class linear3d_class(object):
 
     def __init__(self,nx,ny,nz,ng,cores,loop_times,P0,R,bc,clip=0,verification_system = True, curvature_sign = False):
+        """Initialize the 3D linear smoothing algorithm.
+        
+        Args:
+            nx,ny,nz (int): Grid dimensions
+            ng (int): Number of grains
+            cores (int): Number of CPU cores for parallel processing
+            loop_times (int): Size of smoothing window
+            P0 (ndarray): Initial 3D microstructure
+            R (ndarray): Reference solution for validation
+            bc (str): Boundary condition type ('periodic' or 'non-periodic')
+            clip (int): Number of boundary layers to ignore
+            verification_system (bool): Enable validation checks
+            curvature_sign (bool): Calculate signed curvature
+        """
         # V_matrix init value; runnning time and error for the algorithm
         self.matrix_value = 10
         self.running_time = 0
@@ -97,6 +131,13 @@ class linear3d_class(object):
 
 
     def get_2d_plot(self,init,algo,z_surface = 0):
+        """Generate 2D visualization of a z-slice with normal vectors.
+        
+        Args:
+            init (str): Name of initial condition
+            algo (str): Name of algorithm used
+            z_surface (int): Z coordinate of slice to visualize
+        """
         z_surface = int(self.nz/2)
         plt.subplots_adjust(wspace=0.2,right=1.8)
         plt.close()
@@ -126,6 +167,14 @@ class linear3d_class(object):
         plt.savefig(f'{init}-{algo}.{String}.png',dpi=1000,bbox_inches='tight')
 
     def get_gb_list(self,grainID=1):
+        """Get list of grain boundary voxels.
+        
+        Args:
+            grainID (int): ID of grain to find boundaries for
+            
+        Returns:
+            list: List of [i,j,k] coordinates of boundary voxels
+        """
         ggn_gbsites = []
         if self.bc == 'np':
             edge_l = self.halfL
@@ -137,8 +186,8 @@ class linear3d_class(object):
                     ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
                     if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or\
                          ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or\
-                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ):#\
-                           #and self.P[0,i,j,k]==grainID:
+                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ) and\
+                         self.P[0,i,j,k]==grainID:
                         ggn_gbsites.append([i,j,k])
         return ggn_gbsites
 
@@ -155,6 +204,15 @@ class linear3d_class(object):
         return gagn_gbsites
 
     def find_window(self,i,j,k,fw_len):
+        """Calculate smoothing window weights for given voxel.
+        
+        Args:
+            i,j,k (int): Voxel coordinates
+            fw_len (int): Window size
+            
+        Returns:
+            ndarray: 3D window of weights for smoothing
+        """
         # fw_len = self.tableL - 2*self.clip
         fw_half = int((fw_len-1)/2)
         window = np.zeros((fw_len,fw_len,fw_len))
@@ -174,6 +232,16 @@ class linear3d_class(object):
         return window
 
     def calculate_curvature(self,matrix):
+        """Calculate mean curvature from normal vectors.
+        
+        Uses second derivatives of the normal vector field.
+        
+        Args:
+            matrix (ndarray): Normal vector field
+            
+        Returns:
+            float: Local mean curvature value
+        """
         # calculate curvature based on 5x5 smoothed matrix
         I022 = matrix[0][2][2]
         I112 = matrix[1][1][2]
@@ -289,6 +357,18 @@ class linear3d_class(object):
         return (fval,(core_etime - core_stime).total_seconds())
 
     def linear3d_normal_vector_core(self,core_input, core_all_queue):
+        """Core function for normal vector calculation.
+        
+        Implements the main 3D linear smoothing algorithm for normal vector
+        calculation in parallel across multiple cores.
+        
+        Args:
+            core_input (ndarray): Subset of voxels to process
+            core_all_queue: Queue for inter-process communication
+            
+        Returns:
+            tuple: (Results array, Computation time)
+        """
         core_stime = datetime.datetime.now()
         li,lj,lk,lp=np.shape(core_input)
         fval = np.zeros((self.nx,self.ny,self.nz,3))
@@ -343,7 +423,17 @@ class linear3d_class(object):
         if self.verification_system == True: print("my res time is " + str((res_etime - res_stime).total_seconds()))
 
     def linear3d_main(self, purpose ="inclination"):
-
+        """Main execution function for 3D linear algorithm.
+        
+        Controls the overall workflow including:
+        - Parallel processing setup
+        - Core function execution
+        - Results collection
+        - Error calculation
+        
+        Args:
+            purpose (str): Type of calculation ("inclination" or "curvature")
+        """
         # global starttime, endtime
         starttime = datetime.datetime.now()
 

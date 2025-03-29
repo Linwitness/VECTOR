@@ -1,9 +1,35 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jul 14 19:54:13 2021
+3D Vertex Method Implementation for Interface Analysis
 
-@author: lin.yang
+This module implements the 3D vertex method for calculating grain boundary 
+normal vectors and curvature in polycrystalline materials. The vertex method 
+uses geometric constructions at grain boundary triple lines and quadruple points
+with the following features:
+
+1. Vertex Detection:
+   - Identifies triple lines and quadruple points
+   - Handles complex grain boundary junctions
+   - Maintains topological consistency
+
+2. Normal Vector Calculation:
+   - Uses local geometric fitting at vertices
+   - Handles multiple grain intersections
+   - Provides improved accuracy at triple junctions
+
+3. Curvature Calculation:
+   - Fits spherical surfaces to boundary patches
+   - Computes principal curvatures
+   - Handles complex junction geometries
+
+Key Features:
+- Parallel implementation for large 3D datasets
+- Robust handling of multiple grain junctions
+- Geometric validation checks
+- Error calculation against analytical solutions
+
+Author: Lin Yang
 """
 
 import os
@@ -18,7 +44,17 @@ import datetime
 import multiprocessing as mp
 
 class vertex3d_class(object):
-    def __init__(self,nx,ny,nz,ng,cores,interval,P0,R):
+    def __init__(self,nx,ny,nz,ng,cores,interval,P0,R,bc='p',clip=0,verification_system = True, curvature_sign = False):
+        """Initialize the 3D vertex method algorithm.
+        
+        Args:
+            nx,ny,nz (int): Grid dimensions
+            ng (int): Number of grains
+            cores (int): Number of CPU cores for parallel processing
+            interval (int): Vertex detection interval
+            P0 (ndarray): Initial 3D microstructure
+            R (ndarray): Reference solution for validation
+        """
         # V_matrix init value; runnning time and error for the algorithm
         self.running_time = 0
         self.running_coreTime = 0
@@ -129,12 +165,22 @@ class vertex3d_class(object):
                     ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
                     if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or\
                          ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or\
-                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ): #\
-                           # and self.P[0,i,j,k]==grainID:
+                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ) and\
+                         self.P[0,i,j,k]==grainID:
                         ggn_gbsites.append([i,j,k])
         return ggn_gbsites
 
     def check_coplane(self,array):
+        """Check if a set of points are coplanar.
+        
+        Uses vector algebra to determine if points lie in same plane.
+        
+        Args:
+            array: List of point coordinates
+            
+        Returns:
+            bool: True if points are coplanar
+        """
         array2 = [None]*len(array)
         for arri in range(0,len(array)):
             array2[arri] = [int(x) for x in array[arri].split(',')]
@@ -157,6 +203,14 @@ class vertex3d_class(object):
             return False
 
     def find_crossLine(self,array):
+        """Find intersection line of multiple grain boundaries.
+        
+        Args:
+            array: Set of boundary points to analyze
+            
+        Returns:
+            ndarray: Direction vector of intersection line
+        """
         array2 = [None]*len(array)
         for arri in range(0,len(array)):
             array2[arri] = [int(x) for x in array[arri].split(',')]
@@ -177,6 +231,16 @@ class vertex3d_class(object):
 
 
     def find_fittingSphere(self,array):
+        """Fit a sphere to a set of boundary points.
+        
+        Used for curvature calculation at triple junctions.
+        
+        Args:
+            array: Set of points to fit sphere to
+            
+        Returns:
+            tuple: (Center coordinates, Radius) of fitted sphere
+        """
         # print(array)
         array2 = [None]*len(array)
         for arri in range(0,len(array)):
@@ -203,7 +267,16 @@ class vertex3d_class(object):
 
 
     def find_neighbor_sites(self,ori_A):
-
+        """Find neighboring sites around a given point.
+        
+        Identifies sites belonging to different grains.
+        
+        Args:
+            ori_A: Central point coordinates
+            
+        Returns:
+            list: Coordinates of neighboring sites
+        """
         A = [int(x) for x in ori_A.split(',')]
         ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,A[0],A[1],A[2])
         output = []
@@ -299,6 +372,16 @@ class vertex3d_class(object):
         return (fval,(core_etime - core_stime).total_seconds())
 
     def vertex3d_normal_vector_core(self,core_input):
+        """Core function for normal vector calculation.
+        
+        Implements geometric construction of normal vectors at vertices.
+        
+        Args:
+            core_input: Subset of vertices to process
+            
+        Returns:
+            tuple: (Normal vector array, Computation time)
+        """
         core_stime = datetime.datetime.now()
         li,lj,lk,lp=np.shape(core_input)
         fval = np.zeros((self.nx,self.ny,self.nz,3))
@@ -373,7 +456,19 @@ class vertex3d_class(object):
         print("my core time is " + str((core_etime - core_stime).total_seconds()))
         return (fval,(core_etime - core_stime).total_seconds())
 
-    def vertex3d_main(self, purpose ="inclination"):
+    def vertex3d_main(self, purpose="inclination"):
+        """Main execution function for 3D vertex algorithm.
+        
+        Controls the overall workflow including:
+        - Vertex detection 
+        - Parallel processing setup
+        - Core function execution
+        - Results collection
+        - Error calculation
+        
+        Args:
+            purpose (str): Type of calculation ("inclination" or "curvature")
+        """
         # calculate time
         starttime = datetime.datetime.now()
 

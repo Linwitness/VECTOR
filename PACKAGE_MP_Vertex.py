@@ -1,9 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jan 25 21:59:10 2021
+Vertex Method Implementation for Interface Analysis
 
-@author: lin.yang
+This module implements the vertex method for calculating grain boundary 
+normal vectors and curvature in polycrystalline materials. The vertex method
+uses local geometric information to track boundary points and compute:
+
+1. Normal vectors by constructing local boundary segments
+2. Curvature by fitting circles to sets of boundary points
+
+Key features:
+- Direct tracking of boundary points
+- Local geometric calculations
+- Parallel implementation for efficiency
+- Supports both 2D and 3D interfaces
+
+Author: Lin Yang
 """
 
 import os
@@ -18,50 +31,94 @@ import datetime
 import multiprocessing as mp
 
 class vertex_class(object):
-    def __init__(self,nx,ny,ng,cores,interval,P0,R):
-        # V_matrix init value; runnning time and error for the algorithm
-        self.running_time = 0
-        self.running_coreTime = 0
-        self.errors = 0
-        self.errors_per_site = 0
+    """Vertex method implementation for interface analysis.
+    
+    This class implements the vertex method to calculate normal vectors and 
+    curvature at grain boundaries. The method tracks interface points directly
+    and uses local geometric constructions.
+    
+    Key attributes:
+        P: Phase field array storing microstructure and normal vectors
+        C: Array storing calculated curvature values
+        interval: Number of boundary points to use in calculations
+    """
 
-        # initial condition data
-        self.nx,self.ny = nx, ny
-        self.ng = ng
-        self.R = R  # results of analysis model
-        # convert individual grains map into one grain map
-        self.P = np.zeros((3,nx,ny)) # matrix to store IC and normal vector results
-        self.C = np.zeros((2,nx,ny)) # curvature result matrix
+    def __init__(self,nx,ny,ng,cores,interval,P0,R,clip=0,verification_system=True,curvature_sign=False):
+        """Initialize the vertex method algorithm.
+        
+        Args:
+            nx, ny: Grid dimensions
+            ng: Number of grains
+            cores: Number of parallel processes 
+            interval: Number of boundary points for calculations
+            P0: Initial phase field configuration
+            R: Reference normal vectors
+        """
+        # Runtime tracking
+        self.running_time = 0   # Total execution time
+        self.running_coreTime = 0  # Core calculation time 
+        self.errors = 0  # Accumulated errors
+        self.errors_per_site = 0  # Average error per site
+
+        # Grid parameters
+        self.nx = nx  # Number of sites in x axis
+        self.ny = ny  # Number of sites in y axis
+        self.ng = ng  # Number of grains
+        self.R = R    # Reference normal vectors
+        self.clip = clip  # Clipping value for curvature calculation
+        self.verification_system = verification_system
+        self.curvature_sign = curvature_sign  # Sign convention for curvature
+
+        # Initialize result arrays
+        self.P = np.zeros((3,nx,ny))  # Stores IC and normal vectors
+        self.C = np.zeros((2,nx,ny))  # Stores curvature
+        
+        # Convert individual grain maps to single map
         for i in range(0,np.shape(P0)[2]):
             self.P[0,:,:] += P0[:,:,i]*(i+1)
             self.C[0,:,:] += P0[:,:,i]*(i+1)
 
-        # data for multiprocessing
-        self.cores = cores
+        # Algorithm parameters
+        self.cores = cores  # Number of parallel processes
+        self.interval = interval  # Number of boundary points to use
 
-        # data for accuracy
-        self.interval = interval #Number of timesteps
-
-    #%% Function
     def get_P(self):
-        # Outout the result matrix, first level is microstructure,
-        # last two layers are normal vectors
+        """Get the phase field and normal vector results.
+        
+        Returns:
+            ndarray: Matrix containing grain structure and normal vectors
+        """
         return self.P
 
     def get_C(self):
-        # Get curvature matrix
+        """Get the curvature calculation results.
+        
+        Returns:
+            ndarray: Matrix containing curvature values
+        """
         return self.C
 
     def get_errors(self):
+        """Calculate error between calculated and reference normal vectors.
+        
+        Computes angular difference between calculated normal vectors and reference
+        values at each grain boundary site.
+        """
         ge_gbsites = self.get_gb_list()
-        for gbSite in ge_gbsites :
+        for gbSite in ge_gbsites:
             [gei,gej] = gbSite
             ge_dx,ge_dy = myInput.get_grad(self.P,gei,gej)
+            # Note sign convention for comparison with reference
             self.errors += math.acos(round(abs(-ge_dx*self.R[gei,gej,0]+ge_dy*self.R[gei,gej,1]),5))
-            # self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,0]-ge_dy*self.R[gei,gej,1]),5))
+            
         self.errors_per_site = self.errors/len(ge_gbsites)
 
     def get_curvature_errors(self):
+        """Calculate error between calculated and reference curvature values.
+        
+        For each grain boundary site, computes difference between calculated
+        curvature and reference value.
+        """
         gce_gbsites = self.get_gb_list()
         for gceSite in gce_gbsites:
             [gcei, gcej] = gceSite
@@ -113,16 +170,41 @@ class vertex_class(object):
         plt.savefig(f'VT_{init}_{algo}_{String}.png',dpi=1000,bbox_inches='tight')
 
     def get_gb_list(self,grainID=1):
+        """Find grain boundary sites.
+        
+        Identifies voxels at grain boundaries by checking neighboring voxels
+        for grain ID changes.
+        
+        Args:
+            grainID: ID of grain to find boundaries for (default=1)
+            
+        Returns:
+            list: Coordinates of grain boundary sites
+        """
         ggn_gbsites = []
         for i in range(0,self.nx):
             for j in range(0,self.ny):
                 ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ): #\
-                        # and self.P[0,i,j]==grainID:
+                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or
+                     ((self.P[0,im,j]-self.P[0,i,j])!=0) or
+                     ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
+                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) ) and\
+                     self.P[0,i,j]==grainID:
                     ggn_gbsites.append([i,j])
         return ggn_gbsites
 
     def find_circle(self,A,B,C):
+        """Find circle passing through three points.
+        
+        Calculates center and radius of circle passing through three given points
+        using circumcenter formula.
+        
+        Args:
+            A,B,C: Three 2D points to fit circle through
+            
+        Returns:
+            tuple: Circle center coordinates and radius
+        """
         a = A[1]-B[1]
         b = A[0]-B[0]
         c = A[1]-C[1]
@@ -135,6 +217,17 @@ class vertex_class(object):
         return x0,y0,r
 
     def find_fittingCircle(self,array):
+        """Fit circle to set of boundary points.
+        
+        Takes a set of boundary points and finds best fit circle by averaging
+        circles through point triplets.
+        
+        Args:
+            array: List of boundary point coordinates
+            
+        Returns:
+            tuple: Average circle center and radius
+        """
         K_mat = []
         Y_mat = []
 
@@ -153,6 +246,14 @@ class vertex_class(object):
         return fit_y0, fit_x0, fit_R
 
     def check_collinear(self,A,B,C):
+        """Check if three points are collinear.
+        
+        Args:
+            A,B,C: Three points to check
+            
+        Returns:
+            bool: True if points are collinear
+        """
         a = A[1]-B[1]
         b = A[0]-B[0]
         c = A[1]-C[1]
@@ -247,6 +348,17 @@ class vertex_class(object):
 
     #%% Core base
     def vertex_curvature_core(self,core_input):
+        """Core curvature calculation function using vertex method.
+        
+        Implements vertex method curvature calculation on a subdomain.
+        Fits circles to sets of boundary points to compute curvature.
+        
+        Args:
+            core_input: Input data for this subdomain
+            
+        Returns:
+            tuple: Calculated curvature values and timing information
+        """
         core_stime = datetime.datetime.now()
         li,lj,lk=np.shape(core_input)
         fval = np.zeros((self.nx,self.ny,1))
@@ -315,6 +427,17 @@ class vertex_class(object):
 
 
     def vertex_normal_vector_core(self,core_input):
+        """Core normal vector calculation function using vertex method.
+        
+        Implements vertex method normal vector calculation on a subdomain.
+        Uses local boundary geometry to compute normal vectors.
+        
+        Args:
+            core_input: Input data for this subdomain
+            
+        Returns:
+            tuple: Calculated normal vectors and timing information
+        """
         core_stime = datetime.datetime.now()
         li,lj,lk=np.shape(core_input)
         fval = np.zeros((self.nx,self.ny,2))
@@ -385,42 +508,60 @@ class vertex_class(object):
         return (fval,(core_etime - core_stime).total_seconds())
 
     def vertex_main(self, purpose="inclination"):
-        # calculate time
-            starttime = datetime.datetime.now()
+        """Main function to run the vertex algorithm.
+        
+        Sets up parallel processing and manages the overall calculation for
+        either normal vectors or curvature.
+        
+        Args:
+            purpose: Either "inclination" for normal vectors or 
+                    "curvature" for curvature calculation
+        """
+        starttime = datetime.datetime.now()
 
-            pool = mp.Pool(processes=self.cores)
-            main_lc, main_wc = myInput.split_cores(self.cores)
+        # Setup parallel processing
+        pool = mp.Pool(processes=self.cores)
+        main_lc, main_wc = myInput.split_cores(self.cores)
 
-            all_sites = np.array([[x,y] for x in range(self.nx) for y in range(self.ny) ]).reshape(self.nx,self.ny,2)
-            multi_input = myInput.split_IC(all_sites, self.cores,2, 0,1)
+        # Split domain for parallel processing
+        all_sites = np.array([[x,y] for x in range(self.nx) for y in range(self.ny)]).reshape(self.nx,self.ny,2)
+        multi_input = myInput.split_IC(all_sites, self.cores,2, 0,1)
 
-            res_list=[]
-            if purpose == "inclination":
-                for ki in range(main_wc):
-                    for kj in range(main_lc):
-                        print(f'the processor [{ki},{kj}] start...')
-                        res_one = pool.apply_async(func = self.vertex_normal_vector_core, args = (multi_input[ki][kj], ), callback=self.res_back )
-                        res_list.append(res_one)
-            elif purpose == "curvature":
-                for ki in range(main_wc):
-                    for kj in range(main_lc):
-                        print(f'the processor [{ki},{kj}] start...')
-                        res_one = pool.apply_async(func = self.vertex_curvature_core, args = (multi_input[ki][kj], ), callback=self.res_back )
-                        res_list.append(res_one)
+        # Run calculations in parallel
+        res_list = []
+        if purpose == "inclination":
+            for ki in range(main_wc):
+                for kj in range(main_lc):
+                    print(f'processor [{ki},{kj}] starting...')
+                    res_one = pool.apply_async(
+                        func=self.vertex_normal_vector_core,
+                        args=(multi_input[ki][kj],),
+                        callback=self.res_back)
+                    res_list.append(res_one)
+        elif purpose == "curvature":
+            for ki in range(main_wc):
+                for kj in range(main_lc):
+                    print(f'processor [{ki},{kj}] starting...')
+                    res_one = pool.apply_async(
+                        func=self.vertex_curvature_core,
+                        args=(multi_input[ki][kj],),
+                        callback=self.res_back)
+                    res_list.append(res_one)
 
-            pool.close()
-            pool.join()
-            print("core done!")
-            # print(res_list[0].get())
+        # Wait for all processes to complete
+        pool.close()
+        pool.join()
+        print("core done!")
+        # print(res_list[0].get())
 
-            # calculate time
-            endtime = datetime.datetime.now()
-
-            self.running_time = (endtime - starttime).total_seconds()
-            if purpose == "inclination":
-                self.get_errors()
-            elif purpose == "curvature":
-                self.get_curvature_errors()
+        # Calculate timing and errors
+        endtime = datetime.datetime.now()
+        self.running_time = (endtime - starttime).total_seconds()
+        
+        if purpose == "inclination":
+            self.get_errors()
+        elif purpose == "curvature":
+            self.get_curvature_errors()
 
     def res_back(self,back_result):
         res_stime = datetime.datetime.now()

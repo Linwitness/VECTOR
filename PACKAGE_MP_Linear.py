@@ -1,9 +1,34 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Jan 22 15:59:27 2021
+Linear Smoothing Method Implementation for Interface Analysis
 
-@author: lin.yang
+This module implements a linear smoothing method for calculating grain boundary 
+normal vectors and curvature in polycrystalline materials. The method uses
+linear filtering with these features:
+
+1. Linear Filtering:
+   - Applies weighted averaging to smooth interface properties
+   - Uses variable kernel sizes for multi-scale analysis
+   - Preserves sharp features at grain junctions
+
+2. Normal Vector Calculation:
+   - Computes gradients from smoothed interface data
+   - Handles multiple grain boundaries efficiently 
+   - Provides consistent normals at triple junctions
+
+3. Curvature Calculation:
+   - Uses second derivatives of smoothed data
+   - Handles multiple length scales
+   - Maintains numerical stability at interfaces
+
+Key Features:
+- Parallel implementation for large datasets
+- Configurable smoothing parameters
+- Efficient sparse matrix operations
+- Error calculation against analytical solutions
+
+Author: Lin Yang
 """
 
 import os
@@ -19,23 +44,60 @@ import multiprocessing as mp
 
 
 class linear_class(object):
+    """Linear smoothing algorithm implementation.
+    
+    This class implements linear smoothing to calculate normal vectors and curvature
+    at grain boundaries. The algorithm uses a sliding window approach with weighted 
+    averaging to smooth boundaries and compute geometric properties.
+    
+    Attributes:
+        P (ndarray): Phase field array storing microstructure and normal vectors
+        C (ndarray): Array storing calculated curvature values
+        nx (int): Number of grid points in x direction
+        ny (int): Number of grid points in y direction
+        ng (int): Number of grains
+        cores (int): Number of CPU cores for parallel processing
+        loop_times (int): Number of smoothing iterations
+        clip (int): Number of boundary elements to ignore
+        errors (float): Accumulated angle errors
+        errors_per_site (float): Average error per boundary site
+        running_time (float): Total computation time
+        running_coreTime (float): Maximum core processing time
+    """
 
-    def __init__(self,nx,ny,ng,cores,loop_times,P0,R,clip = 0,verification_system = True, curvature_sign = False):
-        # V_matrix init value; runnning time and error for the algorithm
-        self.running_time = 0
-        self.running_coreTime = 0
-        self.errors = 0
-        self.errors_per_site = 0
-        self.clip = clip
+    def __init__(self,nx,ny,ng,cores,loop_times,P0,R,clip=0,verification_system = True, curvature_sign = False):
+        """Initialize the linear smoothing algorithm.
+        
+        Args:
+            nx (int): Number of grid points in x direction
+            ny (int): Number of grid points in y direction 
+            ng (int): Number of grains in the system
+            cores (int): Number of CPU cores for parallel processing
+            loop_times (int): Size of smoothing window
+            P0 (ndarray): Initial microstructure configuration
+            R (ndarray): Reference/analytical solution for validation
+            clip (int): Number of boundary layers to ignore
+            verification_system (bool): Enable validation against analytical solution
+            curvature_sign (bool): Calculate signed curvature values
+        """
+        # Runtime tracking
+        self.running_time = 0  # Total execution time
+        self.running_coreTime = 0  # Core calculation time
+        self.errors = 0  # Accumulated angle errors
+        self.errors_per_site = 0  # Average error per GB site
+        self.clip = clip  # Boundary clipping
 
-        # initial condition data
-        self.nx = nx # number of sites in x axis
-        self.ny = ny # number of sites in y axis
-        self.ng = ng # number of grains in IC
-        self.R = R  # results of analysis model
-        # convert individual grains map into one grain map
-        self.P = np.zeros((3,nx,ny)) # matrix to store IC and normal vector results
-        self.C = np.zeros((2,nx,ny)) # curvature result matrix
+        # Grid parameters
+        self.nx = nx  # Number of sites in x axis
+        self.ny = ny  # Number of sites in y axis  
+        self.ng = ng  # Number of grains
+        self.R = R   # Reference normal vectors
+
+        # Initialize result arrays
+        self.P = np.zeros((3,nx,ny))  # Stores IC and normal vectors
+        self.C = np.zeros((2,nx,ny))  # Stores curvature
+        
+        # Convert individual grain maps to single map
         if len(P0.shape) == 2:
             self.P[0,:,:] = np.array(P0)
             self.C[0,:,:] = np.array(P0)
@@ -44,55 +106,82 @@ class linear_class(object):
                 self.P[0,:,:] += P0[:,:,i]*(i+1)
                 self.C[0,:,:] += P0[:,:,i]*(i+1)
 
-        # data for multiprocessing
+        # Parallel processing parameters
         self.cores = cores
 
-        # data for accuracy
+        # Smoothing parameters
         self.loop_times = loop_times
-        self.tableL = 2*(loop_times+1)+1 # when repeatting two times, the table length will be 7 (7 by 7 table)
+        self.tableL = 2*(loop_times+1)+1  # Table length for repeated calcs
         self.tableL_curv = 2*(loop_times+2)+1
         self.halfL = loop_times+1
 
-        # temporary matrix to increase efficiency
-        # self.V_sparse = np.empty((loop_times+1,nx,ny),dtype=dict)  # matrix to store the tmp data during calculation
-
-        # some attributes
-        # linear smoothing matrix
-        self.smoothed_vector_i, self.smoothed_vector_j = myInput.output_linear_vector_matrix(self.loop_times, self.clip)
+        # Get smoothing matrices
+        self.smoothed_vector_i, self.smoothed_vector_j = myInput.output_linear_vector_matrix(
+            self.loop_times, self.clip)
         self.verification_system = verification_system
         self.curvature_sign = curvature_sign
 
-    #%% Functions
     def get_P(self):
-        # Outout the result matrix, first level is microstructure,
-        # last two layers are normal vectors
+        """Get the phase field and normal vector results.
+        
+        Returns:
+            ndarray: Matrix containing grain structure and normal vectors. Has shape (3,nx,ny) where:
+                    - P[0,:,:] contains grain IDs
+                    - P[1:3,:,:] contains normal vector components
+        """
         return self.P
 
     def get_C(self):
-        # Get curvature matrix
+        """Get the curvature calculation results.
+        
+        Returns:
+            ndarray: Matrix containing curvature values. Has shape (2,nx,ny) where:
+                    - C[0,:,:] contains grain IDs
+                    - C[1,:,:] contains curvature values
+        """
         return self.C
 
     def get_errors(self):
+        """Calculate error between calculated and reference normal vectors.
+        
+        Computes angular difference between calculated normal vectors and reference
+        values at each grain boundary site.
+        """
         ge_gbsites = self.get_gb_list()
-        for gbSite in ge_gbsites :
+        for gbSite in ge_gbsites:
             [gei,gej] = gbSite
             ge_dx,ge_dy = myInput.get_grad(self.P,gei,gej)
+            # Calculate angle between vectors using dot product
             self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,0]+ge_dy*self.R[gei,gej,1]),5))
 
-        if len(ge_gbsites) > 0: self.errors_per_site = self.errors/len(ge_gbsites)
-        else: self.errors_per_site = 0
+        if len(ge_gbsites) > 0:
+            self.errors_per_site = self.errors/len(ge_gbsites)
+        else:
+            self.errors_per_site = 0
 
     def get_curvature_errors(self):
+        """Calculate error between calculated and reference curvature values.
+        
+        For each grain boundary site, computes difference between calculated
+        curvature and reference value.
+        """
         gce_gbsites = self.get_gb_list()
-        for gbSite in gce_gbsites :
+        for gbSite in gce_gbsites:
             [gcei,gcej] = gbSite
-            self.errors += abs(self.R[gcei, gcej, 2] - self.C[1, gcei, gcej])
+            self.errors += abs(self.R[gcei,gcej,2] - self.C[1,gcei,gcej])
 
-        if len(gce_gbsites)!=0: self.errors_per_site = self.errors/len(gce_gbsites)
-        else: self.errors_per_site = 0
-
+        if len(gce_gbsites)!=0:
+            self.errors_per_site = self.errors/len(gce_gbsites)
+        else:
+            self.errors_per_site = 0
 
     def get_2d_plot(self,init,algo):
+        """Generate 2D visualization of microstructure with normal vectors.
+        
+        Args:
+            init (str): Name of initial condition
+            algo (str): Name of algorithm used
+        """
         plt.subplots_adjust(wspace=0.2,right=1.8)
         plt.close()
         fig1 = plt.figure(1)
@@ -123,15 +212,23 @@ class linear_class(object):
         # plt.savefig('BL_PolyGray_Arrows.png',dpi=1000,bbox_inches='tight')
 
     def get_gb_list(self,grainID=1):
+        """Get list of grain boundary sites.
+        
+        Args:
+            grainID (int): ID of grain to find boundaries for
+            
+        Returns:
+            list: List of [i,j] coordinates of boundary sites
+        """
         ggn_gbsites = []
         for i in range(0,self.nx):
             for j in range(0,self.ny):
                 ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or
-                     ((self.P[0,im,j]-self.P[0,i,j])!=0) or
-                     ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
-                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) )\
-                        and self.P[0,i,j]==grainID:
+                # Check if any neighbors have different grain ID
+                if (((self.P[0,ip,j]-self.P[0,i,j])!=0) or
+                    ((self.P[0,im,j]-self.P[0,i,j])!=0) or
+                    ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
+                    ((self.P[0,i,jm]-self.P[0,i,j])!=0)) and self.P[0,i,j]==grainID:
                     ggn_gbsites.append([i,j])
         return ggn_gbsites
 
@@ -163,25 +260,39 @@ class linear_class(object):
         return ca_area_cen, ca_area_nei
 
     def find_window(self,i,j,fw_len):
-        # fw_len = self.tableL - 2*self.clip
+        """Find the window matrix around a point for smoothing calculations.
+        
+        Args:
+            i (int): x coordinate of center point
+            j (int): y coordinate of center point
+            fw_len (int): Width/height of window
+            
+        Returns:
+            ndarray: Binary window matrix indicating grain membership
+        """
         fw_half = int((fw_len-1)/2)
         window = np.zeros((fw_len,fw_len))
 
         for wi in range(fw_len):
             for wj in range(fw_len):
-                global_x = (i-fw_half+wi)%self.nx
+                global_x = (i-fw_half+wi)%self.nx  
                 global_y = (j-fw_half+wj)%self.ny
                 if self.P[0,global_x,global_y] == self.P[0,i,j]:
                     window[wi,wj] = 1
                 else:
                     window[wi,wj] = 0
-                # window[wi,wj] = self.P[0,global_x,global_y]
 
         return window
 
     def calculate_curvature(self,matrix):
-        # calculate curvature based on 5x5 smoothed matrix
-
+        """Calculate curvature from normal vectors.
+        
+        Args:
+            matrix (ndarray): Normal vector field
+            
+        Returns:
+            float: Local curvature value
+        """
         I02 = matrix[0,2]
         I11 = matrix[1,1]
         I12 = matrix[1,2]
@@ -213,52 +324,62 @@ class linear_class(object):
 
         if (Ii**2 + Ij**2) == 0:
             return 0
-        
-        if self.curvature_sign == True:
+
+        if self.curvature_sign:
             return -(Ii**2 * Ijj - 2*Ii*Ij*Iij + Ij**2 * Iii) / (Ii**2 + Ij**2)**1.5
         else:
             return abs(Ii**2 * Ijj - 2*Ii*Ij*Iij + Ij**2 * Iii) / (Ii**2 + Ij**2)**1.5
     #%%
     # Core
     def linear_curvature_core(self,core_input):
-        # Return the curvature of each boundary pixel:
-        # 1. find the smoothed matrix
-        # 2. calculate curvature based on the smoothed matrix by equation
-        #    K = (Ii**2 * Ijj - 2*Ii*Ij*Iij + Ij**2 * Iii) / (Ii**2 + Ij**2)**(1.5)
+        """Core function for curvature calculation.
+        
+        Implements linear smoothing and calculates curvature
+        using second derivatives of smoothed data.
+        
+        Args:
+            core_input: Input data for this subdomain
+            
+        Returns:
+            tuple: Calculated curvature values and timing information
+        """
         core_stime = datetime.datetime.now()
-        li,lj,lk=np.shape(core_input)
+        li,lj,lk = np.shape(core_input)
         fval = np.zeros((self.nx,self.ny,1))
 
         corner1 = core_input[0,0,:]
         corner3 = core_input[li-1,lj-1,:]
-
+        
+        # Get core area and neighbors
         core_area_cen, core_area_nei = self.check_subdomain_and_nei(corner1)
-        if self.verification_system == True: print(f'the processor {core_area_cen} start...')
+        if self.verification_system:
+            print(f'the processor {core_area_cen} start...')
 
         test_check_read_num = 0
         test_check_max_qsize = 0
+        
+        # Process each point in subdomain
         for core_a in core_input:
             for core_b in core_a:
                 i = core_b[0]
                 j = core_b[1]
-
+                
+                # Check if point is on grain boundary
                 ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
+                if (((self.P[0,ip,j]-self.P[0,i,j])!=0) or
+                    ((self.P[0,im,j]-self.P[0,i,j])!=0) or
+                    ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
+                    ((self.P[0,i,jm]-self.P[0,i,j])!=0)):
 
-                    window = np.zeros((self.tableL_curv,self.tableL_curv))
                     window = self.find_window(i,j,self.tableL_curv - 2*self.clip)
                     smoothed_matrix = myInput.output_smoothed_matrix(window, myInput.output_linear_smoothing_matrix(self.loop_times))[self.loop_times:-self.loop_times,self.loop_times:-self.loop_times]
-
-                    # Error check for smoothed matrix
-                    if (smoothed_matrix.shape != (5,5)):
-                        print(f"The smoothed matrix is not correct: {smoothed_matrix.shape}")
-
+                    
+                    # Calculate curvature
                     fval[i,j,0] = self.calculate_curvature(smoothed_matrix)
 
-
-        if self.verification_system == True: print(f"process{core_area_cen} read {test_check_read_num} times and max qsize {test_check_max_qsize}")
         core_etime = datetime.datetime.now()
-        if self.verification_system == True: print("my core time is " + str((core_etime - core_stime).total_seconds()))
+        if self.verification_system:
+            print("my core time is " + str((core_etime - core_stime).total_seconds()))
         return (fval,(core_etime - core_stime).total_seconds())
 
     def linear_one_normal_vector_core(self,core_input):
@@ -284,41 +405,55 @@ class linear_class(object):
         return np.array([-np.sum(window*self.smoothed_vector_i), np.sum(window*self.smoothed_vector_j)])
 
     def linear_normal_vector_core(self,core_input):
+        """Core function for normal vector calculation.
+        
+        Implements linear smoothing and calculates interface normals
+        using central differences.
+        
+        Args:
+            core_input: Subset of points to process
+            
+        Returns:
+            tuple: (Normal vector array, Computation time)
+        """
         core_stime = datetime.datetime.now()
-        li,lj,lk=np.shape(core_input)
+        li,lj,lk = np.shape(core_input)
         fval = np.zeros((self.nx,self.ny,2))
 
         corner1 = core_input[0,0,:]
         corner3 = core_input[li-1,lj-1,:]
 
+        # Get core area and neighbors
         core_area_cen, core_area_nei = self.check_subdomain_and_nei(corner1)
-        if self.verification_system == True: print(f'the processor {core_area_cen} start...')
+        if self.verification_system:
+            print(f'the processor {core_area_cen} start...')
 
         test_check_read_num = 0
         test_check_max_qsize = 0
+        
+        # Process each point in subdomain
         for core_a in core_input:
             for core_b in core_a:
                 i = core_b[0]
                 j = core_b[1]
-                # fv_i, fv_j = self.find_tableij(corner1,i,j)
 
-
+                # Check if point is on grain boundary
                 ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or
-                     ((self.P[0,im,j]-self.P[0,i,j])!=0) or
-                     ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
-                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
+                if (((self.P[0,ip,j]-self.P[0,i,j])!=0) or
+                    ((self.P[0,im,j]-self.P[0,i,j])!=0) or
+                    ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
+                    ((self.P[0,i,jm]-self.P[0,i,j])!=0)):
 
-                    window = np.zeros((self.tableL,self.tableL))
                     window = self.find_window(i,j,self.tableL - 2*self.clip)
                     # print(window)
-
+                    
+                    # Calculate normal vector components using smoothing matrices
                     fval[i,j,0] = -np.sum(window*self.smoothed_vector_i)
                     fval[i,j,1] = np.sum(window*self.smoothed_vector_j)
 
-        if self.verification_system == True: print(f"process{core_area_cen} read {test_check_read_num} times and max qsize {test_check_max_qsize}")
         core_etime = datetime.datetime.now()
-        if self.verification_system == True: print("my core time is " + str((core_etime - core_stime).total_seconds()))
+        if self.verification_system:
+            print("my core time is " + str((core_etime - core_stime).total_seconds()))
         return (fval,(core_etime - core_stime).total_seconds())
 
     def res_back(self,back_result):
@@ -337,39 +472,57 @@ class linear_class(object):
         if self.verification_system == True: print("my res time is " + str((res_etime - res_stime).total_seconds()))
 
     def linear_main(self, purpose="inclination"):
-
-        # global starttime, endtime
+        """Main execution function for linear smoothing algorithm.
+        
+        Controls the overall workflow including:
+        - Parallel processing setup
+        - Smoothing operations
+        - Normal vector calculation
+        - Error calculation
+        
+        Args:
+            purpose (str): Type of calculation ("inclination" or "curvature")
+        """
         starttime = datetime.datetime.now()
 
+        # Setup parallel processing
         pool = mp.Pool(processes=self.cores)
         main_lc, main_wc = myInput.split_cores(self.cores)
 
-        all_sites = np.array([[x,y] for x in range(self.nx) for y in range(self.ny) ]).reshape(self.nx,self.ny,2)
+        # Split domain for parallel processing
+        all_sites = np.array([[x,y] for x in range(self.nx) for y in range(self.ny)]).reshape(self.nx,self.ny,2)
         multi_input = myInput.split_IC(all_sites, self.cores,2, 0,1)
 
-        res_list=[]
+        # Run calculations in parallel
+        res_list = []
         if purpose == "inclination":
             for ki in range(main_wc):
                 for kj in range(main_lc):
-                    res_one = pool.apply_async(func = self.linear_normal_vector_core, args = (multi_input[ki][kj], ), callback=self.res_back )
+                    res_one = pool.apply_async(
+                        func=self.linear_normal_vector_core, 
+                        args=(multi_input[ki][kj],),
+                        callback=self.res_back)
                     res_list.append(res_one)
         elif purpose == "curvature":
             for ki in range(main_wc):
                 for kj in range(main_lc):
-                    res_one = pool.apply_async(func = self.linear_curvature_core, args = (multi_input[ki][kj], ), callback=self.res_back )
+                    res_one = pool.apply_async(
+                        func=self.linear_curvature_core,
+                        args=(multi_input[ki][kj],),
+                        callback=self.res_back)
                     res_list.append(res_one)
 
-
+        # Wait for all processes to complete
         pool.close()
         pool.join()
 
-        if self.verification_system == True: print("core done!")
-        # print(res_list[0].get())
+        if self.verification_system:
+            print("core done!")
 
-        # calculate time
+        # Calculate timing and errors
         endtime = datetime.datetime.now()
-
         self.running_time = (endtime - starttime).total_seconds()
+        
         if purpose == "inclination":
             self.get_errors()
         elif purpose == "curvature":

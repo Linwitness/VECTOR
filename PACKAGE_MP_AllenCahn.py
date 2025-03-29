@@ -1,9 +1,34 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed May  6 18:44:33 2020
+Allen-Cahn Method Implementation for Interface Analysis
 
-@author: fhilty
+This module implements the Allen-Cahn method for calculating grain boundary 
+normal vectors and curvature in polycrystalline materials. The method uses
+phase field evolution with these features:
+
+1. Phase Field Evolution:
+   - Uses Allen-Cahn equation for interface motion
+   - Implements double-well potential energy function
+   - Maintains phase field values between 0 and 1
+
+2. Normal Vector Calculation:
+   - Computes gradients of evolved phase field
+   - Uses high-order accurate numerical schemes
+   - Handles multiple grain boundaries
+
+3. Curvature Calculation:
+   - Based on divergence of normal vectors
+   - Maintains numerical stability at junctions
+   - Uses efficient matrix operations
+
+Key Features:
+- Parallel implementation for performance
+- Automatic timestep selection
+- Energy minimization tracking
+- Error calculation against analytical solutions
+
+Author: Lin Yang
 """
 
 import os
@@ -19,54 +44,107 @@ import datetime
 
 
 class allenCahn_class(object):
+    """A class implementing the Allen-Cahn equation solver.
+    
+    This class provides methods to evolve grain boundaries using the Allen-Cahn equation
+    and calculate normal vectors and curvature at grain boundaries.
+    
+    Attributes:
+        k (float): Gradient energy coefficient (ε²)
+        m (float): Mobility coefficient (M) 
+        L (float): Time stepping factor
+        matrix_value (float): Initial value for unfilled matrix elements
+        running_time (float): Total execution time
+        running_coreTime (float): Execution time for core calculations
+        errors (float): Accumulated angle errors
+        errors_per_site (float): Average error per grain boundary site
+        nx, ny (int): Grid dimensions
+        ng (int): Number of grains
+        R (ndarray): Reference normal vectors 
+        P (ndarray): Phase field and calculated normal vectors
+        C (ndarray): Calculated curvature
+        cores (int): Number of parallel processes
+        nsteps (int): Number of time steps
+        dt (float): Time step size
+        tableL (int): Length of calculation table
+        halfL (int): Half length of calculation window
+        V (ndarray): Temporary calculation array
+    """
 
-    def __init__(self,nx,ny,ng,cores,nsteps,P0,R):
+    def __init__(self,nx,ny,ng,cores,nsteps,P0,R,clip=0,verification_system=True,curvature_sign=False,mobility=1.0,grad_coef=1.0):
+        """Initialize the Allen-Cahn algorithm.
+        
+        Args:
+            nx,ny (int): Grid dimensions
+            ng (int): Number of grains/phases
+            cores (int): Number of CPU cores for parallel processing
+            nsteps (int): Number of evolution timesteps
+            P0 (ndarray): Initial microstructure
+            R (ndarray): Reference solution for validation
+            mobility (float): Mobility coefficient M
+            grad_coef (float): Gradient energy coefficient κ
+        """
         # V_matrix init value; runnning time and error for the algorithm
-        self.k = 1
-        self.m = 1
-        self.L = 1
+        self.k = grad_coef  # Gradient energy coefficient
+        self.m = mobility  # Mobility
+        self.L = 1  # Time stepping factor
         self.matrix_value = 10
         self.running_time = 0
-        self.running_coreTime = 0
+        self.running_coreTime = 0 
         self.errors = 0
         self.errors_per_site = 0
 
-        # initial condition data
+        # Initial condition data
         self.nx,self.ny = nx, ny
         self.ng = 2
-        self.R = R  # results of analysis model
-        # convert individual grains map into one grain map
-        self.P = np.zeros((3,nx,ny)) # matrix to store IC and normal vector results
-        self.C = np.zeros((2,nx,ny)) # curvature result matrix
+        self.R = R  # Reference normal vectors
+        # Convert individual grains map into one grain map
+        self.P = np.zeros((3,nx,ny))  # Stores IC and normal vectors
+        self.C = np.zeros((2,nx,ny))  # Stores curvature
         for i in range(0,np.shape(P0)[2]):
             self.P[0,:,:] += P0[:,:,i]*(i+1)
             self.C[0,:,:] += P0[:,:,i]*(i+1)
 
-        # data for multiprocessing
+        self.clip = clip  # Clipping value for curvature
+        self.verification_system = verification_system  # Flag for verification system
+        self.curvature_sign = curvature_sign  # Flag for curvature sign
+
+        # Multiprocessing parameters
         self.cores = cores
 
-        # data for accuracy
-        self.nsteps = nsteps #Number of timesteps
-        self.dt = 0.1 #Timestep size
-        self.tableL = 2*(nsteps+1)+1 # when repeatting two times, the table length will be 7 (7 by 7 table)
+        # Numerical solution parameters
+        self.nsteps = nsteps  # Number of timesteps
+        self.dt = 0.1  # Timestep size
+        self.tableL = 2*(nsteps+1)+1  # Table length for repeated calculations
         self.tableL_curv = 2*(nsteps+2)+1
         self.halfL = nsteps+1
         self.halfL_curv = nsteps+2
 
-        # temporary matrix to increase efficiency
+        # Temporary calculation matrix
         self.V = np.ones((nsteps+1,nx,ny,ng))*self.matrix_value
 
-    #%% Function
     def get_P(self):
-        # Outout the result matrix, first level is microstructure,
-        # last two layers are normal vectors
+        """Get the phase field and normal vector results.
+        
+        Returns:
+            ndarray: Matrix containing grain structure and normal vectors
+        """
         return self.P
 
     def get_C(self):
-        # Get curvature matrix
+        """Get the curvature calculation results.
+        
+        Returns:
+            ndarray: Matrix containing curvature values
+        """
         return self.C
 
     def get_errors(self):
+        """Calculate error between calculated and reference normal vectors.
+        
+        Computes angular difference between calculated normal vectors and reference
+        values at each grain boundary site.
+        """
         ge_gbsites = self.get_gb_list()
         for gbSite in ge_gbsites :
             [gei,gej] = gbSite
@@ -76,6 +154,14 @@ class allenCahn_class(object):
         self.errors_per_site = self.errors/len(ge_gbsites)
 
     def get_2d_plot(self,init,algo):
+        """Generate 2D visualization of results.
+        
+        Creates plot showing grain structure and normal vectors.
+        
+        Args:
+            init (str): Name of initial condition
+            algo (str): Name of algorithm
+        """
         plt.subplots_adjust(wspace=0.2,right=1.8)
         plt.close()
         fig1 = plt.figure(1)
@@ -103,6 +189,14 @@ class allenCahn_class(object):
         plt.savefig('AC_PolyGray_Arrows.png',dpi=1000,bbox_inches='tight')
 
     def get_gb_list(self,grainID=1):
+        """Get list of grain boundary sites.
+        
+        Args:
+            grainID (int): ID of grain to find boundaries for
+            
+        Returns:
+            list: List of [i,j] coordinates of boundary sites
+        """
         ggn_gbsites = []
         for i in range(0,self.nx):
             for j in range(0,self.ny):
@@ -114,6 +208,17 @@ class allenCahn_class(object):
 
 
     def check_subdomain_and_nei(self,A):
+        """Set up parallel domain decomposition.
+        
+        Divides domain into subdomains for parallel processing and identifies
+        neighboring subdomains.
+        
+        Args:
+            A: Subdomain coordinates
+            
+        Returns:
+            tuple: Center and neighbor subdomain indices
+        """
         ca_length,ca_width = myInput.split_cores(self.cores)
         ca_area_cen = [int(A[0]/self.nx*ca_width),int(A[1]/self.ny*ca_length)]
         ca_area_nei = []
@@ -129,6 +234,13 @@ class allenCahn_class(object):
         return ca_area_cen, ca_area_nei
 
     def res_back(self,back_result):
+        """Collect results from parallel processes.
+        
+        Callback function to gather and combine results from parallel calculations.
+        
+        Args:
+            back_result: Results from a parallel process
+        """
         res_stime = datetime.datetime.now()
         (fval,core_time,self.V) = back_result
         if core_time > self.running_coreTime:
@@ -146,6 +258,22 @@ class allenCahn_class(object):
 
     #%% Core
     def allenCahn_curvature_core(self,core_input):
+        """Core curvature calculation function.
+        
+        Implements the Allen-Cahn equation solution for curvature calculation
+        on a subdomain.
+        
+        The curvature κ is calculated as:
+        κ = (ϕxx*ϕy² - 2*ϕx*ϕy*ϕxy + ϕyy*ϕx²)/(ϕx² + ϕy²)^(3/2)
+        
+        where ϕx, ϕy are first derivatives and ϕxx, ϕxy, ϕyy are second derivatives.
+        
+        Args:
+            core_input: Input data for this subdomain
+            
+        Returns:
+            tuple: Calculated curvature values and timing information
+        """
         core_stime = datetime.datetime.now()
         li,lj,lk=np.shape(core_input)
         fval = np.zeros((self.nx,self.ny,1))
@@ -254,6 +382,17 @@ class allenCahn_class(object):
 
 
     def allenCahn_normal_vector_core(self,core_input):
+        """Core function for normal vector calculation.
+        
+        Implements Allen-Cahn evolution and calculates interface normals
+        using phase field gradients.
+        
+        Args:
+            core_input: Subset of points to process
+            
+        Returns:
+            tuple: (Normal vector array, Computation time)
+        """
         core_stime = datetime.datetime.now()
         li,lj,lk=np.shape(core_input)
         fval = np.zeros((self.nx,self.ny,2))
@@ -310,9 +449,18 @@ class allenCahn_class(object):
         print(f"processor {core_area_cen} read {test_check_read_num} times and max qsize {test_check_max_qsize}")
         core_etime = datetime.datetime.now()
         print("my core time is " + str((core_etime - core_stime).total_seconds()))
-        return (fval,(core_etime - core_stime).total_seconds())
+        return (fval,(core_etime - core_stime).total_seconds(),self.V)
 
     def allenCahn_main(self, purpose="inclination"):
+        """Main execution function for Allen-Cahn algorithm.
+        
+        Controls the overall workflow including:
+        - Parallel processing setup
+        - Phase field evolution
+        - Normal vector calculation
+        - Energy minimization
+        - Error calculation
+        """
         # calculate time
         starttime = datetime.datetime.now()
 

@@ -1,9 +1,34 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jul 12 18:09:28 2021
+3D Level Set Method Implementation for Interface Analysis
 
-@author: lin.yang
+This module implements the 3D level set method for calculating grain boundary 
+normal vectors and curvature in 3D polycrystalline materials. The method uses
+signed distance functions to represent interfaces with these features:
+
+1. Level Set Function:
+   - Represents interfaces as zero level sets
+   - Uses signed distance functions for numerical stability
+   - Implements reinitialization for maintaining signed distance property
+
+2. Normal Vector Calculation:
+   - Computes spatial derivatives in 3D
+   - Uses high-order accurate numerical schemes
+   - Handles complex 3D interface geometries
+
+3. Curvature Calculation:
+   - Computes mean and Gaussian curvature
+   - Uses second derivatives for improved accuracy
+   - Handles triple lines and quadruple points
+
+Key Features:
+- Parallel implementation for large 3D datasets
+- Memory-efficient sparse data structures
+- Automatic reinitialization
+- Error calculation against analytical solutions
+
+Author: Lin Yang
 """
 
 import os
@@ -19,14 +44,25 @@ import multiprocessing as mp
 
 class levelSet3d_class(object):
 
-    def __init__(self,nx,ny,nz,ng,cores,nsteps,P0,R,bc,switch = False):
+    def __init__(self,nx,ny,nz,ng,cores,nsteps,P0,R,bc,clip=0,verification_system = True, curvature_sign = False):
+        """Initialize the 3D level set algorithm.
+        
+        Args:
+            nx,ny,nz (int): Grid dimensions
+            ng (int): Number of grains
+            cores (int): Number of CPU cores for parallel processing
+            nsteps (int): Number of evolution timesteps
+            P0 (ndarray): Initial 3D microstructure
+            R (ndarray): Reference solution for validation
+            bc (str): Boundary condition type ('periodic' or 'non-periodic')
+            clip (int): Enable/disable optimization features
+        """
         # V_matrix init value; runnning time and error for the algorithm
         self.matrix_value = 10
         self.running_time = 0
         self.running_coreTime = 0
         self.errors = 0
         self.errors_per_site = 0
-        self.switch = switch
 
         # initial condition data
         self.nx = nx # number of sites in x axis
@@ -97,6 +133,14 @@ class levelSet3d_class(object):
             plt.savefig(f'{init}-{algo}.{String}.{z_surface/self.nz}.png',dpi=1000,bbox_inches='tight')
 
     def get_gb_list(self,grainID=1):
+        """Get list of grain boundary voxels.
+        
+        Args:
+            grainID (int): ID of grain to find boundaries for
+            
+        Returns:
+            list: List of [i,j,k] coordinates of boundary voxels
+        """
         ggn_gbsites = []
         if self.bc == 'np':
             edge_l = self.halfL
@@ -120,6 +164,15 @@ class levelSet3d_class(object):
         return arr[:n,:n,:n]
 
     def find_distance(self,i,j,k,d): # let d=2
+        """Calculate signed distance from point to interface.
+        
+        Args:
+            i,j,k (int): Point coordinates
+            d (int): Search radius
+            
+        Returns:
+            float: Signed distance to nearest interface
+        """
         smallTable = self.Neighbors(self.P[0,:,:,:],i,j,k,d*2+1)
 
         # two layer list
@@ -156,6 +209,18 @@ class levelSet3d_class(object):
         print("my res time is " + str((res_etime - res_stime).total_seconds()))
 
     def levelSet3d_normal_vector_core(self,core_input, core_all_queue):
+        """Core function for normal vector calculation.
+        
+        Implements evolution of level set function and calculation of
+        normal vectors through spatial derivatives.
+        
+        Args:
+            core_input: Subset of voxels to process
+            core_all_queue: Queue for inter-process communication
+            
+        Returns:
+            tuple: (Normal vector array, Computation time, Level set function)
+        """
         core_stime = datetime.datetime.now()
         li,lj,lk, lp=np.shape(core_input)
         fval = np.zeros((self.nx,self.ny,self.nz,3))
@@ -322,7 +387,16 @@ class levelSet3d_class(object):
         print("my core time is " + str((core_etime - core_stime).total_seconds()))
         return (fval,(core_etime - core_stime).total_seconds(),self.V)
 
-    def levelSet3d_main(self):
+    def levelSet3d_main(self,purpose='inclination'):
+        """Main execution function for 3D level set algorithm.
+        
+        Controls the overall workflow including:
+        - Parallel processing setup
+        - Core function execution
+        - Results collection
+        - Error calculation
+        - Level set reinitialization
+        """
         # calculate time
         starttime = datetime.datetime.now()
 
