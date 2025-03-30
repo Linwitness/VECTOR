@@ -248,13 +248,13 @@ class linear3d_class(object):
         dI_dk = (matrix[2, 2, 3] - matrix[2, 2, 1]) / 2.0  # Ik
 
         # Second derivatives (using second-order central differences)
-        d2I_dii = (matrix[4, 2, 2] - 2 * matrix[2, 2, 2] + matrix[0, 2, 2]) / 2.0  # Iii
-        d2I_djj = (matrix[2, 4, 2] - 2 * matrix[2, 2, 2] + matrix[2, 0, 2]) / 2.0  # Ijj
-        d2I_dkk = (matrix[2, 2, 4] - 2 * matrix[2, 2, 2] + matrix[2, 2, 0]) / 2.0  # Ikk
+        d2I_dii = (matrix[4, 2, 2] - 2 * matrix[2, 2, 2] + matrix[0, 2, 2]) / 4.0  # Iii
+        d2I_djj = (matrix[2, 4, 2] - 2 * matrix[2, 2, 2] + matrix[2, 0, 2]) / 4.0  # Ijj
+        d2I_dkk = (matrix[2, 2, 4] - 2 * matrix[2, 2, 2] + matrix[2, 2, 0]) / 4.0  # Ikk
 
-        d2I_dij = (matrix[3, 3, 2] - matrix[3, 1, 2] - matrix[1, 3, 2] + matrix[1, 1, 2]) / 2.0  # Iij
-        d2I_dik = (matrix[3, 2, 3] - matrix[3, 2, 1] - matrix[1, 2, 3] + matrix[1, 2, 1]) / 2.0  # Iik
-        d2I_djk = (matrix[2, 3, 3] - matrix[2, 1, 3] - matrix[2, 3, 1] + matrix[2, 1, 1]) / 2.0  # Ijk
+        d2I_dij = (matrix[3, 3, 2] - matrix[3, 1, 2] - matrix[1, 3, 2] + matrix[1, 1, 2]) / 4.0  # Iij
+        d2I_dik = (matrix[3, 2, 3] - matrix[3, 2, 1] - matrix[1, 2, 3] + matrix[1, 2, 1]) / 4.0  # Iik
+        d2I_djk = (matrix[2, 3, 3] - matrix[2, 1, 3] - matrix[2, 3, 1] + matrix[2, 1, 1]) / 4.0  # Ijk
 
         # Compute the squared gradient magnitude
         grad_sq = dI_di**2 + dI_dj**2 + dI_dk**2

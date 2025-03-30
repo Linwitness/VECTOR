@@ -44,7 +44,7 @@ CONFIG_3D = {
         'grid_size': (50, 50, 50),
         'num_grains': 2,
         'num_cores': 8,
-        'step_range': range(2, 11, 2),
+        'step_range': range(2, 21, 2),
         'sphere_radius': 15,
     }
 }
