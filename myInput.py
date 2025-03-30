@@ -691,7 +691,7 @@ def output_smoothed_matrix(simple_test3, linear_smoothing_matrix):
 
     return smoothed_matrix3
 
-def output_smoothed_matrix3D(simple_test3, linear_smoothing_matrix):
+def output_smoothed_matrix3D_old(simple_test3, linear_smoothing_matrix):
     """Apply smoothing matrix to test data in 3D
     
     Args:
@@ -709,6 +709,39 @@ def output_smoothed_matrix3D(simple_test3, linear_smoothing_matrix):
             for k in range(edge, klen-edge):
                 smoothed_matrix3[i, j, k] = np.sum(simple_test3[i-edge:i+edge+1, j-edge:j+edge+1, k-edge:k+edge+1]*linear_smoothing_matrix)
 
+    return smoothed_matrix3
+
+def output_smoothed_matrix3D(simple_test3, linear_smoothing_matrix):
+    """
+    Smooth a 3D array by applying a 3D linear smoothing kernel in a vectorized fashion.
+    
+    The function computes the weighted sum (convolution) over each voxel's neighborhood,
+    using the kernel (linear_smoothing_matrix) and places the result in the central region of
+    the output array. Voxels along the boundary (which do not have a full neighborhood)
+    remain zero.
+    
+    Args:
+        simple_test3 (ndarray): 3D input array.
+        linear_smoothing_matrix (ndarray): 3D smoothing kernel (assumed cubic).
+        
+    Returns:
+        ndarray: Smoothed 3D array of the same shape as simple_test3.
+    """
+    # Determine the half-width (edge) of the smoothing kernel.
+    edge = int(np.floor(np.shape(linear_smoothing_matrix)[0] / 2))
+    
+    # Extract all overlapping windows from simple_test3 with the same shape as the smoothing kernel.
+    # The resulting shape is (ilen - 2*edge, jlen - 2*edge, klen - 2*edge, kernel_dim, kernel_dim, kernel_dim)
+    windows = np.lib.stride_tricks.sliding_window_view(simple_test3, linear_smoothing_matrix.shape)
+    
+    # Compute the weighted sum over the last three dimensions for each window.
+    # This is equivalent to the elementwise multiplication and sum in the original triple loop.
+    smoothed_valid = np.tensordot(windows, linear_smoothing_matrix, axes=([3, 4, 5], [0, 1, 2]))
+    
+    # Prepare the output array and insert the smoothed values in the valid region.
+    smoothed_matrix3 = np.zeros_like(simple_test3)
+    smoothed_matrix3[edge:-edge, edge:-edge, edge:-edge] = smoothed_valid
+    
     return smoothed_matrix3
 
 def output_dream3d(P0, path):

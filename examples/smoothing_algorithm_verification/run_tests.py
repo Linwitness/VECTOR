@@ -138,13 +138,13 @@ def run_all_tests(test_2D=True, test_3D=True):
         }
         
         # 3D Algorithm Tests
-        # print("\nTesting 3D Linear Algorithm...")
-        # test_3dlinear_sphere()
-        # test_3dlinear_convergence()
+        print("\nTesting 3D Linear Algorithm...")
+        test_3dlinear_sphere()
+        test_3dlinear_convergence()
         
-        print("\nTesting 3D Vertex Algorithm...")
-        test_3dvertex_sphere()
-        test_3dvertex_convergence()
+        # print("\nTesting 3D Vertex Algorithm...")
+        # test_3dvertex_sphere()
+        # test_3dvertex_convergence()
         
         # print("\nTesting 3D Level Set Algorithm...")
         # test_3dlevelset_sphere()

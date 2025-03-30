@@ -3,8 +3,8 @@
 """
 3D Linear Method Implementation for Interface Analysis
 
-This module implements the 3D extension of the linear smoothing algorithm for calculating 
-grain boundary normal vectors and curvature in 3D polycrystalline materials. 
+This module implements the 3D extension of the linear smoothing algorithm for calculating
+grain boundary normal vectors and curvature in 3D polycrystalline materials.
 Key features include:
 
 1. Normal Vector Calculation:
@@ -43,7 +43,7 @@ class linear3d_class(object):
 
     def __init__(self,nx,ny,nz,ng,cores,loop_times,P0,R,bc,clip=0,verification_system = True, curvature_sign = False):
         """Initialize the 3D linear smoothing algorithm.
-        
+
         Args:
             nx,ny,nz (int): Grid dimensions
             ng (int): Number of grains
@@ -132,7 +132,7 @@ class linear3d_class(object):
 
     def get_2d_plot(self,init,algo,z_surface = 0):
         """Generate 2D visualization of a z-slice with normal vectors.
-        
+
         Args:
             init (str): Name of initial condition
             algo (str): Name of algorithm used
@@ -168,10 +168,10 @@ class linear3d_class(object):
 
     def get_gb_list(self,grainID=1):
         """Get list of grain boundary voxels.
-        
+
         Args:
             grainID (int): ID of grain to find boundaries for
-            
+
         Returns:
             list: List of [i,j,k] coordinates of boundary voxels
         """
@@ -205,11 +205,11 @@ class linear3d_class(object):
 
     def find_window(self,i,j,k,fw_len):
         """Calculate smoothing window weights for given voxel.
-        
+
         Args:
             i,j,k (int): Voxel coordinates
             fw_len (int): Window size
-            
+
         Returns:
             ndarray: 3D window of weights for smoothing
         """
@@ -231,141 +231,161 @@ class linear3d_class(object):
 
         return window
 
-    def calculate_curvature(self,matrix):
-        """Calculate mean curvature from normal vectors.
-        
-        Uses second derivatives of the normal vector field.
-        
+    def calculate_curvature(self, matrix):
+        """
+        Calculate mean curvature from a 5x5x5 normal vector field using vectorized operations.
+
         Args:
-            matrix (ndarray): Normal vector field
-            
+            matrix (ndarray): 5x5x5 normal vector field
+
         Returns:
             float: Local mean curvature value
         """
-        # calculate curvature based on 5x5 smoothed matrix
-        I022 = matrix[0][2][2]
-        I112 = matrix[1][1][2]
-        I122 = matrix[1][2][2]
-        I132 = matrix[1][3][2]
-        I202 = matrix[2][0][2]
-        I212 = matrix[2][1][2]
-        I222 = matrix[2][2][2]
-        I232 = matrix[2][3][2]
-        I242 = matrix[2][4][2]
-        I312 = matrix[3][1][2]
-        I322 = matrix[3][2][2]
-        I332 = matrix[3][3][2]
-        I422 = matrix[4][2][2]
 
-        I220 = matrix[2][2][0]
-        I111 = matrix[1][1][1]
-        I121 = matrix[1][2][1]
-        I131 = matrix[1][3][1]
-        I211 = matrix[2][1][1]
-        I221 = matrix[2][2][1]
-        I231 = matrix[2][3][1]
-        I311 = matrix[3][1][1]
-        I321 = matrix[3][2][1]
-        I331 = matrix[3][3][1]
+        # First derivatives (central differences)
+        dI_di = (matrix[3, 2, 2] - matrix[1, 2, 2]) / 2.0  # Ii
+        dI_dj = (matrix[2, 3, 2] - matrix[2, 1, 2]) / 2.0  # Ij
+        dI_dk = (matrix[2, 2, 3] - matrix[2, 2, 1]) / 2.0  # Ik
 
-        I113 = matrix[1][1][3]
-        I123 = matrix[1][2][3]
-        I133 = matrix[1][3][3]
-        I213 = matrix[2][1][3]
-        I223 = matrix[2][2][3]
-        I233 = matrix[2][3][3]
-        I313 = matrix[3][1][3]
-        I323 = matrix[3][2][3]
-        I333 = matrix[3][3][3]
-        I224 = matrix[2][2][4]
+        # Second derivatives (using second-order central differences)
+        d2I_dii = (matrix[4, 2, 2] - 2 * matrix[2, 2, 2] + matrix[0, 2, 2]) / 2.0  # Iii
+        d2I_djj = (matrix[2, 4, 2] - 2 * matrix[2, 2, 2] + matrix[2, 0, 2]) / 2.0  # Ijj
+        d2I_dkk = (matrix[2, 2, 4] - 2 * matrix[2, 2, 2] + matrix[2, 2, 0]) / 2.0  # Ikk
 
-        # calculate teh improve or decrease of each site
-        Ii = (I322-I122)/2
-        Ij = (I232-I212)/2
-        Ik = (I223-I221)/2
+        d2I_dij = (matrix[3, 3, 2] - matrix[3, 1, 2] - matrix[1, 3, 2] + matrix[1, 1, 2]) / 2.0  # Iij
+        d2I_dik = (matrix[3, 2, 3] - matrix[3, 2, 1] - matrix[1, 2, 3] + matrix[1, 2, 1]) / 2.0  # Iik
+        d2I_djk = (matrix[2, 3, 3] - matrix[2, 1, 3] - matrix[2, 3, 1] + matrix[2, 1, 1]) / 2.0  # Ijk
 
-        Imi = (I222-I022)/2
-        Ipi = (I422-I222)/2
-        Imj = (I222-I202)/2
-        Ipj = (I242-I222)/2
-        Imk = (I222-I220)/2
-        Ipk = (I224-I222)/2
-        Imij = (I132-I112)/2
-        Ipij = (I332-I312)/2
-        Imik = (I321-I121)/2
-        Ipik = (I323-I123)/2
-        Imjk = (I231-I211)/2
-        Ipjk = (I233-I213)/2
+        # Compute the squared gradient magnitude
+        grad_sq = dI_di**2 + dI_dj**2 + dI_dk**2
+        if grad_sq == 0:
+            return 0
 
-        Iii = (Ipi-Imi)/2
-        Ijj = (Ipj-Imj)/2
-        Ikk = (Ipk-Imk)/2
-        Iij = (Ipij-Imij)/2
-        Iik = (Ipik-Imik)/2
-        Ijk = (Ipjk-Imjk)/2
+        # Numerator of the curvature formula
+        num = ((dI_dj**2 + dI_dk**2) * d2I_dii +
+            (dI_dk**2 + dI_di**2) * d2I_djj +
+            (dI_di**2 + dI_dj**2) * d2I_dkk -
+            2 * dI_di * dI_dj * d2I_dij -
+            2 * dI_dj * dI_dk * d2I_djk -
+            2 * dI_dk * dI_di * d2I_dik)
 
-        if (Ii**2 + Ij**2 + Ik**2) == 0: return 0
-    
-        if self.curvature_sign == True:
-            return -((Ij**2+Ik**2)*Iii + (Ik**2+Ii**2)*Ijj + (Ii**2+Ij**2)*Ikk - 2*Ii*Ij*Iij - 2*Ij*Ik*Ijk - 2*Ik*Ii*Iik) / (2*(Ii**2 + Ij**2 + Ik**2)**(1.5))
+        # Denomintor
+        denom = 2 * grad_sq**1.5
+        curvature = num / denom
+
+        # Return with the proper sign
+        if self.curvature_sign:
+            return -curvature
         else:
-            return abs((Ij**2+Ik**2)*Iii + (Ik**2+Ii**2)*Ijj + (Ii**2+Ij**2)*Ikk - 2*Ii*Ij*Iij - 2*Ij*Ik*Ijk - 2*Ik*Ii*Iik) / (2*(Ii**2 + Ij**2 + Ik**2)**(1.5))
+            return abs(curvature)
 
     #%%
     # Core
-    def linear3d_curvature_core(self,core_input, core_all_queue):
-        # Return the curvature of each boundary pixel:
-        # 1. find the smoothed matrix
-        # 2. calculate mean curvature based on the smoothed matrix by equation
-        #    H = ((Ij**2+Ik**2)*Iii + (Ik**2+Ii**2)*Ijj + (Ii**2+Ij**2)*Ikk - 2*Ii*Ij*Iij - 2*Ij*Ik*Ijk - 2*Ik*Ii*Iik) / (2*(Ii**2 + Ij**2 + Ik**2)**(1.5))
+    def linear3d_curvature_core(self, core_input, core_all_queue):
+        """Vectorized implementation of curvature calculation.
+        
+        Args:
+            core_input: Input array containing voxel coordinates
+            core_all_queue: Queue for parallel processing
+            
+        Returns:
+            tuple: (Results array, Computation time)
+        """
         core_stime = datetime.datetime.now()
-        li,lj,lk,lp=np.shape(core_input)
-        fval = np.zeros((self.nx,self.ny,self.nz,1))
-
-        for core_a in core_input:
-            for core_b in core_a:
-                for core_c in core_b:
-                    i = core_c[0]
-                    j = core_c[1]
-                    k = core_c[2]
-
-                    ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
-                    if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or
-                         ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or
-                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ):
-
-                        window = np.zeros((self.tableL_curv,self.tableL_curv,self.tableL_curv))
-                        window = self.find_window(i,j,k,self.tableL_curv - 2*self.clip)
-                        smoothed_matrix = myInput.output_smoothed_matrix3D(window, myInput.output_linear_smoothing_matrix3D(self.loop_times))[self.loop_times:-self.loop_times,self.loop_times:-self.loop_times,self.loop_times:-self.loop_times]
-
-                        # Error check for smoothed matrix
-                        if (smoothed_matrix.shape != (5,5,5)):
-                            print(f"The smoothed matrix is not correct: {smoothed_matrix.shape}")
-
-
-                        # print(window)
-
-                        # if i==64 and j==65:
-                        #     signal = 1
-                        # else:
-                        #     signal=0
-                        fval[i,j,k,0] = self.calculate_curvature(smoothed_matrix)
-
-
+        li, lj, lk, lp = np.shape(core_input)
+        fval = np.zeros((self.nx, self.ny, self.nz, 1))
+        
+        # Extract all coordinates from core_input
+        coords = core_input.reshape(-1, 3)
+        i, j, k = coords[:, 0], coords[:, 1], coords[:, 2]
+        
+        # Vectorized boundary point detection using numpy operations
+        P0 = self.P[0]
+        center_vals = P0[i, j, k]
+        
+        # Calculate periodic indices for all points at once
+        ip = (i + 1) % self.nx
+        im = (i - 1) % self.nx
+        jp = (j + 1) % self.ny
+        jm = (j - 1) % self.ny
+        kp = (k + 1) % self.nz
+        km = (k - 1) % self.nz
+        
+        # Find boundary points using vectorized comparison
+        is_boundary = (
+            (P0[ip, j, k] != center_vals) |
+            (P0[im, j, k] != center_vals) |
+            (P0[i, jp, k] != center_vals) |
+            (P0[i, jm, k] != center_vals) |
+            (P0[i, j, kp] != center_vals) |
+            (P0[i, j, km] != center_vals)
+        )
+        
+        # Get boundary coordinates
+        boundary_coords = coords[is_boundary]
+        
+        if len(boundary_coords) > 0:
+            # Get smoothing matrix once for all points
+            smoothing_matrix = myInput.output_linear_smoothing_matrix3D(self.loop_times)
+            window_len = self.tableL_curv - 2*self.clip
+            window_half = int((window_len-1)/2)
+            
+            # Create coordinate offsets for the window
+            wi_range = np.arange(-window_half, window_half + 1)
+            wj_range = np.arange(-window_half, window_half + 1)
+            wk_range = np.arange(-window_half, window_half + 1)
+            
+            # Create meshgrid for window coordinates
+            wi_grid, wj_grid, wk_grid = np.meshgrid(wi_range, wj_range, wk_range, indexing='ij')
+            
+            # Process boundary points
+            for coord in boundary_coords:
+                i, j, k = coord.astype(int)
+                
+                # Check boundary condition for non-periodic case
+                if self.bc == 'np':
+                    if not myInput.filter_bc3d(self.nx, self.ny, self.nz, i, j, k, self.halfL):
+                        continue
+                
+                # Calculate global coordinates using broadcasting
+                global_x = (i + wi_grid) % self.nx
+                global_y = (j + wj_grid) % self.ny
+                global_z = (k + wk_grid) % self.nz
+                
+                # Create window using vectorized operations
+                center_val = self.P[0, i, j, k]
+                window = (self.P[0, global_x, global_y, global_z] == center_val).astype(np.float64)
+                
+                # Calculate smoothed matrix
+                smoothed_matrix = myInput.output_smoothed_matrix3D(
+                    window, 
+                    smoothing_matrix
+                )[self.loop_times:-self.loop_times,
+                  self.loop_times:-self.loop_times,
+                  self.loop_times:-self.loop_times]
+                
+                if smoothed_matrix.shape != (5, 5, 5):
+                    continue
+                
+                # Calculate curvature using existing method
+                fval[i, j, k, 0] = self.calculate_curvature(smoothed_matrix)
+        
         core_etime = datetime.datetime.now()
-        if self.verification_system == True: print("my core time is " + str((core_etime - core_stime).total_seconds()))
-        return (fval,(core_etime - core_stime).total_seconds())
+        if self.verification_system:
+            print("my core time is " + str((core_etime - core_stime).total_seconds()))
+        
+        return (fval, (core_etime - core_stime).total_seconds())
 
     def linear3d_normal_vector_core(self,core_input, core_all_queue):
         """Core function for normal vector calculation.
-        
+
         Implements the main 3D linear smoothing algorithm for normal vector
         calculation in parallel across multiple cores.
-        
+
         Args:
             core_input (ndarray): Subset of voxels to process
             core_all_queue: Queue for inter-process communication
-            
+
         Returns:
             tuple: (Results array, Computation time)
         """
@@ -424,13 +444,13 @@ class linear3d_class(object):
 
     def linear3d_main(self, purpose ="inclination"):
         """Main execution function for 3D linear algorithm.
-        
+
         Controls the overall workflow including:
         - Parallel processing setup
         - Core function execution
         - Results collection
         - Error calculation
-        
+
         Args:
             purpose (str): Type of calculation ("inclination" or "curvature")
         """
