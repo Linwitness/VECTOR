@@ -127,7 +127,10 @@ class linear3d_class(object):
             [gcei,gcej,gcek] = gceSite
             self.errors += abs(self.R[gcei, gcej, gcek, 3] - self.C[1, gcei, gcej, gcek])
 
-        self.errors_per_site = self.errors/len(gce_gbsites)
+        if len(gce_gbsites) !=0: 
+            self.errors_per_site = self.errors/len(gce_gbsites)
+        else: 
+            self.errors_per_site = 0
 
 
     def get_2d_plot(self,init,algo,z_surface = 0):
