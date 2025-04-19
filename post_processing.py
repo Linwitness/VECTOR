@@ -15,6 +15,7 @@ from tqdm import tqdm
 import PACKAGE_MP_3DLinear as smooth_3d
 import PACKAGE_MP_Linear as smooth
 import myInput
+from itertools import combinations
 
 ###########################################
 # 1. Basic Matrix Operations
@@ -105,10 +106,29 @@ def IO_curvature(microstructure):
             else: # larger
                 example[1] += edge_list[int(num_faces[i]-1)]
             voxel_and_face_num_edge[pair_id] = example
+        # if len(neighbors_unique_id) >= 2:
+        #     for g1, g2 in combinations(neighbors_unique_id, 2):
+        #         pair = sorted([g1, g2])
+        #         pair_id = get_line(pair[0], pair[1])
+        #         if pair_id not in voxel_and_face_num_edge:
+        #             example = np.zeros(4)
+        #         else:
+        #             example = voxel_and_face_num_edge[pair_id]
+        #         # Add half of the face count for this voxel to the total faces for this grain boundary pair
+        #         different_pairs = len(neighbors_unique_id) * (len(neighbors_unique_id) - 1) / 2
+        #         example[2] += num_faces[i] / (2 * max(1, different_pairs))
+        #         # Assign edge count based on whether the current voxel belongs to the smaller grain id in the pair
+        #         if microstructure[tuple(idx[i])] == pair[0]:
+        #             example[0] += edge_list[int(num_faces[i] - 1)]
+        #         elif microstructure[tuple(idx[i])] == pair[1]:
+        #             example[1] += edge_list[int(num_faces[i] - 1)]
+        #         else:
+        #             continue
+        #         voxel_and_face_num_edge[pair_id] = example
     
     # curvature point to the center of smaller grain id is positive
     for key, value in voxel_and_face_num_edge.items():
-        value[3] = np.pi / 4 * (value[1] - value[0]) / value[2]
+        value[3] = np.pi / 4 * (value[0] - value[1]) / value[2]
         voxel_and_face_num_edge[key] = value
     
     return voxel_and_face_num_edge
