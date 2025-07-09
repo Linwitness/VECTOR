@@ -1,9 +1,67 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jul  7 15:29:17 2021
+3D Linear Smoothing Package for Grain Boundary Analysis
 
-@author: lin.yang
+This module implements a comprehensive 3D linear smoothing algorithm for analyzing
+grain boundaries in three-dimensional polycrystalline microstructures. It extends
+the 2D bilinear smoothing approach to handle complex 3D grain boundary networks
+with multiprocessing support for large-scale simulations.
+
+Key Features:
+-------------
+1. 3D Linear Smoothing: Advanced algorithms for 3D grain boundary normal calculation
+2. Multiprocessing Support: Parallel computation for large 3D datasets
+3. Sparse Matrix Implementation: Memory-efficient storage for large microstructures
+4. Boundary Condition Handling: Various boundary conditions for 3D domains
+5. Error Analysis: Comprehensive convergence and accuracy assessment
+
+Scientific Background:
+---------------------
+In 3D microstructures, grain boundaries form complex surface networks that
+require sophisticated analysis techniques. This module provides:
+- Accurate normal vector calculation on curved 3D grain boundaries
+- Curvature analysis for grain boundary surfaces
+- Multi-scale smoothing for different resolution requirements
+- Integration with experimental 3D characterization data
+
+Mathematical Foundation:
+-----------------------
+The 3D linear smoothing algorithm uses:
+- 3D convolution kernels for gradient calculation
+- Sparse matrix representation for memory efficiency
+- Iterative refinement for improved accuracy
+- Multi-resolution analysis for scale-dependent features
+
+Algorithm Implementation:
+------------------------
+Uses sparse data structure (doi:10.1088/0965-0393/14/7/007) to store
+temporary matrix V with size nsteps×nx×ny×nz dictionary format for
+memory efficiency in large 3D simulations.
+
+Multiprocessing Architecture:
+----------------------------
+Implements domain decomposition with load balancing for efficient
+parallel computation of 3D grain boundary properties across
+multiple CPU cores.
+
+Dependencies:
+------------
+- numpy: 3D array operations and numerical computations
+- matplotlib: Visualization of 3D results
+- multiprocessing: Parallel computation support
+- myInput: 3D smoothing matrix generation utilities
+
+Author: lin.yang
+Created: Wed Jul 7 15:29:17 2021
+
+Usage:
+------
+Designed for analyzing 3D microstructural data from:
+- Phase field simulations
+- Monte Carlo grain growth models
+- Experimental 3D characterization (FIB-SEM, X-ray tomography)
+- Multi-scale modeling applications
 """
 
 import os
@@ -20,8 +78,84 @@ import multiprocessing as mp
 # we use sparse data struture (doi:10.1088/0965-0393/14/7/007) to store temporary matrix V. The size is nsteps*nx*ny*nz dict
 
 class linear3d_class(object):
+    """
+    3D Linear Smoothing Class for Grain Boundary Analysis
+    
+    This class implements a comprehensive 3D linear smoothing algorithm
+    for analyzing grain boundaries in three-dimensional polycrystalline
+    microstructures with multiprocessing support.
+    
+    Attributes:
+    -----------
+    matrix_value : float
+        Initial value for V_matrix (default: 10)
+    running_time : float
+        Total algorithm execution time
+    running_coreTime : float
+        Core computation time for multiprocessing analysis
+    errors : float
+        Total error metrics for convergence analysis
+    errors_per_site : float
+        Per-site error for spatial error distribution
+    clip : int
+        Clipping parameter for numerical stability (default: 0)
+    
+    Microstructure Parameters:
+    -------------------------
+    nx, ny, nz : int
+        Grid dimensions in x, y, z directions
+    ng : int
+        Number of grains in initial condition
+    R : array_like
+        Analysis model results for validation
+    P : ndarray, shape (4, nx, ny, nz)
+        Matrix storing initial condition and normal vector results
+    C : ndarray, shape (2, nx, ny, nz)
+        Curvature result matrix
+    bc : str or int
+        Boundary condition specification
+    
+    Computational Parameters:
+    ------------------------
+    cores : int
+        Number of CPU cores for multiprocessing
+    loop_times : int
+        Number of iterations for accuracy control
+    
+    Mathematical Foundation:
+    -----------------------
+    The class converts individual grain maps into unified grain representation
+    and applies 3D linear smoothing algorithms with proper boundary handling.
+    
+    Usage:
+    ------
+    Primary class for 3D grain boundary analysis in polycrystalline materials.
+    Suitable for large-scale simulations and experimental data analysis.
+    """
 
     def __init__(self,nx,ny,nz,ng,cores,loop_times,P0,R,bc,clip=0):
+        """
+        Initialize 3D Linear Smoothing Class
+        
+        Parameters:
+        -----------
+        nx, ny, nz : int
+            Grid dimensions in x, y, z directions
+        ng : int
+            Number of grains in initial condition
+        cores : int
+            Number of CPU cores for multiprocessing
+        loop_times : int
+            Number of iterations for accuracy control
+        P0 : ndarray, shape (nx, ny, nz, ng)
+            Initial condition with individual grain maps
+        R : array_like
+            Reference results for validation
+        bc : str or int
+            Boundary condition specification
+        clip : int, optional
+            Clipping parameter for numerical stability (default: 0)
+        """
         # V_matrix init value; runnning time and error for the algorithm
         self.matrix_value = 10
         self.running_time = 0
@@ -33,15 +167,18 @@ class linear3d_class(object):
         # initial condition data
         self.nx = nx # number of sites in x axis
         self.ny = ny # number of sites in y axis
-        self.nz = nz
+        self.nz = nz # number of sites in z axis
         self.ng = ng # number of grains in IC
         self.R = R  # results of analysis model
+        
         # convert individual grains map into one grain map
         self.P = np.zeros((4,nx,ny,nz)) # matrix to store IC and normal vector results
         self.C = np.zeros((2,nx,ny,nz)) # curvature result matrix
+        
+        # Convert individual grain maps to unified representation
         for i in range(0,np.shape(P0)[3]):
-            self.P[0,:,:,:] += P0[:,:,:,i]*(i+1)
-            self.C[0,:,:,:] += P0[:,:,:,i]*(i+1)
+            self.P[0,:,:,:] += P0[:,:,:,i]*(i+1)  # Grain IDs start from 1
+            self.C[0,:,:,:] += P0[:,:,:,i]*(i+1)  # Initialize curvature matrix
         self.bc = bc
 
         # data for multiprocessing
