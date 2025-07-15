@@ -1,42 +1,123 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jul 31 14:33:57 2023
+=========================================================================================
+VECTOR Framework: Misorientation Distribution Analysis for Energy Function Verification
+=========================================================================================
 
+Scientific Application: Crystallographic Misorientation Analysis for Energy Function Validation
+Primary Focus: Statistical Misorientation Distribution Analysis in Polycrystalline Systems
+
+Created on Mon Jul 31 14:33:57 2023
 @author: Lin
+
+=========================================================================================
+CRYSTALLOGRAPHIC MISORIENTATION ANALYSIS FRAMEWORK
+=========================================================================================
+
+This Python script implements comprehensive misorientation distribution analysis for
+energy function verification in large-scale polycrystalline Monte Carlo simulations.
+The analysis focuses on crystallographic texture evolution, grain boundary character
+distribution, and energy function effects on crystallographic misorientation statistics.
+
+Scientific Objectives:
+- Crystallographic texture analysis through misorientation distribution characterization
+- Energy function validation via grain boundary character distribution comparison
+- Statistical analysis of crystallographic orientation evolution in polycrystalline systems
+- Verification of energy function effects on crystallographic texture development
+- Large-scale HiPerGator dataset analysis for statistical significance
+
+Key Features:
+- Quaternion-based crystallographic orientation analysis with cubic symmetry operations
+- Comprehensive misorientation angle distribution calculation and statistical validation
+- Multi-energy function comparison (anisotropic, isotropic, well energy formulations)
+- High-resolution misorientation angle binning for detailed crystallographic analysis
+- Publication-quality visualization with statistical significance assessment
+
+Applications:
+- Energy function verification through crystallographic texture analysis
+- Grain boundary character distribution studies for materials science applications
+- Statistical crystallographic analysis for polycrystalline materials research
+- Verification of energy function effects on crystallographic texture evolution
+- Large-scale simulation validation with HiPerGator computational resources
 """
 
+# ================================================================================
+# ENVIRONMENT SETUP AND PATH CONFIGURATION
+# ================================================================================
 import os
-current_path = os.getcwd()
-import numpy as np
-from numpy import seterr
-seterr(all='raise')
-import matplotlib.pyplot as plt
-import math
-from tqdm import tqdm
+current_path = os.getcwd()                       # Current working directory for file operations
+import numpy as np                               # Numerical computing and array operations
+from numpy import seterr                         # Numerical error handling configuration
+seterr(all='raise')                             # Raise exceptions for numerical errors
+import matplotlib.pyplot as plt                  # Advanced scientific visualization
+import math                                      # Mathematical functions for calculations
+from tqdm import tqdm                            # Progress bar for long-running operations
 import sys
-sys.path.append(current_path+'/../../')
-import myInput
-import post_processing
-import PACKAGE_MP_3DLinear as linear3d
+sys.path.append(current_path+'/../../')          # Add VECTOR framework root directory
+
+# ================================================================================
+# VECTOR FRAMEWORK INTEGRATION: SPECIALIZED ANALYSIS MODULES
+# ================================================================================
+import myInput                                   # Input parameter management and file handling
+import post_processing                           # Core post-processing functions for crystallographic analysis
+import PACKAGE_MP_3DLinear as linear3d          # 3D linear algebra for crystallographic operations
+
+# ================================================================================
+# STATISTICAL ANALYSIS FUNCTIONS FOR MISORIENTATION CHARACTERIZATION
+# ================================================================================
 
 def simple_magnitude(freqArray):
-    xLim = [0, 360]
-    binValue = 10.01
-    binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
-    xCor = np.linspace((xLim[0]+binValue/2),(xLim[1]-binValue/2),binNum)
+    """
+    Statistical Magnitude Calculation for Misorientation Distribution Analysis
+    
+    Calculates statistical measures of misorientation distribution deviation from random
+    distribution for energy function comparison and validation.
+    
+    Scientific Purpose:
+    - Quantifies crystallographic texture strength through distribution analysis
+    - Provides statistical measures for energy function effect characterization
+    - Enables comparative analysis of texture evolution under different energy formulations
+    
+    Parameters:
+    -----------
+    freqArray : numpy.ndarray
+        Frequency distribution array for misorientation angles
+        
+    Returns:
+    --------
+    magnitude_ave : float
+        Average magnitude of deviation from random distribution
+    magnitude_stan : float  
+        Standard deviation of magnitude distribution for statistical significance
+    """
+    
+    # Misorientation angle analysis range (0-360 degrees for comprehensive coverage)
+    xLim = [0, 360]                              # Full crystallographic rotation range
+    binValue = 10.01                            # Bin width for misorientation angle analysis
+    binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)   # Calculate number of analysis bins
+    xCor = np.linspace((xLim[0]+binValue/2),(xLim[1]-binValue/2),binNum)  # Bin center coordinates
 
-    freqArray_circle = np.ones(binNum)
-    freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
+    # Generate random distribution baseline for comparison
+    freqArray_circle = np.ones(binNum)           # Uniform random distribution
+    freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)  # Normalize to probability density
 
+    # Calculate statistical magnitude measures for texture quantification
     magnitude_max = np.max(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
     magnitude_ave = np.average(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
 
+    # Statistical standard deviation for significance assessment
     magnitude_stan = np.sqrt(np.sum((abs(freqArray - freqArray_circle)/np.average(freqArray_circle) - magnitude_ave)**2)/binNum)
 
     return magnitude_ave, magnitude_stan
 
 def find_fittingEllipse2(array): #failure
+    """
+    Ellipse Fitting Algorithm for Crystallographic Analysis (Experimental)
+    
+    Note: This function is marked as experimental and may require further development
+    for robust crystallographic ellipse fitting applications.
+    """
     K_mat = []
     Y_mat = []
 
@@ -451,54 +532,131 @@ def pre_operation_misorientation(grainNum, init_filename, Osym=24):
     return symm2quat_matrix, quartAngle
 
 def get_line(i, j):
-    """Get the row order of grain i and grain j in MisoEnergy.txt (i < j)"""
+    """
+    Efficient Row Index Calculation for Symmetric Misorientation Matrix
+    
+    Calculates the row index for grain pair (i,j) in symmetric misorientation energy matrix.
+    This function optimizes memory usage by storing only the upper triangular portion
+    of the symmetric misorientation matrix.
+    
+    Scientific Purpose:
+    - Efficient crystallographic misorientation data storage and retrieval
+    - Optimized memory management for large-scale polycrystalline simulations
+    - Fast lookup for grain boundary energy calculations
+    
+    Parameters:
+    -----------
+    i, j : int
+        Grain identifiers for misorientation pair calculation
+        
+    Returns:
+    --------
+    int : Row index in symmetric misorientation matrix for efficient data access
+    """
     if i < j: return i+(j-1)*(j)/2
     else: return j+(i-1)*(i)/2
 
 if __name__ == '__main__':
-    # File name
+    # ================================================================================
+    # HIPERGATOR DATASET CONFIGURATION FOR LARGE-SCALE ANALYSIS
+    # ================================================================================
+    """
+    HiPerGator Computational Infrastructure Setup:
+    - Large-scale polycrystalline simulation data from University of Florida's supercomputer
+    - Multi-core parallel processing results for statistical significance
+    - Comprehensive crystallographic orientation dataset analysis
+    """
+    
+    # HiPerGator data directory structure for organized large-scale data management
     npy_file_folder = "/blue/michael.tonks/lin.yang/SPPARKS-VirtualIncEnergy/3d_poly_fully/results/"
     init_file_folder = "/blue/michael.tonks/lin.yang/SPPARKS-VirtualIncEnergy/3d_poly/IC/"
-    init_file_name = "poly_IC150_1k.init"
+    
+    # Initial configuration and simulation result files
+    init_file_name = "poly_IC150_1k.init"        # Initial polycrystalline configuration
     npy_file_name_aniso = f"p_ori_fully_aveE_150_1k_multiCore64_J1_refer_1_0_0_seed56689_kt1.95.npy"
 
-    # Get time step with expected grain num
+    # ================================================================================
+    # TEMPORAL EVOLUTION ANALYSIS: OPTIMAL TIME STEP IDENTIFICATION
+    # ================================================================================
+    """
+    Time Step Selection for Misorientation Analysis:
+    - Identifies simulation time steps with target grain count for statistical validity
+    - Ensures comparable microstructural states for crystallographic analysis
+    - Optimizes statistical sampling for misorientation distribution characterization
+    """
+    
+    # Load anisotropic energy function simulation results
     npy_file_aniso = np.load(npy_file_folder + npy_file_name_aniso)
-    step_num = npy_file_aniso.shape[0]
-    grain_num_aniso = np.zeros(step_num)
+    step_num = npy_file_aniso.shape[0]           # Total simulation time steps
+    grain_num_aniso = np.zeros(step_num)         # Grain count evolution tracking
+    
+    # Calculate grain count evolution for optimal time step selection
     for i in tqdm(range(step_num)):
         grain_num_aniso[i] = len(set(npy_file_aniso[i,:].flatten()))
-    expected_grain_num = 200
+        
+    expected_grain_num = 200                     # Target grain count for statistical analysis
     special_step_distribution_ave = int(np.argmin(abs(grain_num_aniso - expected_grain_num)))
     print("> Step calculation done")
 
+    # ================================================================================
+    # CRYSTALLOGRAPHIC SYMMETRY SETUP FOR MISORIENTATION CALCULATION
+    # ================================================================================
+    """
+    Cubic Crystallographic Symmetry Operations:
+    - 24-fold cubic symmetry operations for crystallographic misorientation calculation
+    - Quaternion-based orientation representation for computational efficiency
+    - Pre-computed symmetry matrices for optimized misorientation analysis
+    """
+    
     # misorientation
-    grain_num = 20000
-    Osym = 24
+    grain_num = 20000                            # Total number of grains in large-scale simulation
+    Osym = 24                                    # Cubic crystal symmetry operations (24-fold)
+    
+    # Pre-compute crystallographic symmetry operations and quaternion matrices
     symm2quat_matrix, quartAngle = pre_operation_misorientation(grain_num, init_file_folder + init_file_name, Osym)
-    num_bin = 100
-    misorientation_angle_list = np.zeros(num_bin)
+    num_bin = 100                               # High-resolution binning for misorientation analysis
+    misorientation_angle_list = np.zeros(num_bin)  # Initialize misorientation distribution storage
     print("> Pre-work done")
 
+    # ================================================================================
+    # GRAIN BOUNDARY MISORIENTATION ANALYSIS
+    # ================================================================================
+    """
+    Comprehensive 3D Grain Boundary Misorientation Calculation:
+    - Analyzes all grain boundary interfaces in 3D microstructure
+    - Calculates crystallographic misorientation angles with cubic symmetry
+    - Builds statistical misorientation distribution for energy function validation
+    """
+    
     # Get dict
-    miso_dict = dict()
-    microstructure = npy_file_aniso[special_step_distribution_ave,:]
-    nx,ny,nz = microstructure.shape
+    miso_dict = dict()                          # Misorientation angle cache for computational efficiency
+    microstructure = npy_file_aniso[special_step_distribution_ave,:]  # Extract microstructure at target time step
+    nx,ny,nz = microstructure.shape             # 3D microstructure dimensions
+    
+    # Comprehensive 3D grain boundary interface analysis
     for i in tqdm(range(nx)):
         for j in range(ny):
             for k in range(nz):
+                # Apply periodic boundary conditions for comprehensive interface analysis
                 ip,im,jp,jm,kp,km = myInput.periodic_bc3d(nx,ny,nz,i,j,k)
+                
+                # Identify grain boundary sites through neighbor comparison
                 if ( ((microstructure[ip,j,k]-microstructure[i,j,k])!=0) or ((microstructure[im,j,k]-microstructure[i,j,k])!=0) or\
                      ((microstructure[i,jp,k]-microstructure[i,j,k])!=0) or ((microstructure[i,jm,k]-microstructure[i,j,k])!=0) or\
                      ((microstructure[i,j,kp]-microstructure[i,j,k])!=0) or ((microstructure[i,j,km]-microstructure[i,j,k])!=0) ):
+                    
+                    # Extract grain boundary interface information
                     central_site = microstructure[i,j,k]
                     neighboring_sites_list = [microstructure[ip,j,k], microstructure[i,jp,k], microstructure[i,j,kp], microstructure[im,j,k], microstructure[i,jm,k], microstructure[i,j,km]]
                     neighboring_sites_set = set(neighboring_sites_list).remove(central_site)
                     print(f"center: {central_site}, neighbor: {neighboring_sites_list}")
                     neighboring_sites_list_unque = list(neighboring_sites_set)
+                    
+                    # Calculate misorientation for all unique grain pairs at interface
                     for m in range(len(neighboring_sites_list_unque)):
                         pair_id = get_line(central_site, neighboring_sites_list_unque[m]) # get pair id
-                        # calculate or extract misorientation
+                        
+                        # Calculate or extract misorientation with caching for efficiency
                         if pair_id in miso_dict:
                             misorientation_angle = miso_dict[pair_id]
                         else:
