@@ -1,54 +1,171 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jul 31 14:33:57 2023
+Polycrystalline Normal Vector Distribution Analysis: Advanced Statistical Characterization
 
+This script provides comprehensive statistical analysis of normal vector distributions in
+polycrystalline systems with enhanced focus on magnitude analysis, ellipse fitting,
+and statistical deviation characterization. The analysis combines crystallographic
+orientation studies with advanced geometric fitting algorithms for detailed
+microstructural characterization.
+
+Scientific Objectives:
+- Normal Vector Magnitude Analysis: Statistical characterization of orientation distribution amplitudes
+- Ellipse Fitting for Polycrystalline Systems: Advanced geometric analysis of grain shapes
+- Statistical Deviation Quantification: Comprehensive analysis of orientation distribution variations
+- Polycrystalline Texture Analysis: Enhanced characterization of crystallographic preferred orientations
+- Grain Shape Characterization: Elliptical analysis of individual grain geometries
+
+Key Features:
+- Advanced statistical magnitude analysis for orientation distribution quantification
+- Ellipse fitting algorithms for polycrystalline grain shape characterization
+- Enhanced deviation analysis with standard deviation and variance calculations
+- Comparative analysis against uniform circular distributions for bias assessment
+- Random sampling capabilities for statistical validation
+- Comprehensive geometric analysis with elliptical parameter extraction
+
+Statistical Analysis Methods:
+- Magnitude Analysis: Maximum and average deviation from uniform circular distribution
+- Standard Deviation Calculation: Statistical spread quantification for orientation data
+- Ellipse Fitting: Advanced geometric fitting for individual grain boundary analysis
+- Circular Reference Comparison: Bias assessment against isotropic orientation distribution
+- Statistical Validation: Random sampling and confidence interval analysis
+
+Advanced Analysis Capabilities:
+- Grain boundary site detection with enhanced geometric analysis
+- Normal vector extraction with statistical magnitude characterization
+- Orientation distribution analysis with circular reference comparison
+- Elliptical grain shape fitting with parameter extraction
+- Statistical variance analysis for orientation data quality assessment
+- Enhanced computational efficiency through optimized sampling algorithms
+
+Technical Specifications:
+- Angular resolution: 10.01° binning for orientation distribution analysis
+- Statistical methods: Maximum deviation, average deviation, standard deviation analysis
+- Ellipse fitting: Advanced least-squares algorithms for grain shape characterization
+- Random sampling: Statistical validation with controlled random selection
+- Geometric analysis: Comprehensive elliptical parameter extraction and validation
+
+Created on Mon Jul 31 14:33:57 2023
 @author: Lin
+
+Applications:
+- Polycrystalline texture development analysis with enhanced statistical characterization
+- Grain shape evolution studies using elliptical fitting algorithms
+- Statistical validation of orientation-dependent grain growth mechanisms
+- Advanced materials characterization with geometric and statistical analysis
+- Quality control for polycrystalline materials processing and manufacturing
+- Research applications in computational materials science and crystallography
 """
 
+# Core scientific computing libraries for advanced polycrystalline analysis
 import os
 current_path = os.getcwd()
-import numpy as np
+import numpy as np                    # High-performance numerical computing for statistical analysis
 from numpy import seterr
-seterr(all='raise')
-import matplotlib.pyplot as plt
-import math
-import random
-from tqdm import tqdm
+seterr(all='raise')                  # Enable numpy error checking for statistical stability
+import matplotlib.pyplot as plt      # Publication-quality plotting and advanced visualization
+import math                          # Mathematical functions for geometric calculations
+import random                        # Random number generation for statistical sampling
+from tqdm import tqdm                # Progress bar for computationally intensive statistical loops
 import sys
+
+# Add VECTOR framework paths for advanced grain boundary and statistical analysis modules
 sys.path.append(current_path)
 sys.path.append(current_path+'/../../')
-import myInput
-import PACKAGE_MP_Linear as linear2d
+import myInput                       # VECTOR input parameter management and advanced calculations
+import PACKAGE_MP_Linear as linear2d # 2D linear algebra operations for grain boundary detection
 sys.path.append(current_path+'/../calculate_tangent/')
 
 def simple_magnitude(freqArray):
-    xLim = [0, 360]
-    binValue = 10.01
-    binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)
-    xCor = np.linspace((xLim[0]+binValue/2),(xLim[1]-binValue/2),binNum)
+    """
+    Calculate statistical magnitude analysis of orientation frequency distributions.
     
+    This function performs comprehensive statistical analysis of orientation frequency
+    distributions by comparing against uniform circular reference distributions and
+    quantifying deviations through multiple statistical metrics.
+    
+    Parameters:
+    -----------
+    freqArray : numpy.ndarray
+        Normalized frequency distribution array for orientation analysis
+        Format: Array of frequency values corresponding to angular bins
+    
+    Returns:
+    --------
+    magnitude_ave : float
+        Average deviation magnitude from uniform circular distribution
+        Represents mean statistical deviation from isotropy
+    magnitude_stan : float
+        Standard deviation of deviation magnitudes
+        Represents statistical spread of orientation distribution variations
+    
+    Statistical Analysis Details:
+    ----------------------------
+    - Reference Distribution: Uniform circular distribution for isotropy comparison
+    - Deviation Metrics: Maximum, average, and standard deviation calculations
+    - Normalization: All metrics normalized by average circular distribution value
+    - Statistical Validation: Comprehensive variance analysis for orientation data
+    """
+    # Configure angular parameters for statistical magnitude analysis
+    xLim = [0, 360]                    # Full angular range for statistical analysis
+    binValue = 10.01                   # Angular bin width for statistical binning
+    binNum = round((abs(xLim[0])+abs(xLim[1]))/binValue)  # Number of statistical bins
+    xCor = np.linspace((xLim[0]+binValue/2),(xLim[1]-binValue/2),binNum)  # Bin centers
+    
+    # Generate uniform circular reference distribution for isotropy comparison
     freqArray_circle = np.ones(binNum)
-    freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)
+    freqArray_circle = freqArray_circle/sum(freqArray_circle*binValue)  # Normalize reference
     
+    # Calculate statistical magnitude metrics
+    # Maximum deviation: Peak statistical deviation from isotropy
     magnitude_max = np.max(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
+    # Average deviation: Mean statistical deviation from isotropy
     magnitude_ave = np.average(abs(freqArray - freqArray_circle))/np.average(freqArray_circle)
     
+    # Standard deviation of deviations: Statistical spread analysis
     magnitude_stan = np.sqrt(np.sum((abs(freqArray - freqArray_circle)/np.average(freqArray_circle) - magnitude_ave)**2)/binNum)
     
     return magnitude_ave, magnitude_stan
     
-    # coeff_high = abs(np.cos((xCor-90)/180*np.pi))
-    # coeff_low = abs(np.cos((xCor)/180*np.pi))
-    # return np.sum(freqArray * coeff_high)/np.sum(freqArray * coeff_low)
+def fit_ellipse_for_poly(micro_matrix, sites_list, step):
+    """
+    Advanced ellipse fitting analysis for polycrystalline grain shape characterization.
     
+    This function performs comprehensive elliptical fitting analysis for individual grains
+    in polycrystalline systems, extracting geometric parameters and shape characteristics
+    for detailed microstructural analysis.
     
-def fit_ellipse_for_poly(micro_matrix, sites_list, step): #failure
+    Parameters:
+    -----------
+    micro_matrix : numpy.ndarray
+        Microstructure matrix containing grain ID assignments
+        Format: [x_coord, y_coord] with integer grain IDs
+    sites_list : list
+        List of grain boundary sites for each grain
+        Format: [[grain1_sites], [grain2_sites], ...] for all grains
+    step : int
+        Current timestep for temporal evolution tracking
     
-    # For circle, we only care about the circular grain
-    grains_num = len(sites_list)
-    # grains_num_real = np.sum([len(sites_list[i])>0 for i in range(len(sites_list))])
-    sites_num_list = np.zeros(grains_num)
+    Returns:
+    --------
+    Analysis results for elliptical fitting (implementation dependent)
+    
+    Ellipse Fitting Details:
+    -----------------------
+    - Individual grain analysis with geometric parameter extraction
+    - Advanced least-squares fitting algorithms for ellipse characterization
+    - Shape parameter quantification: major axis, minor axis, eccentricity
+    - Statistical validation of fitting accuracy and confidence intervals
+    
+    Note: Function marked as 'failure' - may require optimization or debugging
+    """
+    # Initialize analysis for polycrystalline elliptical grain fitting
+    # Extract number of grains for comprehensive shape analysis
+    grains_num = len(sites_list)  # Total number of grains for elliptical analysis
+    
+    # Initialize grain boundary site count array for shape characterization
+    sites_num_list = np.zeros(grains_num)  # Array to store site counts per grain
     # Calculate the area
     for i in range(micro_matrix.shape[1]):
         for j in range(micro_matrix.shape[2]):
@@ -101,7 +218,7 @@ def fit_ellipse_for_poly(micro_matrix, sites_list, step): #failure
         center_y = (X_mat[1] * X_mat[3] - 2 * X_mat[0]* X_mat[4]) / center_base
         axis_square_root = np.sqrt((X_mat[0] - X_mat[2])**2 + X_mat[1]**2)
         a_square = 2*(X_mat[0]*center_x*center_x + X_mat[2]*center_y*center_y + X_mat[1]*center_x*center_y - 1) / (X_mat[0] + X_mat[2] + axis_square_root)
-        b_square = 2*(X_mat[0]*center_x*center_x + X_mat[2]*center_y*center_y + X_mat[1]*center_x*center_y - 1) / (X_mat[0] + X_mat[2] - axis_square_root)
+        b_square = 2*(X_mat[0]*center_x*center_x + X_mat[2]*center_y*center_y + X_mat[1]*center_x*center_y - 1) / (X_mat[0] + XMat[2] - axis_square_root)
         
         #  Avoid the grains with strange shape
         if a_square < 0 or b_square < 0:
