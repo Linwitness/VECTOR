@@ -308,7 +308,7 @@ P[i,j,k] = grain_id  # 3D grain ID map
 ### Required Python Packages
 ```bash
 pip install numpy matplotlib scipy tqdm
-pip install torch torchvision  # For GPU acceleration
+pip install torch # For GPU acceleration
 pip install multiprocess      # For parallel processing
 ```
 

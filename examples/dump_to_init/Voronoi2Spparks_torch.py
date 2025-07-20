@@ -28,7 +28,7 @@ Performance Scaling:
 - Batch processing optimizes memory usage vs. computation time
 
 Created on Fri Oct 13 17:37:17 2023
-@author: Lin
+@author: Joseph Melville (coupled by Lin)
 """
 
 from tqdm import tqdm  # Progress tracking for large computations

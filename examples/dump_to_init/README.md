@@ -27,7 +27,7 @@ graph TD
     C --> D[SPPARKS Dump File]
     D --> E[Dump-to-Init Conversion]
     E --> F[Neighbor Connectivity]
-    F --> G[Anisotropic Simulation]
+    F --> B
     
     H[Microstructure Modification] --> B
     I[Bimodal Distribution] --> H

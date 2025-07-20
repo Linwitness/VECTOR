@@ -59,31 +59,31 @@ VECTOR/
 ### 2D Smoothing Algorithms
 
 #### PACKAGE_MP_Vertex.py
-- **Algorithm**: Vertex-based boundary smoothing for 2D systems
+- **Algorithm**: Vertex-based boundary smoothing for 2D grain boundary inclination calculation
 - **Key Features**: Vertex identification, geometric smoothing, parallel processing
-- **Applications**: Sharp boundary smoothing with vertex preservation
+- **Applications**: Grain boundary inclination calculation and analysis
 
 #### PACKAGE_MP_Linear.py
 - **Algorithm**: Bilinear smoothing for 2D grain boundary inclination calculation
 - **Key Features**: Linear interpolation, gradient calculation, parallel implementation
-- **Applications**: Grain boundary normal vector calculation and inclination analysis
+- **Applications**: Grain boundary inclination calculation and analysis
 
 #### PACKAGE_MP_AllenCahn.py
-- **Algorithm**: Allen-Cahn equation-based smoothing for 2D systems
+- **Algorithm**: Allen-Cahn equation-based smoothing for 2D grain boundary inclination calculation
 - **Key Features**: Phase field methodology, diffuse interface modeling
-- **Applications**: Smooth boundary evolution and interface characterization
+- **Applications**: Grain boundary inclination calculation and analysis
 
 #### PACKAGE_MP_LevelSet.py
-- **Algorithm**: Level-Set method for 2D boundary smoothing
-- **Key Features**: Level-set function evolution, interface tracking
-- **Applications**: Complex topology handling and boundary evolution
+- **Algorithm**: Level-Set method for 2D grain boundary inclination calculation
+- **Key Features**: Level-set smoothing method
+- **Applications**: Grain boundary inclination calculation and analysis
 
 ### 3D Smoothing Algorithms
 
 #### PACKAGE_MP_3DVertex.py
 - **Algorithm**: 3D vertex-based boundary smoothing
 - **Key Features**: 3D vertex identification, volumetric smoothing, enhanced parallel processing
-- **Applications**: Complex 3D grain boundary analysis and smoothing
+- **Applications**: 3D grain boundary inclination calculation and analysis
 
 #### PACKAGE_MP_3DLinear.py
 - **Algorithm**: 3D bilinear smoothing for grain boundary analysis
@@ -92,13 +92,13 @@ VECTOR/
 
 #### PACKAGE_MP_3DAllenCahn.py
 - **Algorithm**: 3D Allen-Cahn equation-based smoothing
-- **Key Features**: 3D phase field modeling, volumetric diffuse interfaces
-- **Applications**: 3D microstructure evolution and complex interface analysis
+- **Key Features**: 3D phase field smoothing method
+- **Applications**: 3D grain boundary characterization and curvature analysis
 
 #### PACKAGE_MP_3DLevelSet.py
 - **Algorithm**: 3D Level-Set method for boundary smoothing
-- **Key Features**: 3D level-set evolution, complex 3D topology handling
-- **Applications**: Advanced 3D interface tracking and boundary evolution
+- **Key Features**: 3D level-set smoothing method
+- **Applications**: 3D grain boundary characterization and curvature analysis
 
 ## Examples Directory Structure
 
@@ -176,17 +176,14 @@ VECTOR/
 
 ## Scientific Applications
 
-### Materials Science Research
-- **Grain Growth Studies**: Comprehensive analysis of grain growth kinetics and mechanisms
-- **Microstructure Evolution**: Statistical characterization of microstructural development
-- **Energy Function Development**: Validation and optimization of grain boundary energy models
-- **Crystallographic Analysis**: Advanced texture and orientation analysis
-
 ### Computational Materials Science
-- **Algorithm Development**: Development and validation of new smoothing algorithms
-- **Simulation Integration**: Interface with Monte Carlo and phase field simulations
+- **Algorithm Development**: Development and validation of new smoothing algorithms for inclination and curvature calculation
+- **Simulation Integration**: Interface with Monte Carlo simulations
 - **Performance Optimization**: Parallel processing and computational efficiency
 - **Method Validation**: Comprehensive testing and verification frameworks
+- **Grain Growth Studies**: Comprehensive analysis of grain growth kinetics and mechanisms
+- **Energy Function Development**: Validation and optimization of grain boundary energy models
+- **Crystallographic Analysis**: Advanced texture and orientation analysis
 
 ### Engineering Applications
 - **Materials Design**: Microstructure-property relationship analysis
@@ -200,7 +197,6 @@ VECTOR/
 - **Parallel Processing**: All algorithms support multicore parallel execution
 - **Scalability**: Designed for large-scale 3D microstructures (up to 1000³ voxels)
 - **Memory Efficiency**: Optimized data structures for large dataset processing
-- **HPC Integration**: Compatible with high-performance computing environments
 
 ### Supported Data Formats
 - **SPPARKS**: Native integration with SPPARKS simulation output
@@ -213,7 +209,7 @@ VECTOR/
 - **2D Systems**: Optimized for high-resolution 2D microstructure analysis
 - **3D Systems**: Advanced 3D algorithms with enhanced computational efficiency
 - **Accuracy**: Validated against analytical solutions and experimental data
-- **Robustness**: Comprehensive error handling and validation procedures
+- **Robustness**: Comprehensive error handling and validation
 
 ## Installation and Dependencies
 
@@ -247,12 +243,6 @@ python examples/calculate_inclination/calculate_inclination_example.py
 ```python
 # Use Jupyter notebooks for interactive analysis
 jupyter notebook examples/GB_velocity/3D_GB_velocity_analysis.ipynb
-```
-
-### Large-Scale HPC Analysis
-```bash
-# SLURM job submission for large-scale analysis
-sbatch --nodes=1 --ntasks=64 --mem=256GB run_vector_analysis.sh
 ```
 
 # Publication Reference
