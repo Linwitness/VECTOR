@@ -515,51 +515,6 @@ comparison_methods = ['tangent', 'direct', 'third', 'new_method']
 results = comprehensive_comparison(data, methods=comparison_methods)
 ```
 
-## Troubleshooting
-
-### Common Issues
-
-#### Memory Limitations
-```
-MemoryError: Unable to allocate array for large 3D analysis
-```
-**Solutions**:
-- Reduce domain size or use domain decomposition
-- Increase system memory or use HPC cluster
-- Implement sparse matrix storage for very large datasets
-
-#### Convergence Problems
-```
-Warning: Algorithm did not converge within specified iterations
-```
-**Solutions**:
-- Increase iteration count for better accuracy
-- Check for degenerate triple junction configurations
-- Validate input microstructure quality
-
-#### Numerical Instabilities
-```
-ValueError: Invalid angle calculation (NaN or inf)
-```
-**Solutions**:
-- Check for zero-length normal vectors
-- Increase smoothing iterations
-- Validate grain boundary topology
-
-### Performance Optimization
-
-#### For Large Datasets
-1. **Use multiprocessing**: Specify cores parameter
-2. **Optimize memory usage**: Use sparse representations
-3. **Batch processing**: Process data in chunks
-4. **GPU acceleration**: Use PyTorch for compatible operations
-
-#### For High Accuracy
-1. **Increase iterations**: Use 10-20 iterations for critical applications
-2. **Validate convergence**: Monitor error metrics
-3. **Cross-validate methods**: Compare multiple algorithms
-4. **Use analytical benchmarks**: Validate against known solutions
-
 ## HPC Cluster Deployment
 
 ### Resource Requirements

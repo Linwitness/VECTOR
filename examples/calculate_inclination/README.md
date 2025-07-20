@@ -50,8 +50,7 @@ The PRIMME validation workflow follows this analytical pipeline:
 
 ```mermaid
 graph TD
-    A[Phase Field Data] --> B[HDF5 Processing]
-    B --> C[Bilinear Smoothing]
+    B[HDF5 Processing] --> C[Bilinear Smoothing]
     C --> D[Normal Vector Calculation]
     D --> E[Inclination Analysis]
     
@@ -271,34 +270,6 @@ This timestamp format ensures unique filenames and chronological ordering for ba
 - Supports both interactive analysis and automated processing
 
 ## Technical Specifications
-
-### Data Formats
-
-#### Phase Field HDF5 Structure
-```
-simulation.h5
-├── /timestep_000/
-│   ├── phase_field      # 3D array: grain IDs
-│   ├── grain_orientations # Euler angles (φ₁, Φ, φ₂)
-│   └── metadata         # Simulation parameters
-├── /timestep_001/
-└── ...
-```
-
-#### Inclination Data Output
-```python
-{
-    'theta_angles': array([...]),      # Polar angles (0 to π)
-    'phi_angles': array([...]),        # Azimuthal angles (0 to 2π)
-    'normal_vectors': array([...]),    # Unit normal vectors
-    'grain_boundary_points': array([...]), # GB coordinates
-    'statistical_metrics': {
-        'mean_theta': float,
-        'std_theta': float,
-        'angular_distribution': array([...])
-    }
-}
-```
 
 ### Performance Characteristics
 
@@ -558,75 +529,6 @@ validation_metrics = {
 - **Angular Correlation**: > 0.90 (strong linear relationship)
 - **Histogram Overlap**: > 0.80 (substantial distribution similarity)
 - **Processing Efficiency**: < 2× reference method computation time
-
-## Troubleshooting
-
-### Common Issues
-
-#### Memory Allocation Errors
-```
-MemoryError: Unable to allocate array for phase field data
-```
-**Solutions**:
-1. Reduce chunk size in processing configuration
-2. Enable memory mapping for large HDF5 files
-3. Request additional memory in SLURM allocation
-4. Process smaller time ranges sequentially
-
-#### HDF5 File Corruption
-```
-OSError: Unable to open HDF5 file (corrupted or truncated)
-```
-**Solutions**:
-1. Verify file integrity with `h5dump -H filename.h5`
-2. Check file system permissions and available space
-3. Re-transfer files from source location
-4. Use HDF5 repair tools if available
-
-#### Numerical Instability
-```
-RuntimeWarning: invalid value encountered in normal vector calculation
-```
-**Solutions**:
-1. Increase smoothing iterations or kernel size
-2. Check for degenerate grain geometries
-3. Adjust numerical stability thresholds
-4. Validate input data quality
-
-#### Performance Issues
-```
-Process hanging or extremely slow execution
-```
-**Solutions**:
-1. Monitor memory usage with system tools
-2. Reduce parallel processing threads
-3. Check I/O bottlenecks on shared file systems
-4. Enable progress monitoring and logging
-
-### Performance Optimization
-
-#### For Large Datasets
-1. **Memory Management**: Use chunked processing and memory mapping
-2. **Parallel Processing**: Optimize thread count for available cores
-3. **I/O Optimization**: Use high-speed storage and appropriate buffer sizes
-4. **Algorithm Selection**: Choose appropriate smoothing and calculation methods
-
-#### For HPC Environments
-1. **Resource Allocation**: Request appropriate memory and CPU resources
-2. **File System Usage**: Optimize for Blue/Lustre file system characteristics
-3. **Job Management**: Use array jobs for multiple simulations
-4. **Monitoring**: Implement robust logging and progress tracking
-
-## Contributing
-
-When modifying these analysis tools:
-
-1. **Maintain Scientific Accuracy**: Preserve the mathematical foundations of inclination calculations
-2. **Validate Algorithm Changes**: Test modifications against known reference cases
-3. **Document Performance Impact**: Measure and report computational efficiency changes
-4. **Update Validation Metrics**: Ensure statistical tests remain appropriate
-5. **Cross-Platform Testing**: Verify compatibility across local and HPC environments
-6. **Update Documentation**: Keep this documentation current with code changes
 
 ## References
 

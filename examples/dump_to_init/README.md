@@ -34,7 +34,7 @@ graph TD
 
 ## File Descriptions
 
-### 1. Voronoi2Spparks_torch.py
+### 1. Voronoi2Spparks_torch.py (code from Joseph)
 **Purpose**: GPU-accelerated generation of realistic polycrystalline microstructures
 
 **Key Features**:
@@ -203,40 +203,7 @@ init_img = post_processing.init2img(box_size, "uniform.init")
 post_processing.image2init(modified_img, euler_angles, "bimodal.init")
 ```
 
-## HPC Cluster Considerations
-
-### Storage Requirements
-- **Input files**: 10-100 MB (initialization files)
-- **Output files**: 1-100+ GB (neighbor connectivity files)
-- **Temporary files**: 10-50% of output size during processing
-
-### Memory Requirements
-- **Voronoi generation**: 10-100 GB for large domains
-- **Neighbor generation**: 5-20 GB per process
-- **Multiprocessing**: Memory × CPU cores
-
-### Recommended HPC Settings
-```bash
-# SLURM example for large domain processing
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=64
-#SBATCH --mem=500GB
-#SBATCH --time=12:00:00
-#SBATCH --partition=gpu  # For Voronoi generation
-```
-
 ## Integration with SPPARKS
-
-### Required SPPARKS Commands
-```bash
-# Basic grain growth simulation
-spparks < input.spk
-
-# With anisotropic energy model
-app_style potts/neighonly
-neighfile init_neighbors.init
-potts/energy anisotropy read_energy_file energy_matrix.txt
-```
 
 ### Energy Matrix Configuration
 The utilities preserve Euler angles for anisotropic calculations:
@@ -260,52 +227,6 @@ The utilities preserve Euler angles for anisotropic calculations:
 - **Algorithm verification**: Curvature-driven growth laws
 - **Energy model testing**: Anisotropic vs isotropic comparison
 - **Scale effects**: Domain size sensitivity studies
-
-## Troubleshooting
-
-### Common Issues
-
-#### Memory Errors
-```
-MemoryError: Unable to allocate array
-```
-**Solution**: Reduce domain size or increase memory_limit parameter
-
-#### File I/O Errors
-```
-PermissionError: [Errno 13] Permission denied
-```
-**Solution**: Check file system permissions and available disk space
-
-#### GPU Issues
-```
-RuntimeError: CUDA out of memory
-```
-**Solution**: Reduce batch size or use CPU fallback
-
-### Performance Optimization
-
-#### For Large Domains
-1. Use GPU acceleration when available
-2. Optimize memory_limit for available RAM
-3. Use fast storage (SSD) for temporary files
-4. Enable multiprocessing for neighbor generation
-
-#### For HPC Clusters
-1. Request appropriate memory allocation
-2. Use high-performance file systems
-3. Consider job array parallelization
-4. Monitor storage quotas during processing
-
-## Contributing
-
-When modifying these utilities:
-
-1. **Maintain file format compatibility** with SPPARKS
-2. **Preserve scientific accuracy** in energy calculations
-3. **Document performance characteristics** for new algorithms
-4. **Test on multiple domain sizes** before production use
-5. **Update this documentation** with changes
 
 ## References
 
