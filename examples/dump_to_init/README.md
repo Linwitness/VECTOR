@@ -29,8 +29,7 @@ graph TD
     E --> F[Neighbor Connectivity]
     F --> B
     
-    H[Microstructure Modification] --> B
-    I[Bimodal Distribution] --> H
+    H[DREAM.3D microstructure] --> B
 ```
 
 ## File Descriptions
