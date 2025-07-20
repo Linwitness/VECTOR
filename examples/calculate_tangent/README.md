@@ -28,13 +28,11 @@ The dihedral angle analysis workflow follows this computational pipeline:
 ```mermaid
 graph TD
     A[Microstructure Data] --> B[Triple Junction Detection]
-    B --> C[Normal Vector Calculation]
-    C --> D[Bilinear Smoothing]
+    B --> D[Normal Vector Calculation]
     D --> E[Dihedral Angle Computation]
     E --> F[Algorithm Comparison]
     F --> G[Statistical Validation]
     
-    H[3D Extension] --> C
     I[Multiprocessing] --> D
     J[Visualization] --> G
 ```
@@ -514,47 +512,6 @@ def new_algorithm_method(normal_vectors):
 comparison_methods = ['tangent', 'direct', 'third', 'new_method']
 results = comprehensive_comparison(data, methods=comparison_methods)
 ```
-
-## HPC Cluster Deployment
-
-### Resource Requirements
-
-#### Typical Job Specifications
-```bash
-# SLURM script for large 3D analysis
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=32
-#SBATCH --mem=128GB
-#SBATCH --time=24:00:00
-#SBATCH --partition=compute
-
-# GPU-accelerated analysis
-#SBATCH --gres=gpu:1
-#SBATCH --mem=64GB
-```
-
-#### Storage Considerations
-- **Input files**: 100 MB - 10 GB depending on domain size
-- **Output files**: 500 MB - 50 GB for comprehensive analysis
-- **Temporary files**: 2-5× output size during processing
-
-### Parallel Processing Strategies
-
-#### Domain Decomposition
-```python
-# Example parallel processing setup
-def parallel_analysis_setup(domain_size, num_cores):
-    subdomain_size = domain_size // num_cores
-    return [
-        (i*subdomain_size, (i+1)*subdomain_size) 
-        for i in range(num_cores)
-    ]
-```
-
-#### Load Balancing
-- **Dynamic scheduling**: Adaptive work distribution
-- **Memory optimization**: Efficient data sharing
-- **I/O optimization**: Coordinated file access
 
 ## Scientific Applications
 

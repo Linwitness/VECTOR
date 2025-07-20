@@ -356,42 +356,6 @@ plot_energy_angle_correlation(energy_data, angles, correlation)
 - **Statistical consistency**: Ensemble average validation
 - **Visualization checks**: Graphical verification of results
 
-## Troubleshooting
-
-### Common Issues
-
-#### Memory Errors
-```
-MemoryError: Unable to allocate array for large 3D domains
-```
-**Solution**: Reduce domain size, increase system memory, or process in chunks
-
-#### Import Errors
-```
-ModuleNotFoundError: No module named 'PACKAGE_MP_3DLinear'
-```
-**Solution**: Ensure VECTOR framework is properly installed and paths are configured
-
-#### Data Format Issues
-```
-ValueError: Invalid grain ID or orientation data
-```
-**Solution**: Verify SPPARKS initialization file format and data consistency
-
-### Performance Optimization
-
-#### For Large Datasets
-1. **Memory management**: Process data in chunks for large domains
-2. **Parallel processing**: Utilize available CPU cores
-3. **Storage optimization**: Use fast storage (SSD) for temporary files
-4. **Algorithm selection**: Choose appropriate method based on data size
-
-#### For Production Use
-1. **Batch processing**: Automate analysis for multiple datasets
-2. **Error handling**: Implement robust exception handling
-3. **Progress monitoring**: Use progress bars for long computations
-4. **Result validation**: Automated quality checks
-
 ## Integration with VECTOR Framework
 
 ### Data Flow

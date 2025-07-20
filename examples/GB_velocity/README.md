@@ -44,9 +44,7 @@ graph TD
     C --> D[Energy Extraction]
     D --> E[Velocity Analysis]
     E --> F[Anti-Curvature Detection]
-    F --> G[Temporal Pattern Analysis]
-    G --> H[Statistical Validation]
-    H --> I[Comparative Visualization]
+    F --> I[Comparative Visualization]
     
     J[Algorithm Validation] --> C
     K[Experimental Data] --> E
@@ -546,35 +544,6 @@ performance_metrics = benchmark_algorithm_performance(
 )
 ```
 
-## HPC Cluster Considerations
-
-### Storage Requirements
-- **Input datasets**: 10-100 GB (SPPARKS simulation results)
-- **Analysis output**: 1-10 GB (statistical results and visualizations)
-- **Temporary files**: 20-50% of input size during processing
-- **Comparative analysis**: Additional 5-20 GB for cross-system comparison
-
-### Memory Requirements
-- **2D analysis**: 4-16 GB for typical grain counts (5k-20k grains)
-- **3D analysis**: 16-128 GB for realistic 3D systems
-- **Comparative analysis**: 2-5× individual analysis requirements
-- **Parallel processing**: Memory × CPU cores for optimal performance
-
-### Recommended HPC Settings
-```bash
-# SLURM example for large-scale 3D anti-curvature analysis
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=64
-#SBATCH --mem=256GB
-#SBATCH --time=24:00:00
-#SBATCH --partition=standard
-
-# Load required modules
-module load python/3.9
-module load numpy/1.21
-module load matplotlib/3.5
-```
-
 ## Scientific Applications
 
 ### Materials Science Research
@@ -595,64 +564,7 @@ module load matplotlib/3.5
 - **Parameter Optimization**: Fine-tuning anisotropy parameters for specific materials applications
 - **Implementation Verification**: Ensuring correct energy function implementation in simulation codes
 
-## Troubleshooting
-
-### Common Issues
-
-#### Memory Errors During Large 3D Analysis
-```
-MemoryError: Unable to allocate array for 3D curvature calculation
-```
-**Solution**: Reduce domain size, increase memory allocation, or implement chunked processing
-
-#### Curvature Calculation Convergence Issues
-```
-Warning: Linear smoothing did not converge within iteration limit
-```
-**Solution**: Increase iteration limits, adjust convergence criteria, or check input data quality
-
-#### Anti-Curvature Detection Sensitivity
-```
-Warning: Very low anti-curvature fraction detected - check thresholds
-```
-**Solution**: Adjust curvature_limit, area_limit, or temporal_filter_window parameters
-
-#### Energy Function Implementation Errors
-```
-ValueError: Energy calculation produced invalid results
-```
-**Solution**: Verify anisotropy parameters, check energy function implementation, validate input data
-
-### Performance Optimization
-
-#### For Large-Scale 3D Analysis
-1. Use parallel processing with appropriate CPU core allocation
-2. Implement memory-efficient data structures for large datasets
-3. Optimize I/O operations with fast storage systems
-4. Use chunked processing for memory-limited systems
-
-#### For Comparative Studies
-1. Standardize analysis parameters across all systems
-2. Implement automated result aggregation workflows
-3. Use consistent data validation across all analyses
-4. Generate standardized visualization outputs
-
 ## Integration with SPPARKS Framework
-
-### Required SPPARKS Configuration
-```bash
-# SPPARKS input configuration for anti-curvature analysis
-app_style potts/neighonly
-dimension 3
-lattice sc/26n 1.0
-region domain block 0 256 0 256 0 256
-create_box domain
-create_sites box
-set site range 1 256 range 1 256 range 1 256
-
-# Energy function configuration
-potts/energy anisotropy read_energy_file energy_matrix.txt
-```
 
 ### Output Data Requirements
 The analysis tools require specific SPPARKS output:

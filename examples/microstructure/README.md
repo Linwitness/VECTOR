@@ -29,12 +29,8 @@ graph TD
     A[SPPARKS Simulation Data] --> B[Energy Method Analysis]
     B --> C[Timestep Optimization]
     C --> D[Microstructure Visualization]
-    D --> E[Publication Figures]
     
-    F[Parameter Studies] --> B
-    G[HiPerGator Processing] --> A
     H[3D Cross-sections] --> D
-    I[Inclination Energy] --> B
 ```
 
 ## File Descriptions
@@ -283,34 +279,6 @@ python plot_microstructure_for_circle.py
 - **Visualization Standards**: Publication-quality figure generation
 - **Cross-Platform Compatibility**: Cluster and workstation deployment
 
-## HPC Integration
-
-### HiPerGator Cluster Configuration
-```bash
-# Large-scale microstructure analysis
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=64
-#SBATCH --mem=200GB
-#SBATCH --time=24:00:00
-#SBATCH --partition=gpu
-
-# Data locations
-DATA_PATH="/blue/michael.tonks/lin.yang/SPPARKS-VirtualIncEnergy/"
-OUTPUT_PATH="./figures/"
-```
-
-### Storage Requirements
-- **Input Data**: 1-10 GB per simulation dataset
-- **Output Figures**: 10-100 MB per visualization
-- **3D Processing**: 100+ GB for large volumetric analysis
-- **Batch Processing**: Storage scaling with energy method count
-
-### Performance Optimization
-1. **Parallel Processing**: Multi-core energy method comparison
-2. **Memory Management**: Efficient large array handling
-3. **I/O Optimization**: Cluster file system compatibility
-4. **Batch Processing**: Automated multi-configuration analysis
-
 ## Dependencies
 
 ### Required Python Packages
@@ -359,51 +327,6 @@ p_ori_ave_aveE_20000_multiCore64_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066.npy
 pm_ori_ave_qs1_poly20k_667.npy
 h_ori_ave_aveE_hex_multiCore32_delta0.6_m2_J1_refer_1_0_0_seed56689_kt066_angle.npy
 ```
-
-## Troubleshooting
-
-### Common Issues
-
-#### Memory Errors with Large Datasets
-```
-MemoryError: Unable to allocate array for shape (20000, 2400, 2400, 4)
-```
-**Solution**: 
-- Increase system memory allocation
-- Process timesteps individually
-- Use data chunking for large arrays
-
-#### HiPerGator Path Issues
-```
-FileNotFoundError: [Errno 2] No such file or directory
-```
-**Solution**:
-- Verify HiPerGator data path access
-- Check cluster storage quota
-- Ensure proper module loading
-
-#### Visualization Quality Issues
-```
-Low resolution or pixelated output
-```
-**Solution**:
-- Verify DPI setting (400 recommended)
-- Check colormap normalization
-- Ensure proper figure size settings
-
-### Performance Optimization
-
-#### For Large-Scale Analysis
-1. **Batch Processing**: Process multiple energy methods simultaneously
-2. **Memory Management**: Monitor RAM usage during grain counting
-3. **Storage Optimization**: Use fast storage for figure output
-4. **Parallel Execution**: Leverage multi-core capabilities
-
-#### For Interactive Notebooks
-1. **Progressive Loading**: Load data sections as needed
-2. **Memory Cleanup**: Clear variables between analyses
-3. **Output Management**: Control figure generation frequency
-4. **Kernel Restart**: Reset environment for memory recovery
 
 ## Contributing
 

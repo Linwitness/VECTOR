@@ -408,42 +408,6 @@ def energy_function(normals, delta=0.6, m=2):
     return 1 + delta * math.cos(m * theta_rad)
 ```
 
-## Troubleshooting
-
-### Common Issues
-
-#### Normal Vector Computation Errors
-```
-IndexError: array index out of bounds
-```
-**Solution**: Ensure site coordinates (i,j) are within valid bounds with border margins
-
-#### Energy Calculation Convergence
-```
-Warning: Energy calculation may not have converged
-```
-**Solution**: Increase loop_times parameter for VECTOR Linear2D computation
-
-#### Memory Issues with Large Microstructures
-```
-MemoryError: Unable to allocate array
-```
-**Solution**: Reduce ng parameter or process microstructure in smaller regions
-
-### Performance Optimization
-
-#### For Large Domains
-1. **Batch Processing**: Calculate energies in spatial regions rather than individual sites
-2. **Memory Management**: Use efficient array operations and memory allocation
-3. **Parallel Processing**: Extend to multi-core processing for large-scale analysis
-4. **Caching**: Store computed normal vectors for repeated energy calculations
-
-#### For High-Precision Analysis
-1. **Convergence Testing**: Validate loop_times parameter for accuracy requirements
-2. **Numerical Precision**: Use appropriate floating-point precision for energy calculations
-3. **Boundary Handling**: Ensure proper treatment of domain boundaries
-4. **Energy Conservation**: Validate total energy conservation in system
-
 ## Scientific Applications
 
 ### Research Areas
@@ -459,12 +423,6 @@ MemoryError: Unable to allocate array
 - **Algorithm Verification**: Validation of energy calculation methods
 - **Method Comparison**: Systematic comparison of energy averaging approaches
 - **Computational Optimization**: Performance analysis for large-scale simulations
-
-#### Materials Science Applications
-- **Grain Growth Modeling**: Realistic energy functions for microstructure evolution
-- **Texture Development**: Anisotropic energy effects on crystallographic texture
-- **Interface Energy**: Experimental validation of computed grain boundary energies
-- **Polycrystal Properties**: Microstructure-property relationships through energy analysis
 
 ## Contributing
 

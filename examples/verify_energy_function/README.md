@@ -31,7 +31,6 @@ graph TD
     E --> F
     F --> G[Publication-Quality Visualization]
     
-    H[HiPerGator Dataset] --> A
     I[Multi-Energy Comparison] --> B
     I --> C
     J[5D Grain Boundary Analysis] --> E
@@ -311,28 +310,6 @@ interactive_plot = widgets.interactive(
 display(interactive_plot)
 ```
 
-## HPC Cluster Considerations
-
-### Storage Requirements
-- **Input datasets**: 1-10 GB (HiPerGator simulation results)
-- **Analysis output**: 100 MB - 1 GB (statistical distributions and visualizations)
-- **Temporary files**: 10-50% of input size during processing
-
-### Memory Requirements
-- **Grain size analysis**: 5-20 GB for large domains
-- **Misorientation analysis**: 10-50 GB for crystallographic calculations
-- **5D GBCD analysis**: 20-100 GB for high-dimensional analysis
-
-### Recommended HPC Settings
-```bash
-# SLURM example for energy function verification analysis
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=32
-#SBATCH --mem=100GB
-#SBATCH --time=8:00:00
-#SBATCH --partition=standard
-```
-
 ## Statistical Validation Methods
 
 ### Grain Size Distribution Validation
@@ -377,42 +354,6 @@ texture_strength = magnitude_ave / magnitude_stan
 - **Anisotropic Model Validation**: Testing crystallographic orientation-dependent energy formulations
 - **Abnormal Growth Studies**: Validation of specialized energy functions for abnormal grain growth
 - **Comparative Studies**: Statistical comparison of different energy function approaches
-
-## Troubleshooting
-
-### Common Issues
-
-#### Memory Errors during Large Dataset Analysis
-```
-MemoryError: Unable to allocate array for misorientation analysis
-```
-**Solution**: Reduce dataset size, increase memory allocation, or use chunked processing
-
-#### Crystallographic Calculation Errors
-```
-ValueError: Invalid quaternion normalization
-```
-**Solution**: Check Euler angle input ranges and verify crystallographic symmetry operations
-
-#### Statistical Significance Issues
-```
-Warning: Insufficient statistics for reliable comparison
-```
-**Solution**: Increase grain count, extend simulation time, or improve statistical sampling
-
-### Performance Optimization
-
-#### For Large-Scale Analysis
-1. Use efficient data structures for crystallographic calculations
-2. Implement parallel processing for independent grain analysis
-3. Optimize memory usage for large dataset processing
-4. Use appropriate statistical sampling for computational efficiency
-
-#### For Publication-Quality Output
-1. Use high-resolution binning for detailed analysis
-2. Implement proper statistical significance testing
-3. Generate publication-quality visualizations with appropriate formatting
-4. Validate results across multiple simulation runs
 
 ## Integration with SPPARKS Simulation Framework
 

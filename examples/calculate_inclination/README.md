@@ -428,60 +428,6 @@ print(f"KS Statistic: {ks_statistics['statistic']:.4f}")
 print(f"P-value: {ks_statistics['pvalue']:.6f}")
 ```
 
-## HPC Cluster Deployment
-
-### SLURM Job Configuration
-```bash
-#!/bin/bash
-#SBATCH --job-name=inclination_analysis
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=64
-#SBATCH --mem=200GB
-#SBATCH --time=12:00:00
-#SBATCH --partition=hpg-default
-#SBATCH --account=group_name
-
-# Load required modules
-module load python/3.9 hdf5/1.10.7
-
-# Set environment variables
-export OMP_NUM_THREADS=64
-export PYTHONPATH=/blue/group/user/VECTOR:$PYTHONPATH
-
-# Execute analysis
-python calculate_inclination_PRIMME_hipergator.py \
-    --input_dir /blue/data/simulations/ \
-    --output_dir /blue/results/ \
-    --config_file analysis_config.json \
-    --memory_limit 180GB
-```
-
-### Performance Optimization Settings
-```python
-# HPC optimization configuration
-hpc_config = {
-    'memory_management': {
-        'chunk_size': '10GB',           # Process data in chunks
-        'memory_limit': '180GB',        # Stay below SLURM allocation
-        'garbage_collection': True,     # Aggressive memory cleanup
-        'memory_mapping': True          # Use mmap for large files
-    },
-    'parallel_processing': {
-        'num_cores': 64,               # Match SLURM allocation
-        'threading_backend': 'loky',   # Optimized for HPC
-        'batch_size': 1000,           # Grain boundaries per batch
-        'load_balancing': 'dynamic'    # Adaptive work distribution
-    },
-    'io_optimization': {
-        'file_system': 'blue',         # HiPerGator Blue file system
-        'compression': 'gzip',         # Reduce storage requirements
-        'buffer_size': '1MB',          # Optimized I/O buffer
-        'parallel_hdf5': True          # Parallel HDF5 access
-    }
-}
-```
-
 ## Scientific Applications
 
 ### Method Validation Studies

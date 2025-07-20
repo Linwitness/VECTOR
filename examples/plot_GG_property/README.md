@@ -420,48 +420,6 @@ module load intel/2020 python/3.8
 3. **Publication Quality**: High-resolution outputs with error analysis
 4. **Scientific Rigor**: Proper statistical analysis and uncertainty quantification
 
-## Troubleshooting
-
-### Common Issues
-
-#### Memory Errors
-```
-MemoryError: Unable to allocate array
-```
-**Solution**: Reduce domain size, use data chunking, or increase memory allocation
-
-#### File I/O Errors
-```
-FileNotFoundError: Data file not found
-```
-**Solution**: Verify HiPerGator data paths and file system permissions
-
-#### Convergence Issues
-```
-Warning: Analysis may not have converged
-```
-**Solution**: Increase iteration counts or adjust convergence criteria
-
-#### GPU Memory Issues
-```
-CUDA out of memory
-```
-**Solution**: Reduce batch sizes or use CPU fallback for large datasets
-
-### Performance Optimization Tips
-
-#### For Large Datasets
-1. Use incremental processing with data chunking
-2. Enable parallel processing where available
-3. Utilize high-performance storage systems
-4. Cache intermediate results for complex workflows
-
-#### For HPC Environments
-1. Optimize memory allocation requests
-2. Use appropriate job scheduling parameters
-3. Monitor storage quotas and I/O performance
-4. Implement checkpoint/restart capabilities
-
 ## References and Documentation
 
 1. **VECTOR Framework**: Internal grain boundary analysis methodology
