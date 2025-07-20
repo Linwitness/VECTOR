@@ -11,9 +11,15 @@ calculate_inclination/
 ├── README.md                                   # This comprehensive documentation
 ├── calculate_inclination_PRIMME.py            # Core PRIMME validation processor
 ├── calculate_inclination_PRIMME_hipergator.py # HPC-optimized batch processor
+├── calculate_inclination_example.py           # Basic example script for inclination analysis
 ├── compare_inclination_PRIMME.py              # Statistical comparison engine
 ├── compare_inclination_PRIMME_hipergator.py   # HPC statistical analysis
-└── calculate_inclination_PRIMME_hipergator.ipynb # Interactive analysis notebook
+├── calculate_inclination_PRIMME_hipergator.ipynb # Interactive analysis notebook
+├── input/                                      # Sample input data and test cases
+│   ├── PolyIC.init                            # Polycrystal initialization file
+│   └── s1400poly1_t0.init                     # SPPARKS simulation initialization
+└── output/                                     # Generated results and analysis data
+    └── total_site.txt                          # Summary statistics output
 ```
 
 ## Scientific Context
@@ -119,7 +125,58 @@ inclination_data = analyze_inclination_distribution(normal_vectors)
 - **Memory Requirements**: 50-200 GB per job
 - **Output Volume**: 1-10 GB analysis results per simulation
 
-### 3. compare_inclination_PRIMME.py
+### 3. calculate_inclination_example.py
+**Purpose**: Basic example script demonstrating fundamental inclination analysis workflow
+
+**Key Features**:
+- **Educational Implementation**: Clear, step-by-step example of inclination calculation
+- **Standard Output Format**: Demonstrates proper data export and file naming conventions
+- **Error Handling**: Basic validation and user feedback mechanisms
+- **Performance Monitoring**: Simple timing and memory usage tracking
+
+**Core Functionality**:
+```python
+# Standard workflow demonstration
+1. Load configuration from myInput.py
+2. Process phase field or simulation data
+3. Apply VECTOR smoothing algorithms
+4. Calculate grain boundary inclination vectors
+5. Export results in standardized format
+```
+
+**Input Requirements**:
+- Configuration file (myInput.py compatible)
+- Phase field simulation data or grain structure files
+- Basic parameter specification for smoothing algorithms
+
+**Output Products**:
+- Standardized inclination data files with timestamp naming
+- Basic statistical summaries and validation metrics
+- Human-readable processing logs and status updates
+- Example output format for downstream analysis tools
+
+**Output Format Specification**:
+The script generates inclination output files with the following standardized format:
+```
+inclination_data_YYYYMMDD_HHMMSS.txt
+```
+Where:
+- YYYY: 4-digit year
+- MM: 2-digit month (01-12)
+- DD: 2-digit day (01-31)
+- HH: 2-digit hour (00-23)
+- MM: 2-digit minute (00-59)
+- SS: 2-digit second (00-59)
+
+This timestamp format ensures unique filenames and chronological ordering for batch processing workflows.
+
+**Educational Value**:
+- Demonstrates basic VECTOR framework integration
+- Shows standard error handling and validation patterns
+- Provides template for custom analysis script development
+- Illustrates proper data format and naming conventions
+
+### 4. compare_inclination_PRIMME.py
 **Purpose**: Statistical comparison engine for method validation
 
 **Key Features**:
@@ -140,7 +197,7 @@ inclination_data = analyze_inclination_distribution(normal_vectors)
 - Statistical correlation matrices
 - Method comparison summary plots
 
-### 4. compare_inclination_PRIMME_hipergator.py
+### 5. compare_inclination_PRIMME_hipergator.py
 **Purpose**: HPC version of statistical comparison for large-scale studies
 
 **Key Features**:
@@ -155,7 +212,7 @@ inclination_data = analyze_inclination_distribution(normal_vectors)
 - Create publication-ready figure collections
 - Aggregate statistical significance across parameter studies
 
-### 5. calculate_inclination_PRIMME_hipergator.ipynb
+### 6. calculate_inclination_PRIMME_hipergator.ipynb
 **Purpose**: Interactive analysis environment for algorithm development and validation
 
 **Key Features**:
@@ -169,6 +226,49 @@ inclination_data = analyze_inclination_distribution(normal_vectors)
 - Progressive algorithm development with intermediate validation
 - Visual debugging of normal vector calculations
 - Educational exploration of grain boundary physics
+
+## Data Directories
+
+### input/
+**Purpose**: Sample input data and test cases for inclination analysis algorithms
+
+**Contents**:
+- **PolyIC.init**: Standard polycrystal initialization file for algorithm testing
+  - Contains grain structure data for validation studies
+  - Used for algorithm benchmarking and verification
+  - Compatible with VECTOR framework processing utilities
+
+- **s1400poly1_t0.init**: SPPARKS simulation initialization file (converted from dream3d file)
+  - Specific simulation configuration at timestep 0
+  - Provides reference data for comparison studies
+  - Used in statistical validation workflows
+
+**Applications**:
+- Algorithm testing and validation against known datasets
+- Educational examples for new users learning the framework
+- Benchmark datasets for performance comparison studies
+- Reference configurations for method development
+
+### output/
+**Purpose**: Generated results and analysis data from inclination calculations
+
+**Contents**:
+- **total_site.txt**: Summary statistics and analysis results
+  - Contains aggregate statistics from inclination calculations
+  - Provides validation metrics and performance summaries
+  - Used for cross-method comparison and verification
+
+**Applications**:
+- Storage of calculation results for further analysis
+- Validation data for method verification studies
+- Performance benchmarks and timing data
+- Reference outputs for regression testing
+
+**Usage Notes**:
+- Output files use standardized formats for compatibility
+- Timestamp-based naming ensures unique result identification
+- Results are human-readable and machine-parseable
+- Supports both interactive analysis and automated processing
 
 ## Technical Specifications
 
@@ -206,7 +306,6 @@ simulation.h5
 |--------------|--------|-----------------|--------------|-------------|
 | 256³ × 20    | 5,000  | ~30 minutes     | 8-16 GB      | ~100 MB     |
 | 450³ × 50    | 20,000 | ~2 hours        | 32-64 GB     | ~500 MB     |
-| 1000³ × 100  | 50,000 | ~8 hours        | 100-200 GB   | ~2 GB       |
 
 ### Algorithm Parameters
 
@@ -280,37 +379,20 @@ from calculate_inclination_PRIMME import InclinationAnalyzer
 config = myInput.load_config("inclination_analysis.conf")
 analyzer = InclinationAnalyzer(config)
 
-# Process phase field data
-results = analyzer.process_simulation("simulation_data.h5")
+# Process Voronoi data using local input files
+results = analyzer.process_simulation("input/PolyIC.init")
+
+# Alternative: Process SPPARKS initialization file
+# results = analyzer.process_simulation("input/s1400poly1_t0.init")
 
 # Extract inclination distributions
 theta_dist = results['theta_distribution']
 phi_dist = results['phi_distribution']
 
-# Generate validation plots
-analyzer.create_polar_plots(theta_dist, phi_dist, "validation_plots.png")
+# Generate validation plots with organized output
+analyzer.create_polar_plots(theta_dist, phi_dist, "output/validation_plots.png")
 ```
 
-### HPC Batch Processing
-```python
-# HPC batch analysis setup
-from calculate_inclination_PRIMME_hipergator import HPCInclinationProcessor
-
-# Initialize HPC processor
-processor = HPCInclinationProcessor(
-    input_directory="/blue/data/simulations/",
-    output_directory="/blue/results/inclination/",
-    memory_limit="150GB",
-    num_cores=64
-)
-
-# Process multiple simulations
-simulation_list = ["sim_001.h5", "sim_002.h5", "sim_003.h5"]
-batch_results = processor.process_batch(simulation_list)
-
-# Generate summary statistics
-processor.create_batch_summary(batch_results, "batch_validation_report.pdf")
-```
 
 ### Interactive Jupyter Analysis
 ```python

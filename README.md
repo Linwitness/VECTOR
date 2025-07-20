@@ -10,7 +10,6 @@ All smoothing algorithms can work in parallel and are integrated with comprehens
 ```
 VECTOR/
 ├── Core Algorithm Files
-│   ├── main.py                          # Main execution script for smoothing algorithms
 │   ├── myInput.py                       # Input utilities and data processing functions
 │   ├── post_processing.py               # Post-processing and analysis utilities
 │   └── PACKAGE_MP_*.py                  # Core smoothing algorithm implementations
@@ -23,9 +22,6 @@ VECTOR/
 │   ├── PACKAGE_MP_3DLinear.py           # 3D Bilinear smoothing algorithm
 │   ├── PACKAGE_MP_3DAllenCahn.py        # 3D Allen-Cahn smoothing algorithm
 │   └── PACKAGE_MP_3DLevelSet.py         # 3D Level-Set smoothing algorithm
-├── Data Directories
-│   ├── input/                           # Input examples and test cases
-│   └── output/                          # Algorithm results and output data
 ├── Application Examples
 │   ├── examples/                        # Comprehensive application examples
 │   └── verification/                    # Algorithm verification and testing
@@ -36,15 +32,6 @@ VECTOR/
 ```
 
 ## Core Algorithm Files
-
-### main.py
-**Purpose**: Main execution script for VECTOR smoothing algorithms
-- **Primary Function**: Entry point for running all four smoothing algorithms (Vertex, Linear, Allen-Cahn, Level-Set)
-- **Key Features**: 
-  - Unified interface for 2D and 3D algorithm execution
-  - Parameter configuration and algorithm selection
-  - Parallel processing coordination
-  - Output management and result validation
 
 ### myInput.py (993 lines)
 **Purpose**: Comprehensive input utilities and data processing functions
@@ -135,9 +122,9 @@ VECTOR/
 
 ### examples/calculate_inclination/
 **Purpose**: Grain boundary inclination calculation and validation
-- **Content**: PRIMME-based inclination calculation tools
-- **Key Features**: High-performance inclination computation, HiPerGator integration
-- **Applications**: Large-scale crystallographic analysis
+- **Content**: PRIMME-based inclination calculation tools and basic example script (calculate_inclination_example.py)
+- **Key Features**: High-performance inclination computation, HiPerGator integration, educational example workflow
+- **Applications**: Large-scale crystallographic analysis, algorithm demonstration and learning
 
 ### examples/calculate_tangent/
 **Purpose**: Tangent vector calculation for grain boundaries
@@ -186,18 +173,6 @@ VECTOR/
   - `output/`: Verification results and benchmarks
 - **Key Features**: Algorithm accuracy validation, performance benchmarking, regression testing
 - **Applications**: Quality assurance and algorithm development validation
-
-## Data Directories
-
-### input/
-**Purpose**: Input examples and test cases
-- **Content**: Sample microstructures and configuration files
-- **Applications**: Algorithm testing and example execution
-
-### output/
-**Purpose**: Algorithm results and output data
-- **Content**: Generated results from smoothing algorithms and analysis tools
-- **Applications**: Result storage and validation data
 
 ## Scientific Applications
 
@@ -264,8 +239,8 @@ pip install torch  # For GPU-accelerated processing
 
 ### Basic Algorithm Execution
 ```python
-# Execute VECTOR smoothing analysis
-python main.py --algorithm=Linear --dimension=3D --cores=32
+# Execute VECTOR smoothing analysis using example script
+python examples/calculate_inclination/calculate_inclination_example.py
 ```
 
 ### Interactive Analysis
