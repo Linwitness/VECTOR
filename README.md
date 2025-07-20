@@ -251,7 +251,6 @@ jupyter notebook examples/GB_velocity/3D_GB_velocity_analysis.ipynb
 # Author Contact Information
 **Lin Yang**  
 Email: lin.yang@ufl.edu/linyangjump@outlook.com
-Address: 633 Gale Lemerand Dr, Gainesville, FL 32603 (University of Florida)
 
 ---
 
