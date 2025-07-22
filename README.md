@@ -226,11 +226,6 @@ pip install plotly  # For advanced 3D visualization
 pip install torch  # For GPU-accelerated processing
 ```
 
-### HPC Environment
-- **SLURM Integration**: Compatible with SLURM job scheduling
-- **Module System**: Works with HPC module environments
-- **Large Memory Support**: Optimized for high-memory computational nodes
-
 ## Usage Examples
 
 ### Basic Algorithm Execution
