@@ -779,14 +779,33 @@ Functions for handling various boundary conditions:
 """
 
 def periodic_bc(nx, ny, i, j):
-    """Apply 2D periodic boundary conditions
-    
+    """Apply periodic boundary conditions to 2D grid coordinates.
+
+    Computes the 4-neighbor positions (i±1, j±1) with periodic wrapping
+    for finite difference calculations on a toroidal domain. Handles
+    boundary wrapping when indices go outside [0, nx) or [0, ny).
+
     Args:
-        nx, ny: Grid dimensions
-        i, j: Current indices
-        
+        nx (int): Grid size in x direction
+        ny (int): Grid size in y direction
+        i (int): Current x coordinate [0, nx)
+        j (int): Current y coordinate [0, ny)
+
     Returns:
-        tuple: (ip,im,jp,jm) neighboring indices with periodic BCs
+        tuple: (ip, im, jp, jm) where:
+            - ip = (i+1) with wrapping at nx
+            - im = (i-1) with wrapping at 0
+            - jp = (j+1) with wrapping at ny
+            - jm = (j-1) with wrapping at 0
+
+    Example:
+        >>> ip, im, jp, jm = periodic_bc(100, 100, 0, 0)
+        >>> print(ip, im, jp, jm)
+        1 99 1 99  # i-1 and j-1 wrap to 99
+
+    Notes:
+        Used extensively for stencil-based derivative calculations.
+        All PACKAGE_MP algorithms rely on this for boundary handling.
     """
     ip = i + 1
     im = i - 1
@@ -803,14 +822,34 @@ def periodic_bc(nx, ny, i, j):
     return ip, im, jp, jm
 
 def periodic_bc3d(nx, ny, nz, i, j, k):
-    """Apply 3D periodic boundary conditions
-    
+    """Apply periodic boundary conditions to 3D grid coordinates.
+
+    Computes the 6-neighbor positions (i±1, j±1, k±1) with periodic wrapping
+    for finite difference calculations on a 3D toroidal domain. Handles
+    boundary wrapping when indices go outside grid bounds.
+
     Args:
-        nx, ny, nz: Grid dimensions
-        i, j, k: Current indices
-        
+        nx (int): Grid size in x direction
+        ny (int): Grid size in y direction
+        nz (int): Grid size in z direction
+        i (int): Current x coordinate [0, nx)
+        j (int): Current y coordinate [0, ny)
+        k (int): Current z coordinate [0, nz)
+
     Returns:
-        tuple: (ip,im,jp,jm,kp,km) neighboring indices with periodic BCs
+        tuple: (ip, im, jp, jm, kp, km) where:
+            - ip, im = (i±1) with wrapping
+            - jp, jm = (j±1) with wrapping
+            - kp, km = (k±1) with wrapping
+
+    Example:
+        >>> ip, im, jp, jm, kp, km = periodic_bc3d(100, 100, 100, 0, 50, 99)
+        >>> print(im, km)
+        99 0  # i-1 and k+1 wrap around
+
+    Notes:
+        Used in all 3D PACKAGE_MP algorithms for boundary handling.
+        Ensures continuity across domain boundaries.
     """
     ip = i + 1
     im = i - 1
@@ -863,15 +902,36 @@ def repeat_bc3d(nx, ny, nz, i, j, k):
     return ip, im, jp, jm, kp, km
 
 def filter_bc3d(nx, ny, nz, i, j, k, length):
-    """Remove the surface voxels on boundary conditions
-    
+    """Check if voxel is sufficiently far from domain boundaries.
+
+    Determines whether a voxel at (i,j,k) is at least 'length' voxels
+    away from all domain boundaries. Used to exclude boundary regions
+    where stencil operations would extend outside the domain.
+
     Args:
-        nx, ny, nz: Grid dimensions
-        i, j, k: Current indices
-        length: Length of boundary to filter
-        
+        nx (int): Grid size in x direction
+        ny (int): Grid size in y direction
+        nz (int): Grid size in z direction
+        i (int): x coordinate to check
+        j (int): y coordinate to check
+        k (int): z coordinate to check
+        length (int): Minimum distance from boundaries (typically halfL)
+
     Returns:
-        bool: Whether the voxel is within the boundary
+        bool: True if voxel is at least 'length' away from all boundaries,
+              False if too close to any boundary
+
+    Example:
+        >>> filter_bc3d(100, 100, 100, 50, 50, 50, length=5)
+        True  # Center voxel is far from boundaries
+
+        >>> filter_bc3d(100, 100, 100, 2, 50, 50, length=5)
+        False  # Too close to i=0 boundary
+
+    Notes:
+        - Used in level set and Allen-Cahn methods with large stencils
+        - Prevents out-of-bounds access in non-periodic algorithms
+        - For periodic BC systems, this filter is typically not needed
     """
     if i-length < 0:
         return False
@@ -888,14 +948,28 @@ def filter_bc3d(nx, ny, nz, i, j, k, length):
     return True
 
 def get_grad(P, i, j):
-    """Calculate gradient in 2D
-    
+    """Extract and normalize normal vector from phase field array.
+
+    Retrieves normal vector components from phase field array P and
+    normalizes them to unit length. Used for comparing calculated
+    normals against reference solutions.
+
     Args:
-        P: Input data
-        i, j: Current indices
-        
+        P (ndarray): Phase field array of shape (3, nx, ny) where:
+            - P[0,:,:] = grain IDs
+            - P[1,:,:] = y-component of normal vector
+            - P[2,:,:] = x-component of normal vector
+        i (int): x coordinate
+        j (int): y coordinate
+
     Returns:
-        tuple: (gradient in x, gradient in y)
+        tuple: (normalized_x, normalized_y) unit normal vector components
+
+    Notes:
+        - Returns normalized vector: (x, y) / ||(x, y)||
+        - If magnitude is zero, returns unnormalized components
+        - Sign convention: VecY is negated for consistency
+        - H = 1.0 is grid spacing (unit voxels)
     """
     DX = P[2, i, j]
     DY = P[1, i, j]
@@ -910,14 +984,30 @@ def get_grad(P, i, j):
     return VecScale*VecX, -VecScale*VecY
 
 def get_grad3d(P, i, j, k):
-    """Calculate gradient in 3D
-    
+    """Extract and normalize normal vector from 3D phase field array.
+
+    Retrieves normal vector components from 3D phase field array P and
+    normalizes them to unit length. Used for comparing calculated
+    normals against reference solutions in 3D systems.
+
     Args:
-        P: Input data
-        i, j, k: Current indices
-        
+        P (ndarray): Phase field array of shape (4, nx, ny, nz) where:
+            - P[0,:,:,:] = grain IDs
+            - P[1,:,:,:] = y-component of normal vector
+            - P[2,:,:,:] = x-component of normal vector
+            - P[3,:,:,:] = z-component of normal vector
+        i (int): x coordinate
+        j (int): y coordinate
+        k (int): z coordinate
+
     Returns:
-        tuple: (gradient in x, gradient in y, gradient in z)
+        tuple: (normalized_x, normalized_y, normalized_z) unit normal vector
+
+    Notes:
+        - Returns normalized vector: (x, y, z) / ||(x, y, z)||
+        - If magnitude is zero, returns unnormalized components
+        - Sign convention: VecY negated, VecZ positive
+        - H = 1.0 is grid spacing (unit voxels)
     """
     DX = P[2, i, j, k]
     DY = P[1, i, j, k]
@@ -933,15 +1023,107 @@ def get_grad3d(P, i, j, k):
         VecScale = H/VecLen
     return VecScale*VecX, -VecScale*VecY, VecScale*VecZ
 
-def split_cores(cores, sc_d=2):
-    """Split cores num into two or three closed index values of two
-    
+def is_grain_boundary(P, i, j, nx, ny):
+    """Check if a 2D site is on a grain boundary.
+
+    A site is considered on a grain boundary if any of its 4-connected
+    neighbors has a different grain ID. Uses periodic boundary conditions.
+
     Args:
-        cores: Number of cores
-        sc_d: Dimension (default=2)
-        
+        P (ndarray): Phase field array where P[0,:,:] contains grain IDs
+        i (int): x coordinate of site to check
+        j (int): y coordinate of site to check
+        nx (int): Grid size in x direction
+        ny (int): Grid size in y direction
+
     Returns:
-        tuple: Split core dimensions
+        bool: True if site is on grain boundary, False otherwise
+
+    Example:
+        >>> P = np.array([[[1, 1, 2], [1, 1, 2], [1, 1, 2]]])
+        >>> is_grain_boundary(P, 1, 1, 3, 3)
+        True  # Site at (1,1) borders grain 2
+
+    Notes:
+        - Only checks 4-connected neighbors (not diagonals)
+        - Automatically handles periodic boundaries
+        - Used throughout PACKAGE_MP algorithms for GB detection
+        - Consolidates pattern duplicated 12+ times across codebase
+    """
+    ip, im, jp, jm = periodic_bc(nx, ny, i, j)
+    current_grain = P[0, i, j]
+
+    return (P[0, ip, j] != current_grain or
+            P[0, im, j] != current_grain or
+            P[0, i, jp] != current_grain or
+            P[0, i, jm] != current_grain)
+
+def is_grain_boundary_3d(P, i, j, k, nx, ny, nz):
+    """Check if a 3D site is on a grain boundary.
+
+    A site is considered on a grain boundary if any of its 6-connected
+    neighbors has a different grain ID. Uses periodic boundary conditions.
+
+    Args:
+        P (ndarray): Phase field array where P[0,:,:,:] contains grain IDs
+        i (int): x coordinate of site to check
+        j (int): y coordinate of site to check
+        k (int): z coordinate of site to check
+        nx (int): Grid size in x direction
+        ny (int): Grid size in y direction
+        nz (int): Grid size in z direction
+
+    Returns:
+        bool: True if site is on grain boundary, False otherwise
+
+    Example:
+        >>> # 3D microstructure with grain boundary
+        >>> is_grain_boundary_3d(P, 5, 5, 5, 10, 10, 10)
+        True  # If site borders different grain
+
+    Notes:
+        - Only checks 6-connected neighbors (faces, not edges/corners)
+        - Automatically handles periodic boundaries
+        - Used in all 3D PACKAGE_MP algorithms
+        - Consolidates pattern duplicated across 3D implementations
+    """
+    ip, im, jp, jm, kp, km = periodic_bc3d(nx, ny, nz, i, j, k)
+    current_grain = P[0, i, j, k]
+
+    return (P[0, ip, j, k] != current_grain or
+            P[0, im, j, k] != current_grain or
+            P[0, i, jp, k] != current_grain or
+            P[0, i, jm, k] != current_grain or
+            P[0, i, j, kp] != current_grain or
+            P[0, i, j, km] != current_grain)
+
+def split_cores(cores, sc_d=2):
+    """Decompose processor count into subdomain grid dimensions.
+
+    Factors the number of cores (must be power of 2) into 2D or 3D
+    subdomain layout for domain decomposition in parallel processing.
+    Attempts to create balanced partitioning.
+
+    Args:
+        cores (int): Number of CPU cores (must be power of 2)
+        sc_d (int): Dimension of decomposition (2 or 3, default=2)
+
+    Returns:
+        tuple: For 2D (sc_d=2): (length, width)
+               For 3D (sc_d=3): (length, width, height)
+
+    Example:
+        >>> split_cores(8, sc_d=2)
+        (4, 2)  # 4x2 grid of subdomains
+
+        >>> split_cores(8, sc_d=3)
+        (2, 2, 2)  # 2x2x2 grid of subdomains
+
+    Notes:
+        - Assumes cores = 2^p for some integer p
+        - 2D: splits exponent as ceil(p/2) and floor(p/2)
+        - 3D: distributes exponent across three dimensions
+        - Used by check_subdomain_and_nei() for parallel processing
     """
     sc_p = 0
     while cores != 1:
@@ -958,18 +1140,36 @@ def split_cores(cores, sc_d=2):
     return sc_length, sc_width
 
 def split_IC(split_V, cores, dimentions=2, sic_nx_order=1, sic_ny_order=2, sic_nz_order=3):
-    """Split a large matrix into several small matrix based on cores num
-    
+    """Split large array into subdomains for parallel processing.
+
+    Divides an array into multiple smaller subarrays corresponding to
+    processor subdomains. Used to distribute work across parallel cores
+    in domain decomposition algorithms.
+
     Args:
-        split_V: Input matrix
-        cores: Number of cores
-        dimentions: Number of dimensions (default=2)
-        sic_nx_order: Order of x dimension (default=1)
-        sic_ny_order: Order of y dimension (default=2)
-        sic_nz_order: Order of z dimension (default=3)
-        
+        split_V (ndarray): Input array to split
+        cores (int): Number of processor cores (must be power of 2)
+        dimentions (int): Spatial dimension (2 or 3, default=2)
+        sic_nx_order (int): Axis index for x-direction split (default=1)
+        sic_ny_order (int): Axis index for y-direction split (default=2)
+        sic_nz_order (int): Axis index for z-direction split (default=3)
+
     Returns:
-        list: List of split matrices
+        list: Nested list structure of subarrays:
+            - 2D: list[width][length] of subarrays
+            - 3D: list[width][length][height] of subarrays
+
+    Example:
+        >>> sites = np.array([[i, j] for i in range(100) for j in range(100)])
+        >>> sites = sites.reshape(100, 100, 2)
+        >>> subdomains = split_IC(sites, cores=4, dimentions=2)
+        >>> len(subdomains), len(subdomains[0])
+        (2, 2)  # 2x2 grid of subdomains
+
+    Notes:
+        - Uses split_cores() to determine subdomain grid layout
+        - Employs np.array_split() for uneven divisions
+        - Axis ordering depends on array shape convention
     """
     if dimentions == 2:
         sic_lc, sic_wc = split_cores(cores)

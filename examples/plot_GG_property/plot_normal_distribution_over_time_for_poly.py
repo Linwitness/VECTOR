@@ -75,6 +75,7 @@ sys.path.append(current_path)
 sys.path.append(current_path+'/../../')
 import myInput                       # VECTOR input parameter management and advanced calculations
 import PACKAGE_MP_Linear as linear2d # 2D linear algebra operations for grain boundary detection
+import post_processing               # Central post-processing utilities
 sys.path.append(current_path+'/../calculate_tangent/')
 
 def simple_magnitude(freqArray):
@@ -325,28 +326,12 @@ def get_poly_statistical_ar(micro_matrix, step):
 
     return aspect_ratio
 
-def get_normal_vector(grain_structure_figure_one, grain_num):
-    nx = grain_structure_figure_one.shape[0]
-    ny = grain_structure_figure_one.shape[1]
-    ng = np.max(grain_structure_figure_one)
-    cores = 8
-    loop_times = 5
-    P0 = grain_structure_figure_one
-    R = np.zeros((nx,ny,2))
-    smooth_class = linear2d.linear_class(nx,ny,ng,cores,loop_times,P0,R)
+def get_normal_vector(grain_structure_figure_one, grain_num=None):
+    """Wrapper for backward compatibility - grain_num parameter is unused.
 
-    smooth_class.linear_main("inclination")
-    P = smooth_class.get_P()
-    # sites = smooth_class.get_gb_list(1)
-    # print(len(sites))
-    # for id in range(2,grain_num+1): sites += smooth_class.get_gb_list(id)
-    # print(len(sites))
-    sites = smooth_class.get_all_gb_list()
-    sites_together = []
-    for id in range(len(sites)): sites_together += sites[id]
-    print("Total num of GB sites: " + str(len(sites_together)))
-
-    return P, sites_together, sites
+    Calls post_processing.get_normal_vector() which provides the actual implementation.
+    """
+    return post_processing.get_normal_vector(grain_structure_figure_one)
 
 def get_normal_vector_slope(P, sites, step, para_name, bias=None):
     xLim = [0, 360]

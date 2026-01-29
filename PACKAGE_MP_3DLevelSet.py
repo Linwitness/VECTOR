@@ -91,8 +91,15 @@ class levelSet3d_class(object):
 
     #%% Function
     def get_P(self):
-        # Outout the result matrix, first level is microstructure,
-        # last two layers are normal vectors
+        """Output the result matrix containing grain IDs and normal vectors.
+
+        Returns:
+            ndarray: Phase field array of shape (4, nx, ny, nz) where:
+                - P[0,:,:,:] = Grain ID for each voxel
+                - P[1,:,:,:] = x-component of normal vector
+                - P[2,:,:,:] = y-component of normal vector
+                - P[3,:,:,:] = z-component of normal vector
+        """
         return self.P
 
     def get_errors(self):
@@ -149,11 +156,7 @@ class levelSet3d_class(object):
         for i in range(0+edge_l,self.nx-edge_l):
             for j in range(0+edge_l,self.ny-edge_l):
                 for k in range(0+edge_l,self.nz-edge_l):
-                    ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
-                    if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or\
-                         ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or\
-                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) )\
-                           and self.P[0,i,j,k]==grainID:
+                    if myInput.is_grain_boundary_3d(self.P, i, j, k, self.nx, self.ny, self.nz) and self.P[0,i,j,k]==grainID:
                         ggn_gbsites.append([i,j,k])
         return ggn_gbsites
 
@@ -239,10 +242,7 @@ class levelSet3d_class(object):
                     else:
                         pass
 
-                    ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
-                    if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or
-                         ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or
-                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ):
+                    if myInput.is_grain_boundary_3d(self.P, i, j, k, self.nx, self.ny, self.nz):
 
                         # convert the small table into distance LS function
                         for ii in range(-self.halfL,self.halfL+1):
@@ -322,7 +322,7 @@ class levelSet3d_class(object):
 
 
 
-                                            # calculate teh improve or decrease of each site
+                                            # Calculate the improvement to level set value at this site
                                             Ii = (I322-I122)/2
                                             Ij = (I232-I212)/2
                                             Ik = (I223-I221)/2

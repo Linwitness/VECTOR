@@ -181,12 +181,7 @@ class levelSet_class(object):
         ggn_gbsites = []
         for i in range(0,self.nx):
             for j in range(0,self.ny):
-                ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or
-                     ((self.P[0,im,j]-self.P[0,i,j])!=0) or
-                     ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
-                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) )\
-                        and self.P[0,i,j]==grainID:
+                if myInput.is_grain_boundary(self.P, i, j, self.nx, self.ny) and self.P[0,i,j]==grainID:
                     ggn_gbsites.append([i,j])
         return ggn_gbsites
 
@@ -289,8 +284,7 @@ class levelSet_class(object):
                 i = core_b[0]
                 j = core_b[1]
 
-                ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
+                if myInput.is_grain_boundary(self.P, i, j, self.nx, self.ny):
 
                     # convert the small table into distance LS function
                     for ii in range(-self.halfL_curv,self.halfL_curv+1):
@@ -342,7 +336,7 @@ class levelSet_class(object):
                                     I42 = self.myTable[local_xp2,local_y]*self.V[kk-1,local_xp2,local_y]
 
 
-                                    # calculate teh improve or decrease of each site
+                                    # Calculate the improvement to level set value at this site
                                     Ii = (I32-I12)/2 #
                                     Ij = (I23-I21)/2 #
 
@@ -445,8 +439,7 @@ class levelSet_class(object):
                 i = core_b[0]
                 j = core_b[1]
 
-                ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
+                if myInput.is_grain_boundary(self.P, i, j, self.nx, self.ny):
 
                     # convert the small table into distance LS function
                     for ii in range(-self.halfL,self.halfL+1):
@@ -498,7 +491,7 @@ class levelSet_class(object):
                                     I42 = self.myTable[local_xp2,local_y]*self.V[kk-1,local_xp2,local_y]
 
 
-                                    # calculate teh improve or decrease of each site
+                                    # Calculate the improvement to level set value at this site
                                     Ii = (I32-I12)/2 #
                                     Ij = (I23-I21)/2 #
 

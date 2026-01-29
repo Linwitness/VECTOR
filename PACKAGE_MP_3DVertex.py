@@ -162,11 +162,7 @@ class vertex3d_class(object):
         for i in range(0+edge_l,self.nx-edge_l):
             for j in range(0+edge_l,self.ny-edge_l):
                 for k in range(0+edge_l,self.nz-edge_l):
-                    ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
-                    if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or\
-                         ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or\
-                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ) and\
-                         self.P[0,i,j,k]==grainID:
+                    if myInput.is_grain_boundary_3d(self.P, i, j, k, self.nx, self.ny, self.nz) and self.P[0,i,j,k]==grainID:
                         ggn_gbsites.append([i,j,k])
         return ggn_gbsites
 
@@ -287,11 +283,8 @@ class vertex3d_class(object):
                     local_i = (A[0]+fi)%self.ny
                     local_j = (A[1]+fj)%self.nx
                     local_k = (A[2]+fk)%self.nz
-                    fip,fim,fjp,fjm,fkp,fkm = myInput.periodic_bc3d(self.nx,self.ny,self.nz,local_i,local_j,local_k)
                     if (self.P[0,local_i,local_j,local_k] == self.P[0,A[0],A[1],A[2]]) and \
-                       ( ((self.P[0,fip,local_j,local_k]-self.P[0,local_i,local_j,local_k])!=0) or ((self.P[0,fim,local_j,local_k]-self.P[0,local_i,local_j,local_k])!=0) or \
-                         ((self.P[0,local_i,fjp,local_k]-self.P[0,local_i,local_j,local_k])!=0) or ((self.P[0,local_i,fjm,local_k]-self.P[0,local_i,local_j,local_k])!=0) or \
-                         ((self.P[0,local_i,local_j,fkp]-self.P[0,local_i,local_j,local_k])!=0) or ((self.P[0,local_i,local_j,fkm]-self.P[0,local_i,local_j,local_k])!=0) ):
+                       myInput.is_grain_boundary_3d(self.P, local_i, local_j, local_k, self.nx, self.ny, self.nz):
                         output.append(f"{local_i},{local_j},{local_k}")
 
         output = list(set(output)-set([f"{A[0]},{A[1]},{A[2]}"]))
@@ -313,11 +306,8 @@ class vertex3d_class(object):
                     j = core_c[1]
                     k = core_c[2]
     
-                    ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
-                    if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or
-                         ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or
-                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ):
-    
+                    if myInput.is_grain_boundary_3d(self.P, i, j, k, self.nx, self.ny, self.nz):
+
                         # collect all data
                         stored_boun = [[f"{i},{j},{k}"]]
 

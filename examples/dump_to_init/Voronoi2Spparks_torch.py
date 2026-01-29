@@ -46,41 +46,41 @@ if torch.cuda.is_available():
 def image2init(img, EulerAngles, fp=None):
     """
     Convert grain ID image to SPPARKS initialization file format.
-    
+
     This function takes a 2D or 3D array of grain IDs and converts it to the
     SPPARKS initialization file format required for Monte Carlo simulations.
     Each pixel/voxel is assigned a grain ID and corresponding crystallographic
     orientation defined by Euler angles.
-    
+
     Parameters:
     -----------
     img : numpy.ndarray (2D or 3D, integer)
         Array where each element represents the grain ID that the site belongs to
         Shape: (Ny, Nx) for 2D or (Nz, Ny, Nx) for 3D microstructures
         Values: Integer grain IDs (0-based indexing)
-        
+
     EulerAngles : numpy.ndarray, shape (n_grains, 3)
         Crystallographic orientations for each grain in Bunge notation
         Column 0: phi1 (rotation about Z-axis, radians)
-        Column 1: Phi  (rotation about X-axis, radians) 
+        Column 1: Phi  (rotation about X-axis, radians)
         Column 2: phi2 (rotation about Z-axis, radians)
-        
+
     fp : str, optional
         Output file path for SPPARKS initialization file
         Default: "./spparks_simulations/spparks.init"
-        
+
     SPPARKS File Format:
     -------------------
     Line 0: # This line is ignored
-    Line 1: Values  
+    Line 1: Values
     Line 2: [blank line]
     Line 3+: site_id grain_id phi1 Phi phi2
-    
+
     Site Numbering Convention:
     -------------------------
     2D: site_id = j*Nx + i + 1 (row-major, 1-based)
     3D: site_id = k*Nx*Ny + j*Nx + i + 1 (row-major, 1-based)
-    
+
     Notes:
     ------
     - SPPARKS uses 1-based indexing for both site IDs and grain IDs
@@ -91,11 +91,11 @@ def image2init(img, EulerAngles, fp=None):
     size = img.shape
     dim = len(img.shape)
     total_sites = np.product(size)
-    
+
     # Set default output path if not specified
-    if fp is None: 
+    if fp is None:
         fp = r"./spparks_simulations/spparks.init"
-    
+
     # Pre-allocate initialization file content list
     IC = [0] * (total_sites + 3)  # Sites + 3 header lines
 
@@ -103,7 +103,7 @@ def image2init(img, EulerAngles, fp=None):
     IC[0] = '# This line is ignored\n'
     IC[1] = 'Values\n'
     IC[2] = '\n'
-    
+
     site_counter = 0
 
     if dim == 3:
@@ -114,10 +114,10 @@ def image2init(img, EulerAngles, fp=None):
                 for i in range(0, size[0]):  # X-direction (width)
                     # Extract grain ID from image (0-based)
                     grain_id = int(img[i, j, k])
-                    
+
                     # Get corresponding Euler angles for this grain
                     phi1, Phi, phi2 = EulerAngles[grain_id, :]
-                    
+
                     # Write site data: site_id grain_id phi1 Phi phi2
                     # Convert to 1-based indexing for SPPARKS compatibility
                     IC[site_counter + 3] = (f"{site_counter + 1} {grain_id + 1} "
@@ -130,10 +130,10 @@ def image2init(img, EulerAngles, fp=None):
             for i in range(0, size[0]):  # X-direction (width)
                 # Extract grain ID from image (0-based)
                 grain_id = int(img[i, j])
-                
+
                 # Get corresponding Euler angles for this grain
                 phi1, Phi, phi2 = EulerAngles[grain_id, :]
-                
+
                 # Write site data: site_id grain_id phi1 Phi phi2
                 # Convert to 1-based indexing for SPPARKS compatibility
                 IC[site_counter + 3] = (f"{site_counter + 1} {grain_id + 1} "
@@ -154,27 +154,27 @@ def image2init(img, EulerAngles, fp=None):
 def generate_random_grain_centers(size=[128, 64, 32], ngrain=512):
     """
     Generate random grain center coordinates for Voronoi tessellation.
-    
+
     Creates uniformly distributed grain nucleation sites within the specified
     domain boundaries. These centers serve as seeds for the Voronoi tessellation
     that defines the initial polycrystalline microstructure.
-    
+
     Parameters:
     -----------
     size : list, optional
         Domain dimensions [Lx, Ly, Lz] for 3D or [Lx, Ly] for 2D
         Default: [128, 64, 32] for demonstration purposes
-        
-    ngrain : int, optional  
+
+    ngrain : int, optional
         Number of grain nucleation sites to generate
         Default: 512 grains
-        
+
     Returns:
     --------
     torch.Tensor : Shape (ngrain, ndim) containing grain center coordinates
         Each row represents [x, y] for 2D or [x, y, z] for 3D coordinates
         Values are continuous floats within domain boundaries
-        
+
     Notes:
     ------
     - Grain centers are uniformly distributed (Poisson-like nucleation)
@@ -184,65 +184,65 @@ def generate_random_grain_centers(size=[128, 64, 32], ngrain=512):
     """
     ndim = len(size)
     size_tensor = torch.Tensor(size)
-    
+
     # Generate uniform random coordinates within domain boundaries
     grain_centers = torch.rand(ngrain, ndim) * size_tensor
-    
+
     print(f"Generated {ngrain} random grain centers in {ndim}D domain {size}")
     return grain_centers
 
 def voronoi2image(size=[128, 64, 32], ngrain=512, memory_limit=1e9, p=2, center_coords0=None, device=device):
     """
     Generate Voronoi tessellation using GPU-accelerated distance calculations.
-    
+
     This function creates a realistic polycrystalline microstructure by computing
     the Voronoi tessellation of randomly distributed grain centers with periodic
     boundary conditions. The implementation uses PyTorch for GPU acceleration
     and batch processing to handle large domains efficiently.
-    
+
     Parameters:
     -----------
     size : list, default [128, 64, 32]
         Domain dimensions [Lx, Ly, Lz] for 3D or [Lx, Ly] for 2D
         Determines the number of lattice sites in each direction
-        
+
     ngrain : int, default 512
         Number of grains in the microstructure
         Controls average grain size: avg_size ∝ (domain_volume/ngrain)^(1/dim)
-        
+
     memory_limit : float, default 1e9
         Memory limit in bytes for GPU/CPU operations
         Prevents out-of-memory errors on large tessellations
         Automatically triggers batch processing if exceeded
-        
+
     p : float, default 2
         Distance metric for Voronoi calculation
         p=2: Euclidean distance (standard Voronoi)
         p=1: Manhattan distance (diamond-shaped grains)
-        
+
     center_coords0 : numpy.ndarray or None
         Pre-defined grain center coordinates [ngrain, ndim]
         If None, generates random centers using generate_random_grain_centers()
         Enables controlled microstructure generation
-        
+
     device : torch.device
         Computing device (GPU/CPU) for tensor operations
         Automatically set based on CUDA availability
-        
+
     Returns:
     --------
     tuple : (grain_ids, euler_angles, grain_centers)
         grain_ids : numpy.ndarray, shape=size, dtype=int16
             2D/3D array of grain IDs for each lattice site
             Values range from 0 to ngrain-1
-            
+
         euler_angles : numpy.ndarray, shape=(ngrain, 3)
             Random Euler angles for each grain in radians
             [phi1, Phi, phi2] in Bunge notation
-            
-        grain_centers : numpy.ndarray, shape=(ngrain, ndim)  
+
+        grain_centers : numpy.ndarray, shape=(ngrain, ndim)
             Original grain center coordinates used for tessellation
-            
+
     Algorithm Details:
     -----------------
     1. Generate/validate grain center coordinates
@@ -251,38 +251,38 @@ def voronoi2image(size=[128, 64, 32], ngrain=512, memory_limit=1e9, p=2, center_
     4. Process domain in batches to compute minimum distances
     5. Assign grain IDs based on closest center (modulo for periodicity)
     6. Generate random crystallographic orientations
-    
+
     Periodic Boundary Conditions:
     ----------------------------
     - Creates 9 copies (2D) or 27 copies (3D) of grain centers
     - Ensures realistic grain structure at domain boundaries
     - Uses modulo arithmetic to map periodic centers to original grains
-    
+
     Memory Management:
     -----------------
     - Estimates memory requirements for tensors
     - Automatically batches computation if memory limit exceeded
     - Reports memory usage and batch count for optimization
-    
+
     Performance Notes:
     -----------------
     - GPU acceleration provides 10-100x speedup over CPU
     - Batch size affects memory vs. computation time tradeoff
     - Large domains may require multiple batches even with GPU
     """
-    
+
     # =================================================================
     # SETUP AND PARAMETER VALIDATION
     # =================================================================
-    
+
     dim = len(size)
     print(f"Generating {dim}D Voronoi tessellation...")
     print(f"Domain: {size}, Grains: {ngrain}, Device: {device}")
-    
+
     # =================================================================
-    # GRAIN CENTER INITIALIZATION  
+    # GRAIN CENTER INITIALIZATION
     # =================================================================
-    
+
     # Generate or validate grain center coordinates
     if center_coords0 is None:
         print("Generating random grain centers...")
@@ -291,20 +291,20 @@ def voronoi2image(size=[128, 64, 32], ngrain=512, memory_limit=1e9, p=2, center_
         print("Using provided grain centers...")
         center_coords0 = torch.Tensor(center_coords0)
         ngrain = center_coords0.shape[0]  # Update grain count
-        
+
     print(f"Grain centers shape: {center_coords0.shape}")
-    
+
     # =================================================================
     # PERIODIC BOUNDARY CONDITION SETUP
     # =================================================================
-    
+
     # Create periodic replicas of grain centers for realistic boundary conditions
     # This ensures grains can wrap around domain edges naturally
     print("Creating periodic replicas for boundary conditions...")
-    
+
     center_coords = torch.Tensor([])
     size_tensor = torch.Tensor(size)
-    
+
     # Generate all combinations of periodic shifts: [-1, 0, +1] in each dimension
     if dim == 2:
         # 2D: 9 copies (3x3 grid)
@@ -313,135 +313,135 @@ def voronoi2image(size=[128, 64, 32], ngrain=512, memory_limit=1e9, p=2, center_
                 shift = size_tensor * (torch.Tensor([i, j]) - 1)
                 center_coords = torch.cat([center_coords, center_coords0 + shift])
     else:
-        # 3D: 27 copies (3x3x3 grid)  
+        # 3D: 27 copies (3x3x3 grid)
         for i in range(3):
             for j in range(3):
                 for k in range(3):
                     shift = size_tensor * (torch.Tensor([i, j, k]) - 1)
                     center_coords = torch.cat([center_coords, center_coords0 + shift])
-    
+
     center_coords = center_coords.float().to(device)
     print(f"Created {center_coords.shape[0]} periodic grain centers")
-    
+
     # =================================================================
     # MEMORY ESTIMATION AND BATCH CALCULATION
     # =================================================================
-    
+
     # Estimate memory requirements for large tensor operations
     total_sites = torch.prod(torch.Tensor(size))
-    
+
     # Memory per tensor in bytes (assuming float64 = 8 bytes)
     mem_center_coords = float(64 * dim * center_coords.shape[0])
     mem_coords = 64 * total_sites * dim  # Site coordinates
     mem_dist = 64 * total_sites * center_coords.shape[0]  # Distance matrix
     mem_ids = 64 * total_sites  # Final grain ID array
-    
+
     # Available memory for batch operations
     available_memory = memory_limit - mem_center_coords - mem_ids
     batch_memory = mem_coords + mem_dist
-    
+
     print(f"Memory estimation:")
     print(f"  Total sites: {int(total_sites):,}")
     print(f"  Center coords: {mem_center_coords/1e9:.2f} GB")
     print(f"  Available: {available_memory/1e9:.2f} GB")
     print(f"  Batch requirement: {batch_memory/1e9:.2f} GB")
-    
+
     # Calculate number of batches needed to stay under memory limit
     num_batches = torch.ceil(batch_memory / available_memory).int()
     num_dim_batch = torch.ceil(num_batches**(1/dim)).int()  # Batches per dimension
     dim_batch_size = torch.ceil(torch.Tensor(size) / num_dim_batch).int()  # Batch size per dim
     num_dim_batch = torch.ceil(torch.Tensor(size) / dim_batch_size).int()  # Actual batches (accounting for rounding)
-    
+
     print(f"Batch configuration:")
     print(f"  Total batches: {num_batches}")
     print(f"  Batches per dimension: {num_dim_batch}")
     print(f"  Batch size: {dim_batch_size}")
-    
+
     # =================================================================
     # VORONOI TESSELLATION COMPUTATION
     # =================================================================
-    
+
     if available_memory > 0:
         print("Computing Voronoi tessellation...")
-        
+
         # Initialize output grain ID array
         all_ids = torch.zeros(size).type(torch.int16)
-        
+
         # Create coordinate reference arrays for each dimension
         ref = [torch.arange(size[i]).int() for i in range(dim)]
-        
+
         # Generate batch iteration indices
         batch_ranges = tuple([torch.arange(i).int() for i in num_dim_batch])
         batch_iterator = torch.cartesian_prod(*batch_ranges)
-        
+
         # Process domain in batches to manage memory usage
         for batch_idx in tqdm(batch_iterator, desc='Computing Voronoi batches'):
-            
+
             # Calculate batch boundaries
             start = batch_idx * dim_batch_size
             stop = (batch_idx + 1) * dim_batch_size
-            
+
             # Clamp stop values to domain boundaries
             stop[stop >= torch.Tensor(size)] = torch.Tensor(size)[stop >= torch.Tensor(size)].int()
-            
+
             # Extract coordinate indices for current batch
             batch_indices = [ref[i][start[i]:stop[i]] for i in range(dim)]
-            
+
             # Generate Cartesian product of batch coordinates
             batch_coords = torch.cartesian_prod(*batch_indices).float().to(device)
-            
+
             # Compute distance matrix: [n_centers, n_sites_in_batch]
             # Uses specified distance metric (default: Euclidean)
             dist_matrix = torch.cdist(center_coords, batch_coords, p=p)
-            
+
             # Find closest grain center for each site (minimum distance)
             closest_centers = torch.argmin(dist_matrix, dim=0)
-            
+
             # Map periodic centers back to original grain IDs using modulo
             grain_ids_batch = (closest_centers % ngrain).int()
-            
+
             # Reshape to batch dimensions and store in output array
             batch_shape = tuple(stop - start)
             grain_ids_batch = grain_ids_batch.reshape(batch_shape)
-            
+
             # Store batch results in appropriate array slice
             if dim == 2:
                 all_ids[start[0]:stop[0], start[1]:stop[1]] = grain_ids_batch
             else:
                 all_ids[start[0]:stop[0], start[1]:stop[1], start[2]:stop[2]] = grain_ids_batch
-        
+
         # =================================================================
         # MEMORY USAGE REPORTING AND CLEANUP
         # =================================================================
-        
+
         total_memory = batch_memory + mem_center_coords + mem_ids
         print(f"\nVoronoi computation completed!")
         print(f"Total memory used: {total_memory/1e9:.3f} GB")
         print(f"Batches processed: {num_batches}")
-        
+
         # =================================================================
         # CRYSTALLOGRAPHIC ORIENTATION GENERATION
         # =================================================================
-        
+
         # Generate random Euler angles for each grain in Bunge notation
         print("Generating random crystallographic orientations...")
         euler_angles = torch.stack([
-            2*np.pi*torch.rand(ngrain),      # phi1: [0, 2π]  
+            2*np.pi*torch.rand(ngrain),      # phi1: [0, 2π]
             0.5*np.pi*torch.rand(ngrain),    # Phi:  [0, π/2]
             2*np.pi*torch.rand(ngrain)       # phi2: [0, 2π]
         ], dim=1)
-        
+
         print(f"Generated {ngrain} random orientations")
-        
+
         # =================================================================
         # RETURN RESULTS
         # =================================================================
-        
+
         print("Converting tensors to NumPy arrays...")
-        return (all_ids.cpu().numpy(), 
-                euler_angles.cpu().numpy(), 
+        return (all_ids.cpu().numpy(),
+                euler_angles.cpu().numpy(),
                 center_coords0.numpy())
-    
+
     else:
         print(f"ERROR: Insufficient memory!")
         print(f"Available: {available_memory/1e9:.2f} GB")
@@ -458,7 +458,7 @@ PRODUCTION RUN: 3D POLYCRYSTALLINE MICROSTRUCTURE FOR SPPARKS
 ============================================================
 
 This section generates a large-scale 3D Voronoi tessellation for anisotropic
-grain growth simulations. The parameters are configured for realistic 
+grain growth simulations. The parameters are configured for realistic
 microstructure studies with sufficient resolution and grain population.
 
 Target Configuration:
@@ -484,11 +484,11 @@ Scientific Rationale:
 # =================================================================
 
 # Output file path on HPC storage system
-savename = '/orange/michael.tonks/lin.yang/IC/VoronoiIC_450_20k.init'
+savename = '/Users/lin/projects/VECTOR/examples/dump_to_init/IC/VoronoiIC_257_257.init'
 
 # 3D domain specifications
-size_x, size_y, size_z = 450, 450, 450  # Cubic domain with fine resolution
-grains = 20000                           # High grain count for statistical studies
+size_x, size_y, size_z = 257, 257, 1  # Cubic domain with fine resolution
+grains = 257                           # High grain count for statistical studies
 
 print("="*60)
 print("GENERATING 3D VORONOI MICROSTRUCTURE")
@@ -501,13 +501,13 @@ print(f"Output file: {savename}")
 print()
 
 # =================================================================
-# GPU-ACCELERATED VORONOI TESSELLATION  
+# GPU-ACCELERATED VORONOI TESSELLATION
 # =================================================================
 
 print("Computing Voronoi tessellation with GPU acceleration...")
 ic, ea, grain_centers = voronoi2image(
-    [size_x, size_y, size_z],    # 3D domain dimensions
-    grains,                      # Number of grains 
+    [size_x, size_y],    # 3D domain dimensions
+    grains,                      # Number of grains
     100e9                        # 100 GB memory limit for large domains
 )
 
@@ -518,7 +518,7 @@ ic, ea, grain_centers = voronoi2image(
 if ic is not None:
     print("\nWriting SPPARKS initialization file...")
     image2init(ic, ea, savename)  # Convert to SPPARKS format
-    
+
     print("\n" + "="*60)
     print("MICROSTRUCTURE GENERATION COMPLETED SUCCESSFULLY!")
     print("="*60)
@@ -532,7 +532,7 @@ if ic is not None:
     print("2. Configure SPPARKS simulation parameters for anisotropic energy model")
     print("3. Run Monte Carlo grain growth simulation")
     print("4. Analyze grain boundary migration and energy evolution")
-    
+
 else:
     print("\n" + "="*60)
     print("ERROR: MICROSTRUCTURE GENERATION FAILED!")

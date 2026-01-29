@@ -186,11 +186,7 @@ class linear3d_class(object):
         for i in range(0+edge_l,self.nx-edge_l):
             for j in range(0+edge_l,self.ny-edge_l):
                 for k in range(0+edge_l,self.nz-edge_l):
-                    ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
-                    if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or\
-                         ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or\
-                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ) and\
-                         self.P[0,i,j,k]==grainID:
+                    if myInput.is_grain_boundary_3d(self.P, i, j, k, self.nx, self.ny, self.nz) and self.P[0,i,j,k]==grainID:
                         ggn_gbsites.append([i,j,k])
         return ggn_gbsites
 
@@ -199,10 +195,7 @@ class linear3d_class(object):
         for i in range(0,self.nx):
             for j in range(0,self.ny):
                 for k in range(0,self.nz):
-                    ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
-                    if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or\
-                         ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or\
-                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ):
+                    if myInput.is_grain_boundary_3d(self.P, i, j, k, self.nx, self.ny, self.nz):
                         gagn_gbsites[int(self.P[0,i,j,k]-1)].append([i,j,k])
         return gagn_gbsites
 
@@ -272,7 +265,7 @@ class linear3d_class(object):
             2 * dI_dj * dI_dk * d2I_djk -
             2 * dI_dk * dI_di * d2I_dik)
 
-        # Denomintor
+        # Denominator: (∇φ)² = φ_x² + φ_y² + φ_z²
         denom = 2 * grad_sq**1.5
         curvature = num / denom
 
@@ -410,10 +403,7 @@ class linear3d_class(object):
                     else:
                         pass
 
-                    ip,im,jp,jm,kp,km = myInput.periodic_bc3d(self.nx,self.ny,self.nz,i,j,k)
-                    if ( ((self.P[0,ip,j,k]-self.P[0,i,j,k])!=0) or ((self.P[0,im,j,k]-self.P[0,i,j,k])!=0) or
-                         ((self.P[0,i,jp,k]-self.P[0,i,j,k])!=0) or ((self.P[0,i,jm,k]-self.P[0,i,j,k])!=0) or
-                         ((self.P[0,i,j,kp]-self.P[0,i,j,k])!=0) or ((self.P[0,i,j,km]-self.P[0,i,j,k])!=0) ):
+                    if myInput.is_grain_boundary_3d(self.P, i, j, k, self.nx, self.ny, self.nz):
 
                         window = np.zeros((self.tableL,self.tableL,self.tableL))
                         window = self.find_window(i,j,k,self.tableL - 2*self.clip)

@@ -200,9 +200,7 @@ class allenCahn_class(object):
         ggn_gbsites = []
         for i in range(0,self.nx):
             for j in range(0,self.ny):
-                ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) )\
-                        and self.P[0,i,j]==grainID:
+                if myInput.is_grain_boundary(self.P, i, j, self.nx, self.ny) and self.P[0,i,j]==grainID:
                     ggn_gbsites.append([i,j])
         return ggn_gbsites
 
@@ -291,8 +289,7 @@ class allenCahn_class(object):
                 i = core_b[0]
                 j = core_b[1]
 
-                ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
+                if myInput.is_grain_boundary(self.P, i, j, self.nx, self.ny):
 
                     # convert the small table into 0 and 1
                     for ii in range(-self.halfL_curv,self.halfL_curv+1):
@@ -320,9 +317,25 @@ class allenCahn_class(object):
                                     local_yp1 = (j+jj+1)%self.ny
                                     local_ym1 = (j+jj-1)%self.ny
 
+                                    # Allen-Cahn phase field evolution for grain boundary normal calculation
+                                    # The phase field φ evolves according to: ∂φ/∂t = -L·(M·∂F/∂φ - κ·∇²φ)
+
+                                    # Interface energy: Etas = φ² + (1-φ)² - φ
+                                    # Represents deformation from double-well potential minima
                                     Etas = ( self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]**2+(1-self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)])**2 )-self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]
-                                    df0 = self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]**3-self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]+3*self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]*Etas  #Free energy derivative, simple multi-well
-                                    fd = (self.V[kk-1,local_xm1,local_y,int(self.P[0,i,j]-1)]+self.V[kk-1,local_xp1,local_y,int(self.P[0,i,j]-1)]-4*self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]+self.V[kk-1,local_x,local_ym1,int(self.P[0,i,j]-1)]+self.V[kk-1,local_x,local_yp1,int(self.P[0,i,j]-1)])/1**2 #2nd order central differencing
+
+                                    # Free energy derivative: ∂F/∂φ where F(φ) is double-well potential
+                                    # df0 = φ³ - φ + 3φ·Etas (multi-well formulation)
+                                    # Driving force for interface evolution
+                                    df0 = self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]**3-self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]+3*self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]*Etas
+
+                                    # Laplacian: ∇²φ = (φ[i±1,j] + φ[i,j±1] - 4φ[i,j]) / h²
+                                    # Second-order central differences with grid spacing h=1
+                                    # Provides diffusion/smoothing term
+                                    fd = (self.V[kk-1,local_xm1,local_y,int(self.P[0,i,j]-1)]+self.V[kk-1,local_xp1,local_y,int(self.P[0,i,j]-1)]-4*self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]+self.V[kk-1,local_x,local_ym1,int(self.P[0,i,j]-1)]+self.V[kk-1,local_x,local_yp1,int(self.P[0,i,j]-1)])/1**2
+
+                                    # Time evolution: φ(t+dt) = φ(t) - L·dt·(M·df0 - κ·fd)
+                                    # L = mobility, M = energy scale, κ = diffusion coefficient
                                     self.V[kk,local_x,local_y,int(self.P[0,i,j]-1)] = self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)] - self.L*(self.m*df0-self.k*fd)*self.dt
                                     # if i==64 and j==65 :
                                     #     print(f"!!!the value ({ii+2},{jj+2}) is {self.V[kk,local_x,local_y,int(self.P[0,i,j]-1)]}")
@@ -410,8 +423,7 @@ class allenCahn_class(object):
                 i = core_b[0]
                 j = core_b[1]
 
-                ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
+                if myInput.is_grain_boundary(self.P, i, j, self.nx, self.ny):
 
                     # convert the small table into 0 and 1
                     for ii in range(-self.halfL,self.halfL+1):
@@ -439,9 +451,25 @@ class allenCahn_class(object):
                                     local_yp1 = (j+jj+1)%self.ny
                                     local_ym1 = (j+jj-1)%self.ny
 
+                                    # Allen-Cahn phase field evolution for grain boundary normal calculation
+                                    # The phase field φ evolves according to: ∂φ/∂t = -L·(M·∂F/∂φ - κ·∇²φ)
+
+                                    # Interface energy: Etas = φ² + (1-φ)² - φ
+                                    # Represents deformation from double-well potential minima
                                     Etas = ( self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]**2+(1-self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)])**2 )-self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]
-                                    df0 = self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]**3-self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]+3*self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]*Etas  #Free energy derivative, simple multi-well
-                                    fd = (self.V[kk-1,local_xm1,local_y,int(self.P[0,i,j]-1)]+self.V[kk-1,local_xp1,local_y,int(self.P[0,i,j]-1)]-4*self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]+self.V[kk-1,local_x,local_ym1,int(self.P[0,i,j]-1)]+self.V[kk-1,local_x,local_yp1,int(self.P[0,i,j]-1)])/1**2 #2nd order central differencing
+
+                                    # Free energy derivative: ∂F/∂φ where F(φ) is double-well potential
+                                    # df0 = φ³ - φ + 3φ·Etas (multi-well formulation)
+                                    # Driving force for interface evolution
+                                    df0 = self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]**3-self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]+3*self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]*Etas
+
+                                    # Laplacian: ∇²φ = (φ[i±1,j] + φ[i,j±1] - 4φ[i,j]) / h²
+                                    # Second-order central differences with grid spacing h=1
+                                    # Provides diffusion/smoothing term
+                                    fd = (self.V[kk-1,local_xm1,local_y,int(self.P[0,i,j]-1)]+self.V[kk-1,local_xp1,local_y,int(self.P[0,i,j]-1)]-4*self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)]+self.V[kk-1,local_x,local_ym1,int(self.P[0,i,j]-1)]+self.V[kk-1,local_x,local_yp1,int(self.P[0,i,j]-1)])/1**2
+
+                                    # Time evolution: φ(t+dt) = φ(t) - L·dt·(M·df0 - κ·fd)
+                                    # L = mobility, M = energy scale, κ = diffusion coefficient
                                     self.V[kk,local_x,local_y,int(self.P[0,i,j]-1)] = self.V[kk-1,local_x,local_y,int(self.P[0,i,j]-1)] - self.L*(self.m*df0-self.k*fd)*self.dt
 
                     fval[i,j,0] = (self.V[self.nsteps,im,j,int(self.P[0,i,j]-1)]-self.V[self.nsteps,ip,j,int(self.P[0,i,j]-1)])/2

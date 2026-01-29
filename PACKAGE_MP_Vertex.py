@@ -184,37 +184,75 @@ class vertex_class(object):
         ggn_gbsites = []
         for i in range(0,self.nx):
             for j in range(0,self.ny):
-                ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or
-                     ((self.P[0,im,j]-self.P[0,i,j])!=0) or
-                     ((self.P[0,i,jp]-self.P[0,i,j])!=0) or
-                     ((self.P[0,i,jm]-self.P[0,i,j])!=0) ) and\
-                     self.P[0,i,j]==grainID:
+                if myInput.is_grain_boundary(self.P, i, j, self.nx, self.ny) and self.P[0,i,j]==grainID:
                     ggn_gbsites.append([i,j])
         return ggn_gbsites
 
-    def find_circle(self,A,B,C):
-        """Find circle passing through three points.
-        
-        Calculates center and radius of circle passing through three given points
-        using circumcenter formula.
-        
+    def find_circle(self, A, B, C):
+        """Calculate circumcircle of three points using perpendicular bisector method.
+
+        Computes the center and radius of the unique circle passing through three
+        non-collinear points. Uses analytic geometry to find the intersection
+        of perpendicular bisectors of segments AB and AC.
+
         Args:
-            A,B,C: Three 2D points to fit circle through
-            
+            A (array-like): First point as [x, y] coordinates
+            B (array-like): Second point as [x, y] coordinates
+            C (array-like): Third point as [x, y] coordinates
+
         Returns:
-            tuple: Circle center coordinates and radius
+            tuple: (center_x, center_y, radius) of circumcircle
+
+        Mathematical Method:
+        -------------------
+        The circumcenter lies at the intersection of perpendicular bisectors
+        of segments AB and AC. The method solves the linear system:
+
+            Perpendicular bisector of AB: a·x + b·y = e
+            Perpendicular bisector of AC: c·x + d·y = f
+
+        Where:
+            a, b = direction vector of AB: (Ay - By, Ax - Bx)
+            c, d = direction vector of AC: (Ay - Cy, Ax - Cx)
+            e, f = dot products with midpoints
+
+        Solution via Cramer's rule:
+            x0 = -(d·e - b·f) / (b·c - a·d)
+            y0 = -(a·f - c·e) / (b·c - a·d)
+
+        Radius is distance from center to any of the three points.
+
+        Example:
+            >>> A, B, C = [0, 0], [1, 0], [0.5, 0.866]
+            >>> x0, y0, r = find_circle(A, B, C)
+            >>> print(f"Center: ({x0:.3f}, {y0:.3f}), Radius: {r:.3f}")
+            Center: (0.500, 0.289), Radius: 0.577
+
+        Notes:
+            - Assumes points are not collinear (use check_collinear() first)
+            - Division by zero occurs if points are collinear
+            - Coordinate order: [x, y] with array indexing [0]=x, [1]=y
         """
-        a = A[1]-B[1]
-        b = A[0]-B[0]
-        c = A[1]-C[1]
-        d = A[0]-C[0]
-        e = ((A[1]**2-B[1]**2)-(B[0]**2-A[0]**2))/2.0
-        f = ((A[1]**2-C[1]**2)-(C[0]**2-A[0]**2))/2.0
-        x0 = -(d*e-b*f)/(b*c-a*d)
-        y0 = -(a*f-c*e)/(b*c-a*d)
-        r = math.sqrt((A[1]-x0)**2+(A[0]-y0)**2)
-        return x0,y0,r
+        # Calculate direction vectors for segments AB and AC
+        dy_AB = A[1] - B[1]  # y-component of AB
+        dx_AB = A[0] - B[0]  # x-component of AB
+        dy_AC = A[1] - C[1]  # y-component of AC
+        dx_AC = A[0] - C[0]  # x-component of AC
+
+        # Right-hand sides of perpendicular bisector equations
+        # Derived from: (midpoint - origin) · direction_vector
+        rhs_AB = ((A[1]**2 - B[1]**2) - (B[0]**2 - A[0]**2)) / 2.0
+        rhs_AC = ((A[1]**2 - C[1]**2) - (C[0]**2 - A[0]**2)) / 2.0
+
+        # Solve 2x2 linear system using Cramer's rule
+        determinant = dx_AB * dy_AC - dy_AB * dx_AC
+        center_x = -(dx_AC * rhs_AB - dx_AB * rhs_AC) / determinant
+        center_y = -(dy_AB * rhs_AC - dy_AC * rhs_AB) / determinant
+
+        # Calculate radius as distance from center to any point (use A)
+        radius = math.sqrt((A[1] - center_x)**2 + (A[0] - center_y)**2)
+
+        return center_x, center_y, radius
 
     def find_fittingCircle(self,array):
         """Fit circle to set of boundary points.
@@ -264,12 +302,32 @@ class vertex_class(object):
             return False
 
 
-    # loop from any value in one list
-    def starting_with(self,arr, start_index):
-         # use xrange instead of range in python 3
-         for i in range(start_index, len(arr)):
+    def starting_with(self, arr, start_index):
+        """Yield list elements starting from a specific index, wrapping circularly.
+
+        Iterates through a list beginning at start_index, continuing to the end,
+        then wrapping to the start. Useful for boundary traversal starting from
+        a known point.
+
+        Args:
+            arr (list): List to iterate through
+            start_index (int): Index to start iteration from
+
+        Yields:
+            Elements from arr, starting with arr[start_index], wrapping once
+
+        Example:
+            >>> list(starting_with([1, 2, 3, 4, 5], 3))
+            [4, 5, 1, 2, 3]
+
+        Notes:
+            - Uses Python 3 range() (equivalent to Python 2 xrange)
+            - If start_index >= len(arr), behavior may be unexpected
+            - Used for circular boundary point traversal in vertex method
+        """
+        for i in range(start_index, len(arr)):
             yield arr[i]
-         for i in range(start_index):
+        for i in range(start_index):
             yield arr[i]
 
     # find the boundary
@@ -371,8 +429,7 @@ class vertex_class(object):
 
                 stored_boun = [] # store all the boundary by sequence
 
-                ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
+                if myInput.is_grain_boundary(self.P, i, j, self.nx, self.ny):
                     stored_boun.append([i,j])
                     stored_boun.append([i,j])
                     direc = self.find_connect([i,j])
@@ -450,8 +507,7 @@ class vertex_class(object):
 
                 stored_boun = [] # store all the boundary by sequence
 
-                ip,im,jp,jm = myInput.periodic_bc(self.nx,self.ny,i,j)
-                if ( ((self.P[0,ip,j]-self.P[0,i,j])!=0) or ((self.P[0,im,j]-self.P[0,i,j])!=0) or ((self.P[0,i,jp]-self.P[0,i,j])!=0) or ((self.P[0,i,jm]-self.P[0,i,j])!=0) ):
+                if myInput.is_grain_boundary(self.P, i, j, self.nx, self.ny):
                     stored_boun.append([i,j])
                     stored_boun.append([i,j])
                     direc = self.find_connect([i,j])
