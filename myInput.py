@@ -691,25 +691,6 @@ def output_smoothed_matrix(simple_test3, linear_smoothing_matrix):
 
     return smoothed_matrix3
 
-def output_smoothed_matrix3D_old(simple_test3, linear_smoothing_matrix):
-    """Apply smoothing matrix to test data in 3D
-    
-    Args:
-        simple_test3: Input test data
-        linear_smoothing_matrix: Smoothing matrix to apply
-        
-    Returns:
-        ndarray: Smoothed matrix
-    """
-    edge = int(np.floor(np.shape(linear_smoothing_matrix)[0]/2))
-    ilen, jlen, klen = np.shape(simple_test3)
-    smoothed_matrix3 = np.zeros((ilen, jlen, klen))
-    for i in range(edge, ilen-edge):
-        for j in range(edge, jlen-edge):
-            for k in range(edge, klen-edge):
-                smoothed_matrix3[i, j, k] = np.sum(simple_test3[i-edge:i+edge+1, j-edge:j+edge+1, k-edge:k+edge+1]*linear_smoothing_matrix)
-
-    return smoothed_matrix3
 
 def output_smoothed_matrix3D(simple_test3, linear_smoothing_matrix):
     """
