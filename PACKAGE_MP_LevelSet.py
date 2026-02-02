@@ -3,7 +3,7 @@
 """
 Level Set Method Implementation for Interface Analysis
 
-This module implements the level set method for calculating grain boundary 
+This module implements the level set method for calculating grain boundary
 normal vectors and curvature in polycrystalline materials. The method uses
 signed distance functions with these features:
 
@@ -41,14 +41,15 @@ import matplotlib.pyplot as plt
 import myInput
 import datetime
 import multiprocessing as mp
+from PACKAGE_MP_Base2D import Base2D
 
-class levelSet_class(object):
+class levelSet_class(Base2D):
     """Level set method implementation for interface analysis.
-    
-    This class implements the level set method to calculate normal vectors and 
+
+    This class implements the level set method to calculate normal vectors and
     curvature at grain boundaries. The method uses an implicit representation
     of interfaces through a signed distance function.
-    
+
     Key attributes:
         P: Phase field array storing microstructure and normal vectors
         C: Array storing calculated curvature values
@@ -59,7 +60,7 @@ class levelSet_class(object):
 
     def __init__(self,nx,ny,ng,cores,nsteps,P0,R,clip=0,verification_system=True,curvature_sign=False):
         """Initialize the level set algorithm.
-        
+
         Args:
             nx,ny (int): Grid dimensions
             ng (int): Number of grains
@@ -68,36 +69,10 @@ class levelSet_class(object):
             P0 (ndarray): Initial microstructure
             R (ndarray): Reference solution for validation
         """
-        # Level set parameters
+        super().__init__(nx, ny, ng, cores, P0, R, clip, verification_system, curvature_sign)
+
+        # Level set specific parameters
         self.matrix_value = 10  # Initial value for level set function
-        self.running_time = 0   # Total execution time
-        self.running_coreTime = 0  # Core calculation time
-        self.errors = 0  # Accumulated errors
-        self.errors_per_site = 0  # Average error per site
-
-        # Grid parameters
-        self.nx = nx  # Number of sites in x axis
-        self.ny = ny  # Number of sites in y axis
-        self.ng = ng   # Number of grain types
-        self.R = R    # Reference normal vectors
-
-        # Initialize result arrays
-        self.P = np.zeros((3,nx,ny))  # Stores IC and normal vectors
-        self.C = np.zeros((2,nx,ny))  # Stores curvature
-
-        self.clip = clip  # Clipping value for curvature
-        self.verification_system = verification_system  # Flag for verification system
-        self.curvature_sign = curvature_sign  # Flag for curvature sign
-        
-        # Convert individual grain maps to single map
-        for i in range(0,np.shape(P0)[2]):
-            self.P[0,:,:] += P0[:,:,i]*(i+1)
-            self.C[0,:,:] += P0[:,:,i]*(i+1)
-
-        # Parallel processing parameters
-        self.cores = cores
-
-        # Evolution parameters
         self.nsteps = nsteps  # Number of evolution time steps
         self.dt = 1  # Time step size
         self.tableL = 2*(2*nsteps+1)+1  # Window size for normal vectors
@@ -109,82 +84,13 @@ class levelSet_class(object):
         self.V = np.ones((nsteps+1,nx,ny))*self.matrix_value
         self.myTable = np.ones((nx,ny))
 
-    def get_P(self):
-        """Get the phase field and normal vector results.
-        
-        Returns:
-            ndarray: Matrix containing grain structure and normal vectors
-        """
-        return self.P
+    def res_back(self, back_result):
+        self.res_back_with_V(back_result)
 
-    def get_C(self):
-        """Get the curvature calculation results.
-        
-        Returns:
-            ndarray: Matrix containing curvature values
-        """
-        return self.C
-
-    def get_errors(self):
-        """Calculate error between calculated and reference normal vectors.
-        
-        Computes angular difference between calculated normal vectors and reference
-        values at each grain boundary site.
-        """
-        ge_gbsites = self.get_gb_list()
-        for gbSite in ge_gbsites:
-            [gei,gej] = gbSite
-            ge_dx,ge_dy = myInput.get_grad(self.P,gei,gej)
-            self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,0]+ge_dy*self.R[gei,gej,1]),5))
-
-        self.errors_per_site = self.errors/len(ge_gbsites)
-
-    def get_2d_plot(self,init,algo):
-        plt.subplots_adjust(wspace=0.2,right=1.8)
-        plt.close()
-        fig1 = plt.figure(1)
-        fig_page = self.nsteps
-        plt.title(f'{algo}-{init} \n loop = '+str(fig_page))
-        if fig_page < 10:
-            String = '000'+str(fig_page)
-        elif fig_page < 100:
-            String = '00'+str(fig_page)
-        elif fig_page < 1000:
-            String = '0'+str(fig_page)
-        elif fig_page < 10000:
-            String = str(fig_page)
-        plt.imshow(self.P[0,:,:], cmap='gray', interpolation='nearest')
-        # plt.xticks([])
-        # plt.yticks([])
-        # plt.savefig('LS_PolyGray_noArrows.png',dpi=1000,bbox_inches='tight')
-
-        g2p_gbsites = self.get_gb_list()
-        for gbSite in g2p_gbsites :
-            [g2pi,g2pj] = gbSite
-            g2p_dx,g2p_dy = myInput.get_grad(self.P,g2pi,g2pj)
-            if g2pi >200 and g2pi<500:
-                plt.arrow(g2pj,g2pi,40*g2p_dx,40*g2p_dy,width=0.1,lw=0.1,alpha=0.8,color='navy')
-
-        plt.xticks([])
-        plt.yticks([])
-        plt.savefig('LS_PolyGray_Arrows.png',dpi=1000,bbox_inches='tight')
-
-    def get_gb_list(self,grainID=1):
-        """Get list of grain boundary sites.
-        
-        Args:
-            grainID (int): ID of grain to find boundaries for
-            
-        Returns:
-            list: List of [i,j] coordinates of boundary sites
-        """
-        ggn_gbsites = []
-        for i in range(0,self.nx):
-            for j in range(0,self.ny):
-                if myInput.is_grain_boundary(self.P, i, j, self.nx, self.ny) and self.P[0,i,j]==grainID:
-                    ggn_gbsites.append([i,j])
-        return ggn_gbsites
-
+    def get_2d_plot(self, init, algo):
+        super().get_2d_plot(init, algo, self.nsteps, arrow_scale=40, cmap='gray',
+                            save_prefix='LS', filter_range=(200, 500))
+        plt.savefig('LS_PolyGray_Arrows.png', dpi=1000, bbox_inches='tight')
 
     def Neighbors(self,arr,x,y,n):
         ''' Given a 2D-array, returns an nxn array whose "center" element is arr[x,y]'''
@@ -193,13 +99,13 @@ class levelSet_class(object):
 
     def find_distance(self,i,j,d): # let d=2
         """Calculate signed distance from point to interface.
-        
+
         Uses scanning algorithm to find closest interface point.
-        
+
         Args:
             i,j (int): Current point coordinates
             d (int): Search radius
-            
+
         Returns:
             float: Signed distance to nearest interface
         """
@@ -223,47 +129,17 @@ class levelSet_class(object):
 
         return d*math.sqrt(2)
 
-    def check_subdomain_and_nei(self,A):
-        ca_length,ca_width = myInput.split_cores(self.cores)
-        ca_area_cen = [int(A[0]/self.nx*ca_width),int(A[1]/self.ny*ca_length)]
-        ca_area_nei = []
-        ca_area_nei.append( [int((ca_area_cen[0]-1)%ca_width), int((ca_area_cen[1]-1)%ca_length)] )
-        ca_area_nei.append( [int((ca_area_cen[0]-1)%ca_width), int(ca_area_cen[1])] )
-        ca_area_nei.append( [int((ca_area_cen[0]-1)%ca_width), int((ca_area_cen[1]+1)%ca_length)] )
-        ca_area_nei.append( [int(ca_area_cen[0]), int((ca_area_cen[1]+1)%ca_length)] )
-        ca_area_nei.append( [int((ca_area_cen[0]+1)%ca_width), int((ca_area_cen[1]+1)%ca_length)] )
-        ca_area_nei.append( [int((ca_area_cen[0]+1)%ca_width), int(ca_area_cen[1])] )
-        ca_area_nei.append( [int((ca_area_cen[0]+1)%ca_width), int((ca_area_cen[1]-1)%ca_length)] )
-        ca_area_nei.append( [int(ca_area_cen[0]), int((ca_area_cen[1]-1)%ca_length)] )
-
-        return ca_area_cen, ca_area_nei
-
-    def res_back(self,back_result):
-        res_stime = datetime.datetime.now()
-        (fval,core_time,self.V) = back_result
-        if core_time > self.running_coreTime:
-            self.running_coreTime = core_time
-
-        print("res_back start...")
-        if fval.shape[2] == 1:
-            self.C[1,:,:] += fval[:,:,0]
-        elif fval.shape[2] == 2:
-            self.P[1,:,:] += fval[:,:,0]
-            self.P[2,:,:] += fval[:,:,1]
-        res_etime = datetime.datetime.now()
-        print("my res time is " + str((res_etime - res_stime).total_seconds()))
-
     #%% Smooth Core Site-based Stored data
 
     def levelSet_curvature_core(self,core_input):
         """Core curvature calculation function using level set method.
-        
+
         Implements level set evolution and curvature calculation on a subdomain.
         Uses higher-order accurate derivatives to compute mean curvature.
-        
+
         Args:
             core_input: Input data for this subdomain
-            
+
         Returns:
             tuple: Calculated curvature values, timing and level set function
         """
@@ -412,13 +288,13 @@ class levelSet_class(object):
 
     def levelSet_normal_vector_core(self,core_input):
         """Core function for normal vector calculation.
-        
+
         Implements evolution of level set function and calculation of
         normal vectors through spatial derivatives.
-        
+
         Args:
             core_input: Subset of points to process
-            
+
         Returns:
             tuple: (Normal vector array, Computation time)
         """
@@ -542,52 +418,16 @@ class levelSet_class(object):
 
     def levelSet_main(self, purpose="inclination"):
         """Main function to run the level set algorithm.
-        
+
         Sets up parallel processing and manages the overall calculation for
         either normal vectors or curvature.
-        
+
         Args:
-            purpose: Either "inclination" for normal vectors or 
+            purpose: Either "inclination" for normal vectors or
                     "curvature" for curvature calculation
         """
-        starttime = datetime.datetime.now()
-
-        # Setup parallel processing
-        pool = mp.Pool(processes=self.cores)
-        main_lc, main_wc = myInput.split_cores(self.cores)
-
-        # Split domain for parallel processing
-        all_sites = np.array([[x,y] for x in range(self.nx) for y in range(self.ny)]).reshape(self.nx,self.ny,2)
-        multi_input = myInput.split_IC(all_sites, self.cores,2, 0,1)
-
-        # Run calculations in parallel
-        res_list = []
-        if purpose == "inclination":
-            for ki in range(main_wc):
-                for kj in range(main_lc):
-                    res_one = pool.apply_async(
-                        func=self.levelSet_normal_vector_core,
-                        args=(multi_input[ki][kj],),
-                        callback=self.res_back)
-                    res_list.append(res_one)
-        elif purpose == "curvature":
-            for ki in range(main_wc):
-                for kj in range(main_lc):
-                    res_one = pool.apply_async(
-                        func=self.levelSet_curvature_core,
-                        args=(multi_input[ki][kj],),
-                        callback=self.res_back)
-                    res_list.append(res_one)
-
-        # Wait for all processes to complete
-        pool.close()
-        pool.join()
-        print("core done!")
-        # print(res_list[0].get())
-
-        # Calculate timing and errors
-        endtime = datetime.datetime.now()
-        self.running_time = (endtime - starttime).total_seconds()
+        self.run_main(self.levelSet_normal_vector_core, self.levelSet_curvature_core,
+                      purpose=purpose, callback=self.res_back)
         self.get_errors()
 
 if __name__ == '__main__':
