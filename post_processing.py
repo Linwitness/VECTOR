@@ -721,10 +721,10 @@ def get_normal_vector_slope(P, sites, step, para_name, bias=None):
     if bias is not None:
         freqArray = freqArray + bias
         freqArray = freqArray/sum(freqArray*binValue)
-    # Plot
-    plt.plot(xCor/180*math.pi, freqArray, linewidth=2, label=para_name)
+    # Plot (wrap around for polar continuity)
+    plt.plot(np.append(xCor,xCor[0])/180*math.pi, np.append(freqArray,freqArray[0]), linewidth=2, label=para_name)
 
-    return 0
+    return freqArray
 
 def get_normal_vector_slope_3d(P, sites, step, para_name, angle_index=0, bias=None):
     """Calculate and plot slope distribution of normal vectors in 3D.
@@ -801,6 +801,76 @@ def simple_magnitude(freqArray):
     magnitude_stan = np.sqrt(np.sum((abs(freqArray - freqArray_circle)/np.average(freqArray_circle) - magnitude_ave)**2)/binNum)
 
     return magnitude_ave, magnitude_stan
+
+def setup_polar_figure(r_max=0.008, r_tick=0.004, theta_tick=45.0, fontsize=16):
+    """Create and configure a standard polar figure for normal distribution plots.
+
+    Args:
+        r_max (float): Maximum radial limit
+        r_tick (float): Radial tick interval
+        theta_tick (float): Angular tick interval in degrees
+        fontsize (int): Font size for tick labels
+
+    Returns:
+        tuple: (fig, ax) matplotlib figure and axes
+    """
+    plt.close()
+    fig = plt.figure(figsize=(5, 5))
+    ax = plt.gca(projection='polar')
+    ax.set_thetagrids(np.arange(0.0, 360.0, theta_tick), fontsize=fontsize)
+    ax.set_thetamin(0.0)
+    ax.set_thetamax(360.0)
+    ax.set_rgrids(np.arange(0, r_max, r_tick))
+    ax.set_rlabel_position(0.0)
+    ax.set_rlim(0.0, r_max)
+    r_label = f'{r_tick:.0e}' if r_tick < 0.01 else str(r_tick)
+    ax.set_yticklabels(['0', r_label], fontsize=fontsize)
+    ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
+    ax.set_axisbelow('True')
+    return fig, ax
+
+def load_or_compute_normal_vectors(cache_dir, prefix, step, compute_func, *compute_args):
+    """Load cached normal vectors or compute and cache them.
+
+    Args:
+        cache_dir (str): Directory for cache files
+        prefix (str): Prefix for cache file names
+        step (int): Timestep identifier for cache key
+        compute_func (callable): Function to compute (P, sites) if not cached.
+            Should return (P, sites, ...) tuple.
+        *compute_args: Additional arguments passed to compute_func
+
+    Returns:
+        tuple: (P, sites) arrays
+    """
+    data_file_P = os.path.join(cache_dir, f'normal_distribution_{prefix}_P_step{step}.npy')
+    data_file_sites = os.path.join(cache_dir, f'normal_distribution_{prefix}_sites_step{step}.npy')
+    if os.path.exists(data_file_P):
+        P = np.load(data_file_P)
+        sites = np.load(data_file_sites)
+    else:
+        result = compute_func(*compute_args)
+        P = result[0]
+        sites = result[1]
+        os.makedirs(os.path.dirname(data_file_P), exist_ok=True)
+        np.save(data_file_P, P)
+        np.save(data_file_sites, sites)
+    return P, sites
+
+def compute_bias(freqArray):
+    """Compute isotropic bias correction from a reference distribution.
+
+    Args:
+        freqArray (ndarray): Frequency array from an isotropic reference case
+
+    Returns:
+        ndarray: Bias correction array (uniform - reference)
+    """
+    binValue = 10.01
+    binNum = len(freqArray)
+    freqArray_circle = np.ones(binNum)
+    freqArray_circle = freqArray_circle / sum(freqArray_circle * binValue)
+    return freqArray_circle - freqArray
 
 ###########################################
 # 6. Visualization Functions
