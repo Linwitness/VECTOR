@@ -54,72 +54,8 @@ sys.path.append(current_path)
 sys.path.append(current_path+'/../../')
 import myInput
 import PACKAGE_MP_Linear as linear2d
+import post_processing
 sys.path.append(current_path+'/../calculate_tangent/')
-
-def plot_structure_figure(step, structure_figure, figure_path):
-    """
-    Generate High-Quality Microstructure Visualization
-    
-    This function creates publication-quality microstructure plots with consistent
-    color mapping and clean formatting suitable for scientific publications.
-    
-    Parameters:
-    -----------
-    step : int
-        Simulation timestep to visualize
-    structure_figure : ndarray
-        4D array containing microstructure evolution data (time, x, y, features)
-    figure_path : str
-        Base path for output figure (energy method suffix will be appended)
-        
-    Algorithm Details:
-    -----------------
-    - Uses initial timestep for consistent color range normalization
-    - Applies 90-degree rotation for proper orientation
-    - Removes all axes and ticks for clean scientific presentation
-    - Saves at 400 DPI for high-quality publication figures
-    - Uses rainbow colormap for maximum grain distinction
-    
-    Visualization Features:
-    ----------------------
-    - Consistent color range across all energy methods
-    - No interpolation for pixel-perfect grain boundary representation
-    - Tight bounding box to eliminate white space
-    - Timestep encoding in filename for temporal tracking
-    
-    Scientific Applications:
-    -----------------------
-    - Comparative microstructure evolution analysis
-    - Energy method effect visualization
-    - Publication-quality figure generation
-    - Large-scale grain growth documentation
-    """
-    # Close any existing plots to prevent memory issues
-    plt.close()
-    fig, ax = plt.subplots()
-
-    # Extract microstructure data for visualization
-    cv_initial = np.squeeze(structure_figure[0])    # Initial state for color normalization
-    cv0 = np.squeeze(structure_figure[step])        # Current timestep data
-    cv0 = np.rot90(cv0, 1)                         # Rotate for proper orientation
-
-    # Create microstructure plot with consistent color mapping
-    im = ax.imshow(cv0, vmin=np.min(cv_initial), vmax=np.max(cv_initial), 
-                   cmap='rainbow', interpolation='none')
-    
-    # Optional colorbar configuration (currently disabled for clean appearance)
-    # cb = fig.colorbar(im)
-    # cb.set_ticks([10000,20000])
-    # cb.set_ticklabels(['1e4', '2e4'])
-    # cb.ax.tick_params(labelsize=20)
-    
-    # Remove all axes and ticks for clean scientific presentation
-    ax.axes.get_xaxis().set_ticks([])
-    ax.axes.get_yaxis().set_ticks([])
-    ax.tick_params(which='both', size=0, labelsize=0)
-
-    # Save high-resolution figure with timestep information
-    plt.savefig(figure_path + f"_ts{step*30}.png", dpi=400, bbox_inches='tight')
 
 
 if __name__ == '__main__':
@@ -229,12 +165,12 @@ if __name__ == '__main__':
     
     # Create visualization for each energy method at selected timesteps
     # Each method produces a figure showing its characteristic grain structure
-    plot_structure_figure(special_step_distribution_min, npy_file_aniso_min[:,:,:,0], figure_path + "_min")
-    plot_structure_figure(special_step_distribution_max, npy_file_aniso_max[:,:,:,0], figure_path + "_max")
-    plot_structure_figure(special_step_distribution_ave, npy_file_aniso_ave[:,:,:,0], figure_path + "_ave")
-    plot_structure_figure(special_step_distribution_sum, npy_file_aniso_sum[:,:,:,0], figure_path + "_sum")
-    plot_structure_figure(special_step_distribution_consMin, npy_file_aniso_consMin[:,:,:,0], figure_path + "_consmin")
-    plot_structure_figure(special_step_distribution_consMax, npy_file_aniso_consMax[:,:,:,0], figure_path + "_consmax")
+    post_processing.plot_structure_figure(special_step_distribution_min, npy_file_aniso_min[:,:,:,0], figure_path + "_min")
+    post_processing.plot_structure_figure(special_step_distribution_max, npy_file_aniso_max[:,:,:,0], figure_path + "_max")
+    post_processing.plot_structure_figure(special_step_distribution_ave, npy_file_aniso_ave[:,:,:,0], figure_path + "_ave")
+    post_processing.plot_structure_figure(special_step_distribution_sum, npy_file_aniso_sum[:,:,:,0], figure_path + "_sum")
+    post_processing.plot_structure_figure(special_step_distribution_consMin, npy_file_aniso_consMin[:,:,:,0], figure_path + "_consmin")
+    post_processing.plot_structure_figure(special_step_distribution_consMax, npy_file_aniso_consMax[:,:,:,0], figure_path + "_consmax")
 
 
 

@@ -58,73 +58,8 @@ sys.path.append(current_path)
 sys.path.append(current_path+'/../../')
 import myInput
 import PACKAGE_MP_Linear as linear2d
+import post_processing
 sys.path.append(current_path+'/../calculate_tangent/')
-
-def plot_structure_figure(step, structure_figure, figure_path):
-    """
-    Generate Colorful Polycrystalline Microstructure Visualization
-    
-    This function creates publication-quality microstructure plots for
-    medium-scale polycrystalline systems using rainbow colormap visualization
-    that enhances grain identification and provides clear distinction between
-    individual grains in complex microstructures.
-    
-    Parameters:
-    -----------
-    step : int
-        Simulation timestep to visualize
-    structure_figure : ndarray
-        4D array containing polycrystalline microstructure evolution data
-    figure_path : str
-        Base path for output figure (delta suffix will be appended)
-        
-    Algorithm Details:
-    -----------------
-    - Uses initial timestep for consistent color range normalization
-    - Applies 90-degree rotation for proper grain orientation
-    - Rainbow colormap for maximum grain distinction capability
-    - Removes all axes and ticks for clean scientific presentation
-    - Saves at 400 DPI for high-quality publication figures
-    
-    Visualization Features:
-    ----------------------
-    - Rainbow colormap optimized for grain identification
-    - Consistent color range across all delta parameter studies
-    - No interpolation for pixel-perfect grain boundary representation
-    - Timestep encoding in filename for temporal tracking
-    - Enhanced contrast for complex polycrystalline structures
-    
-    Scientific Applications:
-    -----------------------
-    - Delta parameter effect visualization in polycrystalline systems
-    - Grain growth evolution analysis with enhanced identification
-    - Multi-grain system documentation for intermediate scales
-    - Publication-quality figure generation for parameter studies
-    """
-    # Close any existing plots to prevent memory issues
-    plt.close()
-    fig, ax = plt.subplots()
-
-    # Extract polycrystalline microstructure data for visualization
-    cv_initial = np.squeeze(structure_figure[0])    # Initial state for color normalization
-    cv0 = np.squeeze(structure_figure[step])        # Current timestep data
-    cv0 = np.rot90(cv0, 1)                         # Rotate for proper grain orientation
-
-    # Create colorful polycrystalline microstructure plot
-    im = ax.imshow(cv0, vmin=np.min(cv_initial), vmax=np.max(cv_initial), 
-                   cmap='rainbow', interpolation='none')  # Rainbow for grain distinction
-    
-    # Optional colorbar configuration (currently disabled for clean appearance)
-    # cb = fig.colorbar(im)
-    # cb.ax.tick_params(labelsize=20)
-    
-    # Remove all axes and ticks for clean scientific presentation
-    ax.axes.get_xaxis().set_ticks([])
-    ax.axes.get_yaxis().set_ticks([])
-    ax.tick_params(which='both', size=0, labelsize=0)
-
-    # Save high-resolution figure with timestep information
-    plt.savefig(figure_path + f"_ts{step*30}.png", dpi=400, bbox_inches='tight')
 
 
 if __name__ == '__main__':
@@ -248,12 +183,12 @@ if __name__ == '__main__':
     
     # Create rainbow-colormap visualizations for each delta parameter
     # Extract grain ID data (first feature dimension) for microstructure visualization
-    plot_structure_figure(special_step_distribution_000, npy_file_aniso_000[:,:,:,0], figure_path + "_000")
-    plot_structure_figure(special_step_distribution_020, npy_file_aniso_020[:,:,:,0], figure_path + "_020")
-    plot_structure_figure(special_step_distribution_040, npy_file_aniso_040[:,:,:,0], figure_path + "_040")
-    plot_structure_figure(special_step_distribution_060, npy_file_aniso_060[:,:,:,0], figure_path + "_060")
-    plot_structure_figure(special_step_distribution_080, npy_file_aniso_080[:,:,:,0], figure_path + "_080")
-    plot_structure_figure(special_step_distribution_095, npy_file_aniso_095[:,:,:,0], figure_path + "_095")
+    post_processing.plot_structure_figure(special_step_distribution_000, npy_file_aniso_000[:,:,:,0], figure_path + "_000")
+    post_processing.plot_structure_figure(special_step_distribution_020, npy_file_aniso_020[:,:,:,0], figure_path + "_020")
+    post_processing.plot_structure_figure(special_step_distribution_040, npy_file_aniso_040[:,:,:,0], figure_path + "_040")
+    post_processing.plot_structure_figure(special_step_distribution_060, npy_file_aniso_060[:,:,:,0], figure_path + "_060")
+    post_processing.plot_structure_figure(special_step_distribution_080, npy_file_aniso_080[:,:,:,0], figure_path + "_080")
+    post_processing.plot_structure_figure(special_step_distribution_095, npy_file_aniso_095[:,:,:,0], figure_path + "_095")
     
     print("Polycrystalline delta parameter study complete!")
 

@@ -57,75 +57,7 @@ import sys
 sys.path.append(current_path)
 sys.path.append(current_path+'/../../')
 import myInput
-import PACKAGE_MP_Linear as linear2d
-sys.path.append(current_path+'/../calculate_tangent/')
-
-def plot_structure_figure(step, structure_figure, figure_path):
-    """
-    Generate High-Contrast Circular Microstructure Visualization
-    
-    This function creates publication-quality visualizations of circular
-    microstructure evolution with emphasis on grain boundary definition
-    using high-contrast grayscale colormapping suitable for parameter
-    sensitivity studies and boundary analysis.
-    
-    Parameters:
-    -----------
-    step : int
-        Simulation timestep to visualize
-    structure_figure : ndarray
-        4D array containing circular microstructure evolution data (time, x, y, features)
-    figure_path : str
-        Base path for output figure (parameter suffix will be appended)
-        
-    Algorithm Details:
-    -----------------
-    - Uses initial timestep for consistent contrast normalization
-    - Applies 90-degree rotation for proper boundary orientation
-    - High-contrast grayscale colormap for clear boundary definition
-    - Removes all axes and ticks for clean scientific presentation
-    - Saves at 400 DPI for high-quality publication figures
-    
-    Visualization Features:
-    ----------------------
-    - Consistent contrast range across all parameter combinations
-    - No interpolation for pixel-perfect boundary representation
-    - Grayscale colormap optimized for circular boundary visualization
-    - Timestep encoding in filename for temporal tracking
-    - High-contrast settings for clear grain distinction
-    
-    Scientific Applications:
-    -----------------------
-    - Parameter sensitivity visualization for circular systems
-    - Boundary evolution analysis in simplified geometries
-    - High-contrast imaging for energy method validation
-    - Publication-quality figure generation for parameter studies
-    """
-    # Close any existing plots to prevent memory issues
-    plt.close()
-    fig, ax = plt.subplots()
-
-    # Extract circular microstructure data for visualization
-    cv_initial = np.squeeze(structure_figure[0])    # Initial state for contrast normalization
-    cv0 = np.squeeze(structure_figure[step])        # Current timestep data
-    cv0 = np.rot90(cv0, 1)                         # Rotate for proper boundary orientation
-
-    # Create high-contrast circular microstructure plot
-    im = ax.imshow(cv0, vmin=np.min(cv_initial), vmax=np.max(cv_initial), 
-                   cmap='gray_r', interpolation='none')  # High-contrast grayscale
-    
-    # Optional colorbar configuration (currently disabled for clean appearance)
-    # cb = fig.colorbar(im)
-    # cb.ax.tick_params(labelsize=20)
-    
-    # Remove all axes and ticks for clean scientific presentation
-    ax.axes.get_xaxis().set_ticks([])
-    ax.axes.get_yaxis().set_ticks([])
-    ax.tick_params(which='both', size=0, labelsize=0)
-
-    # Save high-resolution figure with timestep information
-    plt.savefig(figure_path + f"_ts{step*30}.png", dpi=400, bbox_inches='tight')
-
+import post_processing
 
 if __name__ == '__main__':
     """
@@ -284,24 +216,24 @@ if __name__ == '__main__':
     figure_path = current_path + "/figures/microstructure_circle"
     
     # Delta sensitivity series: Progressive anisotropy effects
-    plot_structure_figure(special_step_distribution_000, npy_file_aniso_000[:,:,:,0], figure_path + "_000")
-    plot_structure_figure(special_step_distribution_020, npy_file_aniso_020[:,:,:,0], figure_path + "_020")
-    plot_structure_figure(special_step_distribution_040, npy_file_aniso_040[:,:,:,0], figure_path + "_040")
-    plot_structure_figure(special_step_distribution_060, npy_file_aniso_060[:,:,:,0], figure_path + "_060")
-    plot_structure_figure(special_step_distribution_080, npy_file_aniso_080[:,:,:,0], figure_path + "_080")
-    plot_structure_figure(special_step_distribution_095, npy_file_aniso_095[:,:,:,0], figure_path + "_095")
+    post_processing.plot_structure_figure(special_step_distribution_000, npy_file_aniso_000[:,:,:,0], figure_path + "_000", cmap='gray_r')
+    post_processing.plot_structure_figure(special_step_distribution_020, npy_file_aniso_020[:,:,:,0], figure_path + "_020", cmap='gray_r')
+    post_processing.plot_structure_figure(special_step_distribution_040, npy_file_aniso_040[:,:,:,0], figure_path + "_040", cmap='gray_r')
+    post_processing.plot_structure_figure(special_step_distribution_060, npy_file_aniso_060[:,:,:,0], figure_path + "_060", cmap='gray_r')
+    post_processing.plot_structure_figure(special_step_distribution_080, npy_file_aniso_080[:,:,:,0], figure_path + "_080", cmap='gray_r')
+    post_processing.plot_structure_figure(special_step_distribution_095, npy_file_aniso_095[:,:,:,0], figure_path + "_095", cmap='gray_r')
 
     # Crystallographic orientation series: Reference direction effects
-    plot_structure_figure(special_step_distribution_080_000, npy_file_aniso_095[:,:,:,0], figure_path + "_095_000")
-    plot_structure_figure(special_step_distribution_080_087, npy_file_aniso_080_087[:,:,:,0], figure_path + "_095_087")
-    plot_structure_figure(special_step_distribution_080_071, npy_file_aniso_080_071[:,:,:,0], figure_path + "_095_071")
-    plot_structure_figure(special_step_distribution_080_050, npy_file_aniso_080_050[:,:,:,0], figure_path + "_095_050")
-    plot_structure_figure(special_step_distribution_080_100, npy_file_aniso_080_100[:,:,:,0], figure_path + "_095_100")
+    post_processing.plot_structure_figure(special_step_distribution_080_000, npy_file_aniso_095[:,:,:,0], figure_path + "_095_000", cmap='gray_r')
+    post_processing.plot_structure_figure(special_step_distribution_080_087, npy_file_aniso_080_087[:,:,:,0], figure_path + "_095_087", cmap='gray_r')
+    post_processing.plot_structure_figure(special_step_distribution_080_071, npy_file_aniso_080_071[:,:,:,0], figure_path + "_095_071", cmap='gray_r')
+    post_processing.plot_structure_figure(special_step_distribution_080_050, npy_file_aniso_080_050[:,:,:,0], figure_path + "_095_050", cmap='gray_r')
+    post_processing.plot_structure_figure(special_step_distribution_080_100, npy_file_aniso_080_100[:,:,:,0], figure_path + "_095_100", cmap='gray_r')
 
     # Mobility parameter series: Kinetic effects analysis
-    plot_structure_figure(special_step_distribution_095_m2, npy_file_aniso_095[:,:,:,0], figure_path + "_095_m2")
-    plot_structure_figure(special_step_distribution_095_m4, npy_file_aniso_095_m4[:,:,:,0], figure_path + "_095_m4")
-    plot_structure_figure(special_step_distribution_095_m6, npy_file_aniso_095_m6[:,:,:,0], figure_path + "_095_m6")
+    post_processing.plot_structure_figure(special_step_distribution_095_m2, npy_file_aniso_095[:,:,:,0], figure_path + "_095_m2", cmap='gray_r')
+    post_processing.plot_structure_figure(special_step_distribution_095_m4, npy_file_aniso_095_m4[:,:,:,0], figure_path + "_095_m4", cmap='gray_r')
+    post_processing.plot_structure_figure(special_step_distribution_095_m6, npy_file_aniso_095_m6[:,:,:,0], figure_path + "_095_m6", cmap='gray_r')
     
     print("Circular microstructure parameter study complete!")
 

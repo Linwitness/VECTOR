@@ -56,75 +56,7 @@ import sys
 sys.path.append(current_path)
 sys.path.append(current_path+'/../../')
 import myInput
-import PACKAGE_MP_Linear as linear2d
-sys.path.append(current_path+'/../calculate_tangent/')
-
-def plot_structure_figure(step, structure_figure, figure_path):
-    """
-    Generate High-Contrast Hexagonal Microstructure Visualization
-    
-    This function creates publication-quality visualizations of hexagonal
-    microstructure arrangements with emphasis on triple junction geometry
-    using high-contrast grayscale colormapping suitable for energy method
-    validation and systematic boundary analysis.
-    
-    Parameters:
-    -----------
-    step : int
-        Simulation timestep to visualize (typically 0 for initial state)
-    structure_figure : ndarray
-        4D array containing hexagonal microstructure data (time, x, y, features)
-    figure_path : str
-        Base path for output figure (state suffix will be appended)
-        
-    Algorithm Details:
-    -----------------
-    - Uses initial timestep for consistent contrast normalization
-    - Applies 90-degree rotation for proper triple junction orientation
-    - High-contrast grayscale colormap for clear boundary definition
-    - Removes all axes and ticks for clean scientific presentation
-    - Saves at 400 DPI for high-quality publication figures
-    
-    Visualization Features:
-    ----------------------
-    - Consistent contrast range for systematic energy studies
-    - No interpolation for pixel-perfect boundary representation
-    - Grayscale colormap optimized for triple junction visualization
-    - Timestep encoding in filename for temporal tracking
-    - High-contrast settings for clear grain distinction
-    
-    Scientific Applications:
-    -----------------------
-    - Triple junction energy visualization in regular geometries
-    - Energy method validation with controlled boundary arrangements
-    - High-contrast imaging for algorithm verification
-    - Publication-quality figure generation for validation studies
-    """
-    # Close any existing plots to prevent memory issues
-    plt.close()
-    fig, ax = plt.subplots()
-
-    # Extract hexagonal microstructure data for visualization
-    cv_initial = np.squeeze(structure_figure[0])    # Initial state for contrast normalization
-    cv0 = np.squeeze(structure_figure[step])        # Current timestep data
-    cv0 = np.rot90(cv0, 1)                         # Rotate for proper triple junction orientation
-
-    # Create high-contrast hexagonal microstructure plot
-    im = ax.imshow(cv0, vmin=np.min(cv_initial), vmax=np.max(cv_initial), 
-                   cmap='gray_r', interpolation='none')  # High-contrast grayscale
-    
-    # Optional colorbar configuration (currently disabled for clean appearance)
-    # cb = fig.colorbar(im)
-    # cb.ax.tick_params(labelsize=20)
-    
-    # Remove all axes and ticks for clean scientific presentation
-    ax.axes.get_xaxis().set_ticks([])
-    ax.axes.get_yaxis().set_ticks([])
-    ax.tick_params(which='both', size=0, labelsize=0)
-
-    # Save high-resolution figure with timestep information
-    plt.savefig(figure_path + f"_ts{step*30}.png", dpi=400, bbox_inches='tight')
-
+import post_processing
 
 if __name__ == '__main__':
     """
@@ -215,11 +147,9 @@ if __name__ == '__main__':
     
     # Create initial state visualization for triple junction energy validation
     # Extract grain ID data (first feature dimension) for microstructure visualization
-    plot_structure_figure(special_step_distribution_hex, npy_file_hex[:,:,:,0], figure_path + "_initial")
-    
+    post_processing.plot_structure_figure(special_step_distribution_hex, npy_file_hex[:,:,:,0], figure_path + "_initial", cmap='gray_r')
+
     print("Hexagonal microstructure TJE validation analysis complete!")
-
-
 
 
 
