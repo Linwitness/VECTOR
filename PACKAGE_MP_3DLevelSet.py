@@ -3,7 +3,7 @@
 """
 3D Level Set Method Implementation for Interface Analysis
 
-This module implements the 3D level set method for calculating grain boundary 
+This module implements the 3D level set method for calculating grain boundary
 normal vectors and curvature in 3D polycrystalline materials. The method uses
 signed distance functions to represent interfaces with these features:
 
@@ -41,12 +41,13 @@ import matplotlib.pyplot as plt
 import myInput
 import datetime
 import multiprocessing as mp
+from PACKAGE_MP_Base3D import Base3D
 
-class levelSet3d_class(object):
+class levelSet3d_class(Base3D):
 
     def __init__(self,nx,ny,nz,ng,cores,nsteps,P0,R,bc,clip=0,verification_system = True, curvature_sign = False):
         """Initialize the 3D level set algorithm.
-        
+
         Args:
             nx,ny,nz (int): Grid dimensions
             ng (int): Number of grains
@@ -57,32 +58,13 @@ class levelSet3d_class(object):
             bc (str): Boundary condition type ('periodic' or 'non-periodic')
             clip (int): Enable/disable optimization features
         """
-        # V_matrix init value; runnning time and error for the algorithm
+        super().__init__(nx, ny, nz, ng, cores, P0, R, bc, clip, verification_system, curvature_sign)
+
+        # Algorithm-specific attributes
         self.matrix_value = 10
-        self.running_time = 0
-        self.running_coreTime = 0
-        self.errors = 0
-        self.errors_per_site = 0
-
-        # initial condition data
-        self.nx = nx # number of sites in x axis
-        self.ny = ny # number of sites in y axis
-        self.nz = nz
-        self.ng = ng # number of grains in IC
-        self.R = R  # results of analysis model
-        # convert individual grains map into one grain map
-        self.P = np.zeros((4,nx,ny,nz)) # matrix to store IC and normal vector results
-        for i in range(0,np.shape(P0)[3]):
-            self.P[0,:,:,:] += P0[:,:,:,i]*(i+1)
-        self.bc = bc
-
-        # data for multiprocessing
-        self.cores = cores
-
-        # data for accuracy
-        self.nsteps = nsteps #Number of timesteps
-        self.dt = 1 #Timestep size
-        self.tableL = 2*(2*nsteps+1)+1 # smallest table is 7by7
+        self.nsteps = nsteps
+        self.dt = 1
+        self.tableL = 2*(2*nsteps+1)+1
         self.halfL = 2*nsteps+1
 
         # temporary matrix to increase efficiency
@@ -90,26 +72,6 @@ class levelSet3d_class(object):
         self.myTable = np.ones((nx,ny,nz))
 
     #%% Function
-    def get_P(self):
-        """Output the result matrix containing grain IDs and normal vectors.
-
-        Returns:
-            ndarray: Phase field array of shape (4, nx, ny, nz) where:
-                - P[0,:,:,:] = Grain ID for each voxel
-                - P[1,:,:,:] = x-component of normal vector
-                - P[2,:,:,:] = y-component of normal vector
-                - P[3,:,:,:] = z-component of normal vector
-        """
-        return self.P
-
-    def get_errors(self):
-        ge_gbsites = self.get_gb_list()
-        for gbSite in ge_gbsites :
-            [gei,gej,gek] = gbSite
-            ge_dx,ge_dy,ge_dz = myInput.get_grad3d(self.P,gei,gej,gek)
-            self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,gek,0]+ge_dy*self.R[gei,gej,gek,1]+ge_dz*self.R[gei,gej,gek,2]),5))
-
-        self.errors_per_site = self.errors/len(ge_gbsites)
 
     def get_2d_plot(self,init,algo,z_surface = 0):
         for z_surface in range(0,self.nz,10):
@@ -139,27 +101,8 @@ class levelSet3d_class(object):
             plt.yticks([])
             plt.savefig(f'{init}-{algo}.{String}.{z_surface/self.nz}.png',dpi=1000,bbox_inches='tight')
 
-    def get_gb_list(self,grainID=1):
-        """Get list of grain boundary voxels.
-        
-        Args:
-            grainID (int): ID of grain to find boundaries for
-            
-        Returns:
-            list: List of [i,j,k] coordinates of boundary voxels
-        """
-        ggn_gbsites = []
-        if self.bc == 'np':
-            edge_l = self.halfL
-        else:
-            edge_l = 0
-        for i in range(0+edge_l,self.nx-edge_l):
-            for j in range(0+edge_l,self.ny-edge_l):
-                for k in range(0+edge_l,self.nz-edge_l):
-                    if myInput.is_grain_boundary_3d(self.P, i, j, k, self.nx, self.ny, self.nz) and self.P[0,i,j,k]==grainID:
-                        ggn_gbsites.append([i,j,k])
-        return ggn_gbsites
-
+    def res_back(self, back_result):
+        self.res_back_with_V(back_result)
 
     def Neighbors(self,arr,x,y,z,n):
         ''' Given a 2D-array, returns an nxn array whose "center" element is arr[x,y]'''
@@ -168,11 +111,11 @@ class levelSet3d_class(object):
 
     def find_distance(self,i,j,k,d): # let d=2
         """Calculate signed distance from point to interface.
-        
+
         Args:
             i,j,k (int): Point coordinates
             d (int): Search radius
-            
+
         Returns:
             float: Signed distance to nearest interface
         """
@@ -198,29 +141,16 @@ class levelSet3d_class(object):
 
     #%% Smooth Core Site-based Stored data
 
-    def res_back(self,back_result):
-        res_stime = datetime.datetime.now()
-        (fval,core_time,self.V) = back_result
-        if core_time > self.running_coreTime:
-            self.running_coreTime = core_time
-
-        print("res_back start...")
-        self.P[1,:,:,:] += fval[:,:,:,0]
-        self.P[2,:,:,:] += fval[:,:,:,1]
-        self.P[3,:,:,:] += fval[:,:,:,2]
-        res_etime = datetime.datetime.now()
-        print("my res time is " + str((res_etime - res_stime).total_seconds()))
-
     def levelSet3d_normal_vector_core(self,core_input, core_all_queue):
         """Core function for normal vector calculation.
-        
+
         Implements evolution of level set function and calculation of
         normal vectors through spatial derivatives.
-        
+
         Args:
             core_input: Subset of voxels to process
             core_all_queue: Queue for inter-process communication
-            
+
         Returns:
             tuple: (Normal vector array, Computation time, Level set function)
         """
@@ -389,7 +319,7 @@ class levelSet3d_class(object):
 
     def levelSet3d_main(self,purpose='inclination'):
         """Main execution function for 3D level set algorithm.
-        
+
         Controls the overall workflow including:
         - Parallel processing setup
         - Core function execution

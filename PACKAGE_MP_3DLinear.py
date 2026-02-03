@@ -37,9 +37,11 @@ import myInput
 import datetime
 import multiprocessing as mp
 
+from PACKAGE_MP_Base3D import Base3D
+
 # we use sparse data struture (doi:10.1088/0965-0393/14/7/007) to store temporary matrix V. The size is nsteps*nx*ny*nz dict
 
-class linear3d_class(object):
+class linear3d_class(Base3D):
 
     def __init__(self,nx,ny,nz,ng,cores,loop_times,P0,R,bc,clip=0,verification_system = True, curvature_sign = False):
         """Initialize the 3D linear smoothing algorithm.
@@ -56,36 +58,12 @@ class linear3d_class(object):
             verification_system (bool): Enable validation checks
             curvature_sign (bool): Calculate signed curvature
         """
-        # V_matrix init value; runnning time and error for the algorithm
+        super().__init__(nx, ny, nz, ng, cores, P0, R, bc, clip, verification_system, curvature_sign)
+
+        # V_matrix init value
         self.matrix_value = 10
-        self.running_time = 0
-        self.running_coreTime = 0
-        self.errors = 0
-        self.errors_per_site = 0
         self.relative_errors = 0
         self.relative_errors_per_site = 0
-        self.clip = clip
-
-        # initial condition data
-        self.nx = nx # number of sites in x axis
-        self.ny = ny # number of sites in y axis
-        self.nz = nz
-        self.ng = ng # number of grains in IC
-        self.R = R  # results of analysis model
-        # convert individual grains map into one grain map
-        self.P = np.zeros((4,nx,ny,nz)) # matrix to store IC and normal vector results
-        self.C = np.zeros((2,nx,ny,nz)) # curvature result matrix
-        if len(P0.shape) == 3:
-            self.P[0,:,:,:] = np.array(P0)
-            self.C[0,:,:,:] = np.array(P0)
-        else:
-            for i in range(0,np.shape(P0)[3]):
-                self.P[0,:,:,:] += P0[:,:,:,i]*(i+1)
-                self.C[0,:,:,:] += P0[:,:,:,i]*(i+1)
-        self.bc = bc
-
-        # data for multiprocessing
-        self.cores = cores
 
         # data for accuracy
         self.loop_times = loop_times
@@ -93,47 +71,11 @@ class linear3d_class(object):
         self.tableL_curv = 2*(loop_times+2)+1
         self.halfL = loop_times+1
 
-        # self.V_sparse = np.empty((loop_times+1,nx,ny,nz),dtype=dict)
-
-        # some attributes
         # linear smoothing matrix
         self.smoothed_vector_i, self.smoothed_vector_j, self.smoothed_vector_k = myInput.output_linear_vector_matrix3D(self.loop_times, self.clip)
-        self.verification_system = verification_system
-        self.curvature_sign = curvature_sign
 
     #%% Functions
-    def get_P(self):
-        # Outout the result matrix, first level is microstructure,
-        # last two layers are normal vectors
-        return self.P
-
-    def get_C(self):
-        # Get curvature matrix
-        return self.C
-
-    def get_errors(self):
-        ge_gbsites = self.get_gb_list()
-        for gbSite in ge_gbsites :
-            [gei,gej,gek] = gbSite
-            ge_dx,ge_dy,ge_dz = myInput.get_grad3d(self.P,gei,gej,gek)
-            self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,gek,0]+ge_dy*self.R[gei,gej,gek,1]+ge_dz*self.R[gei,gej,gek,2]),5))
-
-        if len(ge_gbsites) > 0: self.errors_per_site = self.errors/len(ge_gbsites)
-        else: self.errors_per_site = 0
-
-    def get_curvature_errors(self):
-        gce_gbsites = self.get_gb_list()
-        for gceSite in gce_gbsites :
-            [gcei,gcej,gcek] = gceSite
-            self.errors += abs(self.R[gcei, gcej, gcek, 3] - self.C[1, gcei, gcej, gcek])
-
-        if len(gce_gbsites) !=0: 
-            self.errors_per_site = self.errors/len(gce_gbsites)
-        else: 
-            self.errors_per_site = 0
-
-
-    def get_2d_plot(self,init,algo,z_surface = 0):
+    def get_2d_plot(self, init, algo, z_surface=0):
         """Generate 2D visualization of a z-slice with normal vectors.
 
         Args:
@@ -141,54 +83,8 @@ class linear3d_class(object):
             algo (str): Name of algorithm used
             z_surface (int): Z coordinate of slice to visualize
         """
-        z_surface = int(self.nz/2)
-        plt.subplots_adjust(wspace=0.2,right=1.8)
-        plt.close()
-        fig1 = plt.figure(1)
-        fig_page = self.loop_times
-        plt.title(f'{algo}-{init} \n loop = '+str(fig_page))
-        if fig_page < 10:
-            String = '000'+str(fig_page)
-        elif fig_page < 100:
-            String = '00'+str(fig_page)
-        elif fig_page < 1000:
-            String = '0'+str(fig_page)
-        elif fig_page < 10000:
-            String = str(fig_page)
-        plt.imshow(self.P[0,:,:,z_surface], cmap='nipy_spectral', interpolation='nearest')
-
-        g2p_gbsites = self.get_gb_list()
-        for gbSite in g2p_gbsites:
-            [g2pi,g2pj,g2pk] = gbSite
-            if g2pk==z_surface:
-
-                g2p_dx,g2p_dy,g2p_dz = myInput.get_grad3d(self.P,g2pi,g2pj,g2pk)
-                plt.arrow(g2pj,g2pi,10*g2p_dx,10*g2p_dy,width=0.1,lw=0.1,alpha=0.8,color='navy')
-
-        plt.xticks([])
-        plt.yticks([])
-        plt.savefig(f'{init}-{algo}.{String}.png',dpi=1000,bbox_inches='tight')
-
-    def get_gb_list(self,grainID=1):
-        """Get list of grain boundary voxels.
-
-        Args:
-            grainID (int): ID of grain to find boundaries for
-
-        Returns:
-            list: List of [i,j,k] coordinates of boundary voxels
-        """
-        ggn_gbsites = []
-        if self.bc == 'np':
-            edge_l = self.halfL
-        else:
-            edge_l = 0
-        for i in range(0+edge_l,self.nx-edge_l):
-            for j in range(0+edge_l,self.ny-edge_l):
-                for k in range(0+edge_l,self.nz-edge_l):
-                    if myInput.is_grain_boundary_3d(self.P, i, j, k, self.nx, self.ny, self.nz) and self.P[0,i,j,k]==grainID:
-                        ggn_gbsites.append([i,j,k])
-        return ggn_gbsites
+        super().get_2d_plot(init, algo, self.loop_times, arrow_scale=10,
+                            cmap='nipy_spectral', save_prefix=f'{init}-{algo}')
 
     def get_all_gb_list(self):
         gagn_gbsites = [[] for _ in range(int(self.ng))]
@@ -279,26 +175,26 @@ class linear3d_class(object):
     # Core
     def linear3d_curvature_core(self, core_input, core_all_queue):
         """Vectorized implementation of curvature calculation.
-        
+
         Args:
             core_input: Input array containing voxel coordinates
             core_all_queue: Queue for parallel processing
-            
+
         Returns:
             tuple: (Results array, Computation time)
         """
         core_stime = datetime.datetime.now()
         li, lj, lk, lp = np.shape(core_input)
         fval = np.zeros((self.nx, self.ny, self.nz, 1))
-        
+
         # Extract all coordinates from core_input
         coords = core_input.reshape(-1, 3)
         i, j, k = coords[:, 0], coords[:, 1], coords[:, 2]
-        
+
         # Vectorized boundary point detection using numpy operations
         P0 = self.P[0]
         center_vals = P0[i, j, k]
-        
+
         # Calculate periodic indices for all points at once
         ip = (i + 1) % self.nx
         im = (i - 1) % self.nx
@@ -306,7 +202,7 @@ class linear3d_class(object):
         jm = (j - 1) % self.ny
         kp = (k + 1) % self.nz
         km = (k - 1) % self.nz
-        
+
         # Find boundary points using vectorized comparison
         is_boundary = (
             (P0[ip, j, k] != center_vals) |
@@ -316,60 +212,60 @@ class linear3d_class(object):
             (P0[i, j, kp] != center_vals) |
             (P0[i, j, km] != center_vals)
         )
-        
+
         # Get boundary coordinates
         boundary_coords = coords[is_boundary]
-        
+
         if len(boundary_coords) > 0:
             # Get smoothing matrix once for all points
             smoothing_matrix = myInput.output_linear_smoothing_matrix3D(self.loop_times)
             window_len = self.tableL_curv - 2*self.clip
             window_half = int((window_len-1)/2)
-            
+
             # Create coordinate offsets for the window
             wi_range = np.arange(-window_half, window_half + 1)
             wj_range = np.arange(-window_half, window_half + 1)
             wk_range = np.arange(-window_half, window_half + 1)
-            
+
             # Create meshgrid for window coordinates
             wi_grid, wj_grid, wk_grid = np.meshgrid(wi_range, wj_range, wk_range, indexing='ij')
-            
+
             # Process boundary points
             for coord in boundary_coords:
                 i, j, k = coord.astype(int)
-                
+
                 # Check boundary condition for non-periodic case
                 if self.bc == 'np':
                     if not myInput.filter_bc3d(self.nx, self.ny, self.nz, i, j, k, self.halfL):
                         continue
-                
+
                 # Calculate global coordinates using broadcasting
                 global_x = (i + wi_grid) % self.nx
                 global_y = (j + wj_grid) % self.ny
                 global_z = (k + wk_grid) % self.nz
-                
+
                 # Create window using vectorized operations
                 center_val = self.P[0, i, j, k]
                 window = (self.P[0, global_x, global_y, global_z] == center_val).astype(np.float64)
-                
+
                 # Calculate smoothed matrix
                 smoothed_matrix = myInput.output_smoothed_matrix3D(
-                    window, 
+                    window,
                     smoothing_matrix
                 )[self.loop_times:-self.loop_times,
                   self.loop_times:-self.loop_times,
                   self.loop_times:-self.loop_times]
-                
+
                 if smoothed_matrix.shape != (5, 5, 5):
                     continue
-                
+
                 # Calculate curvature using existing method
                 fval[i, j, k, 0] = self.calculate_curvature(smoothed_matrix)
-        
+
         core_etime = datetime.datetime.now()
         if self.verification_system:
             print("my core time is " + str((core_etime - core_stime).total_seconds()))
-        
+
         return (fval, (core_etime - core_stime).total_seconds())
 
     def linear3d_normal_vector_core(self,core_input, core_all_queue):
@@ -417,23 +313,6 @@ class linear3d_class(object):
         core_etime = datetime.datetime.now()
         if self.verification_system == True: print("my core time is " + str((core_etime - core_stime).total_seconds()))
         return (fval,(core_etime - core_stime).total_seconds())
-
-
-    def res_back(self,back_result):
-        res_stime = datetime.datetime.now()
-        (fval,core_time) = back_result
-        if core_time > self.running_coreTime:
-            self.running_coreTime = core_time
-
-        if self.verification_system == True: print("res_back start...")
-        if fval.shape[3] == 1:
-            self.C[1,:,:,:] += fval[:,:,:,0]
-        elif fval.shape[3] == 3:
-            self.P[1,:,:,:] += fval[:,:,:,0]
-            self.P[2,:,:,:] += fval[:,:,:,1]
-            self.P[3,:,:,:] += fval[:,:,:,2]
-        res_etime = datetime.datetime.now()
-        if self.verification_system == True: print("my res time is " + str((res_etime - res_stime).total_seconds()))
 
     def linear3d_main(self, purpose ="inclination"):
         """Main execution function for 3D linear algorithm.

@@ -3,7 +3,7 @@
 """
 3D Allen-Cahn Method Implementation for Interface Analysis
 
-This module implements the 3D Allen-Cahn method for calculating grain boundary 
+This module implements the 3D Allen-Cahn method for calculating grain boundary
 normal vectors and curvature in 3D polycrystalline materials. The method uses
 phase field evolution with these features:
 
@@ -41,13 +41,14 @@ import matplotlib.pyplot as plt
 import multiprocessing as mp
 import myInput
 import datetime
+from PACKAGE_MP_Base3D import Base3D
 
 
-class allenCahn3d_class(object):
+class allenCahn3d_class(Base3D):
 
     def __init__(self,nx,ny,nz,ng,cores,nsteps,P0,R,bc='p',clip=0,verification_system = True, curvature_sign = False):
         """Initialize the 3D Allen-Cahn algorithm.
-        
+
         Args:
             nx,ny,nz (int): Grid dimensions
             ng (int): Number of grains
@@ -56,127 +57,42 @@ class allenCahn3d_class(object):
             P0 (ndarray): Initial 3D microstructure
             R (ndarray): Reference solution for validation
         """
-        # V_matrix init value; runnning time and error for the algorithm
+        super().__init__(nx, ny, nz, ng, cores, P0, R, bc, clip, verification_system, curvature_sign)
+
+        # Algorithm-specific parameters
         self.k = 1
         self.m = 1
         self.L = 1
         self.matrix_value = 10
-        self.running_time = 0
-        self.running_coreTime = 0
-        self.errors = 0
-        self.errors_per_site = 0
+        self.ng = 2  # override base class value
 
-        # initial condition data
-        self.nx,self.ny,self.nz = nx, ny, nz
-        self.ng = 2
-        self.R = R  # results of analysis model
-        # convert individual grains map into one grain map
-        self.P = np.zeros((4,nx,ny,nz)) # matrix to store IC and normal vector results
-        for i in range(0,np.shape(P0)[3]):
-            self.P[0,:,:,:] += P0[:,:,:,i]*(i+1)
-
-        # data for multiprocessing
-        self.cores = cores
-
-        # data for accuracy
-        self.nsteps = nsteps #Number of timesteps
-        self.dt = 0.1 #Timestep size
-        self.tableL = 2*(nsteps+1)+1 # when repeatting two times, the table length will be 7 (7 by 7 table)
+        # Accuracy parameters
+        self.nsteps = nsteps
+        self.dt = 0.1
+        self.tableL = 2*(nsteps+1)+1
         self.halfL = nsteps+1
 
-        # temporary matrix to increase efficiency
+        # Temporary matrix to increase efficiency
         self.V = np.ones((nsteps+1,nx,ny,nz,ng))*self.matrix_value
 
 
-
-
-
-    #%% Function
-    def get_P(self):
-        # Outout the result matrix, first level is microstructure,
-        # last two layers are normal vectors
-        return self.P
-
-    def get_errors(self):
-        ge_gbsites = self.get_gb_list()
-        for gbSite in ge_gbsites :
-            [gei,gej,gek] = gbSite
-            ge_dx,ge_dy,ge_dz = myInput.get_grad3d(self.P,gei,gej,gek)
-            self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,gek,0]+ge_dy*self.R[gei,gej,gek,1]+ge_dz*self.R[gei,gej,gek,2]),5))
-
-        self.errors_per_site = self.errors/len(ge_gbsites)
-
-    def get_2d_plot(self,init,algo,z_surface = 0):
-        z_surface = int(self.nz/2)
-        plt.subplots_adjust(wspace=0.2,right=1.8)
-        plt.close()
-        fig1 = plt.figure(1)
-        fig_page = self.nsteps
-        plt.title(f'{algo}-{init} \n loop = '+str(fig_page))
-        if fig_page < 10:
-            String = '000'+str(fig_page)
-        elif fig_page < 100:
-            String = '00'+str(fig_page)
-        elif fig_page < 1000:
-            String = '0'+str(fig_page)
-        elif fig_page < 10000:
-            String = str(fig_page)
-        plt.imshow(self.P[0,:,:,z_surface], cmap='nipy_spectral', interpolation='nearest')
-
-        g2p_gbsites = self.get_gb_list()
-        for gbSite in g2p_gbsites:
-            [g2pi,g2pj,g2pk] = gbSite
-            if g2pk==z_surface:
-
-                g2p_dx,g2p_dy,g2p_dz = myInput.get_grad3d(self.P,g2pi,g2pj,g2pk)
-                plt.arrow(g2pj,g2pi,10*g2p_dx,10*g2p_dy,width=0.1,lw=0.1,alpha=0.8,color='navy')
-
-        plt.xticks([])
-        plt.yticks([])
-        plt.savefig(f'{init}-{algo}.{String}.png',dpi=1000,bbox_inches='tight')
-
-    def get_gb_list(self,grainID=1):
-        """Get list of grain boundary voxels.
-        
-        Args:
-            grainID (int): ID of grain to find boundaries for
-            
-        Returns:
-            list: List of [i,j,k] coordinates of boundary voxels
-        """
-        ggn_gbsites = []
-        edge_l = 1
-        for i in range(0+edge_l,self.nx-edge_l):
-            for j in range(0+edge_l,self.ny-edge_l):
-                for k in range(0+edge_l,self.nz-edge_l):
-                    if myInput.is_grain_boundary_3d(self.P, i, j, k, self.nx, self.ny, self.nz) and self.P[0,i,j,k]==grainID:
-                        ggn_gbsites.append([i,j,k])
-        return ggn_gbsites
-
-
     #%% Core
-    def res_back(self,back_result):
-        res_stime = datetime.datetime.now()
-        (fval,core_time,self.V) = back_result
-        if core_time > self.running_coreTime:
-            self.running_coreTime = core_time
+    def res_back(self, back_result):
+        self.res_back_with_V(back_result)
 
-        print("res_back start...")
-        self.P[1,:,:,:] += fval[:,:,:,0]
-        self.P[2,:,:,:] += fval[:,:,:,1]
-        self.P[3,:,:,:] += fval[:,:,:,2]
-        res_etime = datetime.datetime.now()
-        print("my res time is " + str((res_etime - res_stime).total_seconds()))
+    def get_2d_plot(self, init, algo, z_surface=0):
+        super().get_2d_plot(init, algo, self.nsteps, arrow_scale=10,
+                            cmap='nipy_spectral', save_prefix=f'{init}-{algo}')
 
     def allenCahn3d_normal_vector_core(self,core_input, core_all_queue):
         """Core function for normal vector calculation.
-        
+
         Implements Allen-Cahn evolution and calculates interface normals
         using phase field gradients.
-        
+
         Args:
             core_input: Subset of voxels to process
-            
+
         Returns:
             tuple: (Normal vector array, Computation time)
         """
@@ -243,7 +159,7 @@ class allenCahn3d_class(object):
 
     def allenCahn3d_main(self,purpose='inclination'):
         """Main execution function for 3D Allen-Cahn algorithm.
-        
+
         Controls the overall workflow including:
         - Parallel processing setup
         - Phase field evolution

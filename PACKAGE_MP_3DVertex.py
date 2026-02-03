@@ -42,11 +42,12 @@ import matplotlib.pyplot as plt
 import myInput
 import datetime
 import multiprocessing as mp
+from PACKAGE_MP_Base3D import Base3D
 
-class vertex3d_class(object):
+class vertex3d_class(Base3D):
     def __init__(self,nx,ny,nz,ng,cores,interval,P0,R,bc='p',clip=0,verification_system = True, curvature_sign = False):
         """Initialize the 3D vertex method algorithm.
-        
+
         Args:
             nx,ny,nz (int): Grid dimensions
             ng (int): Number of grains
@@ -55,57 +56,10 @@ class vertex3d_class(object):
             P0 (ndarray): Initial 3D microstructure
             R (ndarray): Reference solution for validation
         """
-        # V_matrix init value; runnning time and error for the algorithm
-        self.running_time = 0
-        self.running_coreTime = 0
-        self.errors = 0
-        self.errors_per_site = 0
+        super().__init__(nx, ny, nz, ng, cores, P0, R, bc, clip, verification_system, curvature_sign)
 
-        # initial condition data
-        self.nx,self.ny,self.nz = nx, ny, nz
-        self.ng = ng
-        self.R = R  # results of analysis model
-        # convert individual grains map into one grain map
-        self.P = np.zeros((4,nx,ny,nz)) # matrix to store IC and normal vector results
-        self.C = np.zeros((2,nx,ny,nz)) # curvature result matrix
-        for i in range(0,np.shape(P0)[3]):
-            self.P[0,:,:,:] += P0[:,:,:,i]*(i+1)
-            self.C[0,:,:,:] += P0[:,:,:,i]*(i+1)
-
-        # data for multiprocessing
-        self.cores = cores
-
-        # data for accuracy
-        self.interval = interval #Number of timesteps
-
-
-
-    #%% Function
-    def get_P(self):
-        # Outout the result matrix, first level is microstructure,
-        # last two layers are normal vectors
-        return self.P
-    
-    def get_C(self):
-        # Get curvature matrix
-        return self.C
-
-    def get_errors(self):
-        ge_gbsites = self.get_gb_list()
-        for gbSite in ge_gbsites :
-            [gei,gej,gek] = gbSite
-            ge_dx,ge_dy,ge_dz = myInput.get_grad3d(self.P,gei,gej,gek)
-            self.errors += math.acos(round(abs(ge_dx*self.R[gei,gej,gek,0]+ge_dy*self.R[gei,gej,gek,1]+ge_dz*self.R[gei,gej,gek,2]),5))
-
-        self.errors_per_site = self.errors/len(ge_gbsites)
-
-    def get_curvature_errors(self):
-        gce_gbsites = self.get_gb_list()
-        for gceSite in gce_gbsites :
-            [gcei,gcej,gcek] = gceSite
-            self.errors += abs(self.R[gcei, gcej, gcek, 3] - self.C[1, gcei, gcej, gcek])
-            
-        self.errors_per_site = self.errors/len(gce_gbsites)
+        # Algorithm parameters
+        self.interval = interval
 
     def get_2d_plot(self,init,algo,z_surface = 0):
         # z_surface = int(self.nz/2)
@@ -155,16 +109,6 @@ class vertex3d_class(object):
 
 
 
-
-    def get_gb_list(self,grainID=1):
-        ggn_gbsites = []
-        edge_l = 1
-        for i in range(0+edge_l,self.nx-edge_l):
-            for j in range(0+edge_l,self.ny-edge_l):
-                for k in range(0+edge_l,self.nz-edge_l):
-                    if myInput.is_grain_boundary_3d(self.P, i, j, k, self.nx, self.ny, self.nz) and self.P[0,i,j,k]==grainID:
-                        ggn_gbsites.append([i,j,k])
-        return ggn_gbsites
 
     def check_coplane(self,array):
         """Check if a set of points are coplanar.
@@ -448,70 +392,16 @@ class vertex3d_class(object):
 
     def vertex3d_main(self, purpose="inclination"):
         """Main execution function for 3D vertex algorithm.
-        
-        Controls the overall workflow including:
-        - Vertex detection 
-        - Parallel processing setup
-        - Core function execution
-        - Results collection
-        - Error calculation
-        
+
         Args:
             purpose (str): Type of calculation ("inclination" or "curvature")
         """
-        # calculate time
-        starttime = datetime.datetime.now()
-
-        pool = mp.Pool(processes=self.cores)
-        main_lc, main_wc, main_hc = myInput.split_cores(self.cores,3)
-
-        all_sites = np.array([[x,y,z] for x in range(self.nx) for y in range(self.ny) for z in range(self.nz) ]).reshape(self.nx,self.ny,self.nz,3)
-        multi_input = myInput.split_IC(all_sites, self.cores,3, 0,1,2)
-
-        res_list=[]
-        if purpose == "inclination":
-            for mpi in range(main_wc):
-                for mpj in range(main_lc):
-                    for mpk in range(main_hc):
-                        res_one = pool.apply_async(func = self.vertex3d_normal_vector_core, args = (multi_input[mpi][mpj][mpk], ), callback=self.res_back )
-                        res_list.append(res_one)
-        elif purpose == "curvature":
-            for mpi in range(main_wc):
-                for mpj in range(main_lc):
-                    for mpk in range(main_hc):
-                        res_one = pool.apply_async(func = self.vertex3d_curvature_core, args = (multi_input[mpi][mpj][mpk], ), callback=self.res_back )
-                        res_list.append(res_one)
-            
-
-        pool.close()
-        pool.join()
-        print("core done!")
-        # print(res_list[0].get())
-
-        # calculate time
-        endtime = datetime.datetime.now()
-
-        self.running_time = (endtime - starttime).total_seconds()
+        self.run_main(self.vertex3d_normal_vector_core, self.vertex3d_curvature_core,
+                      purpose=purpose)
         if purpose == "inclination":
             self.get_errors()
         elif purpose == "curvature":
             self.get_curvature_errors()
-
-    def res_back(self,back_result):
-        res_stime = datetime.datetime.now()
-        (fval,core_time) = back_result
-        if core_time > self.running_coreTime:
-            self.running_coreTime = core_time
-
-        print("res_back start...")
-        if fval.shape[3] == 1:
-            self.C[1,:,:,:] += fval[:,:,:,0]
-        else:
-            self.P[1,:,:,:] += fval[:,:,:,0]
-            self.P[2,:,:,:] += fval[:,:,:,1]
-            self.P[3,:,:,:] += fval[:,:,:,2]
-        res_etime = datetime.datetime.now()
-        print("my res time is " + str((res_etime - res_stime).total_seconds()))
 
 
 
