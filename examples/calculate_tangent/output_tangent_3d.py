@@ -51,7 +51,10 @@ phase field simulations, Monte Carlo grain growth models, or experimental
 """
 
 import os
-current_path = os.getcwd()
+import sys
+# Add project root to path for myInput import
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
 import numpy as np
 from numpy import seterr
 seterr(all='raise')

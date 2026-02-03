@@ -66,6 +66,11 @@ This module is designed for algorithm validation and method selection
 in grain boundary analysis applications.
 """
 
+import os
+import sys
+# Add project root to path for myInput import
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
 import numpy as np
 from numpy import seterr
 seterr(all='raise')

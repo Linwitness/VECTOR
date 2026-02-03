@@ -9,17 +9,15 @@ This directory contains a comprehensive suite of algorithms and analysis tools f
 ```
 calculate_tangent/
 ├── README.md                                    # This documentation
-├── PACKAGE_MP_Bilinear_v4_smoothMatrix.py      # Core 2D bilinear smoothing algorithm
-├── myInput.py                                   # Utility functions and initial conditions
 ├── output_tangent.py                            # 2D triple junction dihedral angle analysis
 ├── output_tangent_3d.py                         # 3D triple line dihedral angle analysis
 ├── compare_TJ_dhedral_algorithms.py             # Algorithm comparison framework
-├── PACKAGE_MP_3DLinear.py                       # 3D linear smoothing with multiprocessing
 ├── slice3_complete.txt                          # Sample 3D microstructure data
 ├── Dihedral_Angle_in_Triple_junction.pptx      # Scientific background presentation
-├── Input/                                       # Input parameter configurations
-└── __pycache__/                                # Python bytecode cache
+└── Input/                                       # Input parameter configurations
 ```
+
+Note: Scripts import `myInput` from the project root directory (two levels up).
 
 ## Workflow Overview
 
@@ -57,43 +55,10 @@ The analysis employs advanced numerical methods:
 
 ## File Descriptions
 
-### 1. PACKAGE_MP_Bilinear_v4_smoothMatrix.py
-**Purpose**: Core 2D bilinear smoothing algorithm with multiprocessing support
+### 1. myInput.py (imported from project root)
 
-**Key Features**:
-- Advanced bilinear smoothing for grain-boundary-aware normal vector calculation
-- Multiprocessing support for large microstructure datasets
-- Comprehensive error analysis and convergence monitoring
-- Integration with SPPARKS simulation data
-
-**Scientific Applications**:
-- Accurate normal vector calculation on curved grain boundaries
-- Noise reduction in experimental microstructure data
-- Validation of phase field simulation results
-- Statistical analysis of grain boundary properties
-
-**Performance Scaling**:
-- Time complexity: O(nx × ny × nsteps²)
-- Memory usage: O(nx × ny + N_GB) where N_GB = grain boundary sites
-- Parallel efficiency: Near-linear scaling up to available CPU cores
-
-**Usage**:
-```python
-# Initialize bilinear smoothing class
-smoother = BLv2_class(P, nsteps, cores=8)
-
-# Calculate normal vectors with error analysis
-normal_vectors, errors = smoother.find_2d_smoothed_normal_vectors()
-
-# Visualize convergence behavior
-smoother.plot_convergence_analysis()
-```
-
-### 2. myInput.py
-**Purpose**: Utility functions and initial condition generators for analysis
-
-**Key Features**:
-- PyTorch-accelerated Voronoi tessellation for microstructure generation
+The `myInput` module is imported from the project root directory (two levels up).
+Scripts use `sys.path.append` to locate it. Key functions used:
 - Analytical test cases (circles, ellipses) for algorithm validation
 - Smoothing matrix generation for different iteration parameters
 - Integration utilities for SPPARKS data processing
@@ -115,7 +80,7 @@ P_circle = create_circular_interface(nx, ny, radius, center)
 grad_i, grad_j = output_linear_vector_matrix(iteration=5)
 ```
 
-### 3. output_tangent.py
+### 2. output_tangent.py
 **Purpose**: 2D triple junction dihedral angle analysis and validation
 
 **Key Features**:
@@ -147,7 +112,7 @@ validate_equilibrium_angles(angles, tolerance=1e-2)
 stats = analyze_angle_distribution(angles)
 ```
 
-### 4. output_tangent_3d.py
+### 3. output_tangent_3d.py
 **Purpose**: 3D triple line dihedral angle analysis for volumetric data
 
 **Key Features**:
@@ -178,7 +143,7 @@ validation_results = validate_3d_cylinder(angles_3d, theoretical_angle=120.0)
 plot_3d_results(P_3d, triple_lines, angles_3d)
 ```
 
-### 5. compare_TJ_dhedral_algorithms.py
+### 4. compare_TJ_dhedral_algorithms.py
 **Purpose**: Comprehensive algorithm comparison and benchmarking framework
 
 **Key Features**:
@@ -214,31 +179,6 @@ agreement_stats = analyze_method_agreement(results)
 # Benchmark against experimental data
 benchmark_results = validate_against_experiments(results, experimental_data)
 ```
-
-### 6. PACKAGE_MP_3DLinear.py
-**Purpose**: 3D linear smoothing with multiprocessing optimization
-
-**Key Features**:
-- Advanced 3D linear smoothing algorithms
-- Sparse matrix implementation for memory efficiency
-- Multiprocessing support for large 3D datasets
-- Comprehensive 3D grain boundary analysis tools
-
-**3D Computational Framework**:
-- **Sparse matrix storage**: Memory-efficient representation
-- **Domain decomposition**: Parallel processing strategies
-- **Boundary condition handling**: Various 3D domain configurations
-
-**Scientific Applications**:
-- **3D grain boundary network characterization**
-- **Curvature analysis for grain boundary surfaces**
-- **Integration with 3D experimental data**
-- **Validation of 3D phase field simulations**
-
-**Performance Scaling**:
-- **Memory usage**: O(N_sparse) where N_sparse << nx×ny×nz
-- **Time complexity**: O(nx×ny×nz×nsteps) with multiprocessing
-- **Parallel efficiency**: Near-linear scaling up to available CPU cores
 
 ## Technical Specifications
 
@@ -392,6 +332,8 @@ plot_algorithm_comparison(comparison_results)
 
 ### Large-Scale 3D Analysis with Multiprocessing
 ```python
+# Import from project root
+import sys; sys.path.append('../..')
 from PACKAGE_MP_3DLinear import linear3d_class
 
 # Initialize large 3D dataset
@@ -403,11 +345,6 @@ analyzer.initialize_3d_analysis(P_large, nsteps=10, cores=32)
 
 # Execute parallel analysis
 results = analyzer.run_parallel_analysis()
-
-# Extract and save results
-triple_line_data = results['triple_lines']
-curvature_data = results['curvatures']
-np.save('large_scale_results.npy', results)
 ```
 
 ## Validation and Quality Control
