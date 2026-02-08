@@ -682,7 +682,251 @@ def get_poly_statistical_ar(micro_matrix, step):
     return aspect_ratio
 
 ###########################################
-# 5. Normal Vector Distribution Analysis
+# 5. Ellipse Fitting and Shape Analysis
+###########################################
+"""
+Functions for ellipse fitting and grain shape characterization
+"""
+
+def fit_ellipse(sites_list, micro_matrix=None, step=None, geometry='circle'):
+    """Ellipse fitting analysis for grain shape characterization.
+
+    Unified function that handles both circular and polycrystalline geometries.
+
+    Args:
+        sites_list (list): List of grain boundary sites per grain
+        micro_matrix (ndarray, optional): Microstructure evolution data (required for poly)
+        step (int, optional): Timestep to analyze (required for poly)
+        geometry (str): 'circle' or 'poly' - determines fitting approach
+
+    Returns:
+        float: Average aspect ratio (b/a) for grains
+    """
+    if geometry == 'circle':
+        return _fit_ellipse_circle(sites_list)
+    elif geometry == 'poly':
+        if micro_matrix is None or step is None:
+            raise ValueError("micro_matrix and step required for poly geometry")
+        return _fit_ellipse_poly(micro_matrix, sites_list, step)
+    else:
+        raise ValueError(f"Unknown geometry: {geometry}")
+
+def _fit_ellipse_circle(sites_list):
+    """Ellipse fitting for circular grain boundaries (2-grain system)."""
+    grain_num = len(sites_list)
+    if grain_num < 2:
+        return 1
+
+    a_square_list = np.ones(grain_num)
+    b_square_list = np.ones(grain_num)
+
+    for i in range(grain_num):
+        array = np.array(sites_list[i])
+        if len(array) < 5:  # Need at least 5 points for ellipse fit
+            continue
+        X = array[:, 0]
+        Y = array[:, 1]
+        K_mat = np.array([X**2, X*Y, Y**2, X, Y]).T
+        Y_mat = -np.ones_like(X)
+        X_mat = np.linalg.lstsq(K_mat, Y_mat, rcond=None)[0].squeeze()
+
+        center_base = 4 * X_mat[0] * X_mat[2] - X_mat[1] * X_mat[1]
+        if abs(center_base) < 1e-10:
+            continue
+        center_x = (X_mat[1] * X_mat[4] - 2 * X_mat[2] * X_mat[3]) / center_base
+        center_y = (X_mat[1] * X_mat[3] - 2 * X_mat[0] * X_mat[4]) / center_base
+        axis_square_root = np.sqrt((X_mat[0] - X_mat[2])**2 + X_mat[1]**2)
+        numerator = 2 * (X_mat[0]*center_x**2 + X_mat[2]*center_y**2 + X_mat[1]*center_x*center_y - 1)
+        a_square = numerator / (X_mat[0] + X_mat[2] + axis_square_root)
+        b_square = numerator / (X_mat[0] + X_mat[2] - axis_square_root)
+
+        if a_square > 0 and b_square > 0:
+            a_square_list[i] = a_square
+            b_square_list[i] = b_square
+
+    return np.average(np.sqrt(b_square_list) / np.sqrt(a_square_list))
+
+def _fit_ellipse_poly(micro_matrix, sites_list, step):
+    """Advanced ellipse fitting for polycrystalline grain shapes."""
+    grains_num = len(sites_list)
+
+    sites_num_list = np.zeros(grains_num)
+    for i in range(micro_matrix.shape[1]):
+        for j in range(micro_matrix.shape[2]):
+            grain_id = int(micro_matrix[step, i, j, 0] - 1)
+            if 0 <= grain_id < grains_num:
+                sites_num_list[grain_id] += 1
+
+    center_list, _ = get_poly_center(micro_matrix, step)
+
+    a_square_list = np.ones(grains_num)
+    b_square_list = np.ones(grains_num)
+    unphysic_result = 0
+    grains_num_real = 0.001
+
+    for i in range(grains_num):
+        array = np.array(sites_list[i])
+        grain_center = center_list[i]
+
+        rest_site_num = 10
+        if len(array) < rest_site_num or (center_list[i, 0] < 0.1 and center_list[i, 1] < 0.1):
+            continue
+
+        # Select representative boundary points using angular sampling
+        prefered_angles = np.linspace(0, 2*np.pi, rest_site_num+1)[:rest_site_num]
+        max_angles = np.ones(rest_site_num) * 2 * np.pi
+        predered_sites = np.zeros((rest_site_num, 2))
+
+        for n in range(len(array)):
+            current_site_angle = math.atan2(array[n, 0] - grain_center[0],
+                                           array[n, 1] - grain_center[1]) + np.pi
+            min_angle = np.min(abs(prefered_angles - current_site_angle))
+            min_angle_index = np.argmin(abs(prefered_angles - current_site_angle))
+            if min_angle < max_angles[min_angle_index]:
+                max_angles[min_angle_index] = min_angle
+                predered_sites[min_angle_index] = array[n]
+
+        array = predered_sites
+        grains_num_real += 1
+
+        X = array[:, 0]
+        Y = array[:, 1]
+
+        K_mat = np.array([X**2, X*Y, Y**2, X, Y]).T
+        Y_mat = -np.ones_like(X)
+        X_mat = np.linalg.lstsq(K_mat, Y_mat, rcond=None)[0].squeeze()
+
+        center_base = 4 * X_mat[0] * X_mat[2] - X_mat[1] * X_mat[1]
+        if abs(center_base) < 1e-10:
+            unphysic_result += 1
+            continue
+        center_x = (X_mat[1] * X_mat[4] - 2 * X_mat[2] * X_mat[3]) / center_base
+        center_y = (X_mat[1] * X_mat[3] - 2 * X_mat[0] * X_mat[4]) / center_base
+        axis_square_root = np.sqrt((X_mat[0] - X_mat[2])**2 + X_mat[1]**2)
+        numerator = 2 * (X_mat[0]*center_x**2 + X_mat[2]*center_y**2 + X_mat[1]*center_x*center_y - 1)
+        a_square = numerator / (X_mat[0] + X_mat[2] + axis_square_root)
+        b_square = numerator / (X_mat[0] + X_mat[2] - axis_square_root)
+
+        if a_square < 0 or b_square < 0:
+            unphysic_result += 1
+            continue
+        a_square_list[i] = a_square
+        b_square_list[i] = b_square
+
+    if grains_num_real > 1:
+        print(f"Ellipse fitting: {round(unphysic_result/grains_num_real*100, 3)}% unphysical results")
+
+    return np.sum(b_square_list * sites_num_list) / np.sum(a_square_list * sites_num_list)
+
+def get_circle_center(micro_matrix, step):
+    """Calculate geometric centers for circular grains (2-grain system).
+
+    Args:
+        micro_matrix (ndarray): 4D microstructure evolution data
+        step (int): Timestep to analyze
+
+    Returns:
+        tuple: (center_list, ave_radius_list) - Centers and average radii
+    """
+    num_grains = int(np.max(micro_matrix[0, :]))
+    center_list = np.zeros((num_grains, 2))
+    sites_num_list = np.zeros(num_grains)
+
+    coord_refer_i = np.zeros((micro_matrix.shape[1], micro_matrix.shape[2]))
+    coord_refer_j = np.zeros((micro_matrix.shape[1], micro_matrix.shape[2]))
+    for i in range(micro_matrix.shape[1]):
+        for j in range(micro_matrix.shape[2]):
+            coord_refer_i[i, j] = i
+            coord_refer_j[i, j] = j
+
+    table = micro_matrix[step, :, :, 0]
+
+    for i in range(num_grains):
+        sites_num_list[i] = np.sum(table == i + 1)
+        if sites_num_list[i] == 0:
+            center_list[i, 0] = 0
+            center_list[i, 1] = 0
+        else:
+            center_list[i, 0] = np.sum(coord_refer_i[table == i + 1]) / sites_num_list[i]
+            center_list[i, 1] = np.sum(coord_refer_j[table == i + 1]) / sites_num_list[i]
+
+    ave_radius_list = np.sqrt(sites_num_list / np.pi)
+    return center_list, ave_radius_list
+
+def get_circle_statistical_radius(micro_matrix, sites_list, step):
+    """Calculate radius deviation statistics for circular grains.
+
+    Args:
+        micro_matrix (ndarray): 4D microstructure evolution data
+        sites_list (list): Boundary sites by grain
+        step (int): Timestep to analyze
+
+    Returns:
+        tuple: (ave_radius_offset, magnitude_stan) - Average offset and standard deviation
+    """
+    center_list, ave_radius_list = get_circle_center(micro_matrix, step)
+    center = center_list[1] if len(center_list) > 1 else center_list[0]
+    ave_radius = ave_radius_list[1] if len(ave_radius_list) > 1 else ave_radius_list[0]
+
+    sites = sites_list[1] if len(sites_list) > 1 else []
+
+    if len(sites) == 0 or ave_radius == 0:
+        return 0, 0
+
+    ave_radius_offset_list = np.zeros(len(sites))
+    max_radius_offset = 0
+
+    for index, sitei in enumerate(sites):
+        [i, j] = sitei
+        current_radius = np.sqrt((i - center[0])**2 + (j - center[1])**2)
+        radius_offset = abs(current_radius - ave_radius)
+        ave_radius_offset_list[index] = radius_offset
+        if radius_offset > max_radius_offset:
+            max_radius_offset = radius_offset
+
+    max_radius_offset = max_radius_offset / ave_radius
+    ave_radius_offset = np.average(ave_radius_offset_list) / ave_radius
+    magnitude_stan = np.sqrt(np.sum((ave_radius_offset_list/ave_radius - ave_radius_offset)**2) / len(sites))
+
+    return ave_radius_offset, magnitude_stan
+
+def get_circle_statistical_ar(micro_matrix, step):
+    """Calculate aspect ratio for circular grain morphology.
+
+    Args:
+        micro_matrix (ndarray): 4D microstructure evolution data
+        step (int): Timestep to analyze
+
+    Returns:
+        float: Aspect ratio (width/height)
+    """
+    num_grains = int(np.max(micro_matrix[step, :]))
+    table = micro_matrix[step, :, :, 0]
+
+    coord_refer_i = np.zeros((micro_matrix.shape[1], micro_matrix.shape[2]))
+    coord_refer_j = np.zeros((micro_matrix.shape[1], micro_matrix.shape[2]))
+    for i in range(micro_matrix.shape[1]):
+        for j in range(micro_matrix.shape[2]):
+            coord_refer_i[i, j] = i
+            coord_refer_j[i, j] = j
+
+    # Analyze grain 2 (the inner grain in 2-grain system)
+    grain_idx = 1 if num_grains > 1 else 0
+    i_values = coord_refer_i[table == grain_idx + 1]
+    j_values = coord_refer_j[table == grain_idx + 1]
+
+    if len(j_values) == 0:
+        return 1
+
+    aspect_ratio_i = len(set(i_values))
+    aspect_ratio_j = len(set(j_values))
+
+    if aspect_ratio_j == 0:
+        return 1
+    return aspect_ratio_i / aspect_ratio_j
+
+###########################################
+# 6. Normal Vector Distribution Analysis
 ###########################################
 """
 Functions for analyzing the distribution of grain boundary normal vectors
