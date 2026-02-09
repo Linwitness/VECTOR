@@ -27,7 +27,10 @@ Created on Mon Jul 31 14:33:57 2023
 """
 
 import os
-current_path = os.getcwd()
+import sys
+from examples.shared.path_setup import setup_vector_path
+setup_vector_path()
+
 import numpy as np
 from numpy import seterr
 seterr(all='raise')  # Strict numerical error handling for production
@@ -35,8 +38,6 @@ import matplotlib.pyplot as plt
 import time
 from tqdm import tqdm  # Progress tracking for large file operations
 import multiprocess as mp  # Multiprocessing for performance optimization
-import sys
-sys.path.append(current_path+'/../../')
 
 # VECTOR framework modules for microstructure processing
 import myInput
@@ -289,23 +290,8 @@ if __name__ == '__main__':
     print()
 
     # =================================================================
-    # ALTERNATIVE PROCESSING OPTIONS
-    # =================================================================
-
-    # Option 1: Full neighbor file generation (commented out for this run)
-    # This would use the complete multiprocessed algorithm from post_processing
-    # output_neighbr_init = post_processing.output_init_neighbor_from_init_mp(
-    #     interval,
-    #     box_size,
-    #     init_file_folder + init_file_name,
-    #     init_file_folder_final + init_file_name_final
-    # )
-
-    # =================================================================
     # STREAMLINED PROCESSING FOR LARGE DOMAINS
     # =================================================================
-
-    # Option 2: Optimized processing for pre-computed neighbor data
     print("Using streamlined neighbor file processing...")
     print("Assumes neighbor connectivity data has been pre-computed.")
     print()

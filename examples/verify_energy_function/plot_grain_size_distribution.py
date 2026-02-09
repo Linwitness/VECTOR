@@ -46,15 +46,16 @@ Applications:
 # ENVIRONMENT SETUP AND PATH CONFIGURATION
 # ================================================================================
 import os
-current_path = os.getcwd()                       # Current working directory for file operations
+import sys
+from examples.shared.path_setup import setup_vector_path
+setup_vector_path()
+
 import numpy as np                               # Numerical computing and array operations
 from numpy import seterr                         # Numerical error handling configuration
 seterr(all='raise')                             # Raise exceptions for numerical errors
 import matplotlib.pyplot as plt                  # Advanced scientific visualization
 import math                                      # Mathematical functions for calculations
 from tqdm import tqdm                            # Progress bar for long-running operations
-import sys
-sys.path.append(current_path+'/../../')          # Add VECTOR framework root directory
 
 # ================================================================================
 # VECTOR FRAMEWORK INTEGRATION: SPECIALIZED ANALYSIS MODULES

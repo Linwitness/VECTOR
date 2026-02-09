@@ -25,15 +25,16 @@ Created on Mon Jul 31 14:33:57 2023
 """
 
 import os
-current_path = os.getcwd()
+import sys
+from examples.shared.path_setup import setup_vector_path
+setup_vector_path()
+
 import numpy as np
 from numpy import seterr
 seterr(all='raise')  # Enable strict numerical error handling
 import matplotlib.pyplot as plt
 import math
 from tqdm import tqdm  # Progress tracking for large file operations
-import sys
-sys.path.append(current_path+'/../../')
 
 # VECTOR framework modules for microstructure analysis
 import myInput

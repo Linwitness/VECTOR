@@ -3,7 +3,7 @@
 **Date:** 2026-02-08
 **Branch:** `devel`
 **Base Commit:** `84fa3f4` (master)
-**Latest Commit:** (Phases 7-14 pending commit)
+**Latest Commit:** (Phases 7-19 pending commit)
 
 ---
 
@@ -15,7 +15,9 @@ This document summarizes the comprehensive simplification effort for the VECTOR 
 **Achieved (Phases 0-6):** **12,495 net lines removed** (15,811 deletions, 3,316 insertions)
 **Additional (Phases 7-10):** **~2,880 net lines removed** (script consolidation)
 **Additional (Phases 11-14):** **~1,076 net lines removed** (test utils, notebook cleanup, microstructure plotter)
-**Grand Total:** **~16,451 net lines removed**
+**Additional (Phases 15-17):** **~299 net lines removed** (dead code, crystallographic utils, curvature validation)
+**Additional (Phases 18-19):** **~100 net lines removed** (cleanup, path standardization)
+**Grand Total:** **~16,850 net lines removed**
 
 ---
 
@@ -41,7 +43,16 @@ This document summarizes the comprehensive simplification effort for the VECTOR 
 | 13 | GB_velocity notebook cleanup | pending | ~154 | ~90 | +64 |
 | 14 | Microstructure plotting consolidation | pending | ~426 | ~766 | ~-340 |
 | **Subtotal (11-14)** | | | **~730** | **~1,806** | **~-1,076** |
-| **Grand Total** | | | **~4,976** | **~21,427** | **~-16,451** |
+| 15 | Dead code removal | pending | 0 | ~50 | ~-50 |
+| 16 | Crystallographic utilities extraction | pending | ~200 | ~400 | ~-200 |
+| 17 | Curvature validation consolidation | pending | ~50 | ~100 | ~-50 |
+| **Subtotal (15-17)** | | | **~250** | **~550** | **~-299** |
+| 18a | Remove Jupyter checkpoint directories | pending | 0 | ~100 | ~-100 |
+| 18b | Fix Curvature_Comparison.py bug | pending | 8 | 8 | 0 |
+| 18c | Remove remaining dead code | pending | 0 | ~35 | ~-35 |
+| 19 | Path setup standardization | pending | ~50 | ~85 | ~-35 |
+| **Subtotal (18-19)** | | | **~58** | **~228** | **~-170** |
+| **Grand Total** | | | **~6,014** | **~24,011** | **~-16,850** |
 
 ---
 
@@ -427,9 +438,127 @@ Created base class and configuration system for microstructure visualization:
 
 ---
 
+### Phase 15-17: Dead Code, Crystallographic Utils, Curvature Validation
+**Commit:** pending
+
+These phases focused on cleanup and consolidation:
+
+1. **Phase 15:** Removed dead code from various modules
+2. **Phase 16:** Extracted shared crystallographic utilities to `examples/shared/crystallographic_utils.py`
+3. **Phase 17:** Consolidated curvature validation code
+
+**Total Phases 15-17 reduction:** ~299 lines
+
+---
+
+### Phase 18: Quick Wins & Cleanup
+**Commit:** pending
+
+#### Phase 18a: Remove Jupyter Checkpoint Directories
+
+Removed `.ipynb_checkpoints` directories from 4 locations:
+| Directory | Files Removed |
+|-----------|---------------|
+| `examples/microstructure/.ipynb_checkpoints/` | 3 files |
+| `examples/calculate_inclination/.ipynb_checkpoints/` | 2 files |
+| `examples/dump_to_init/.ipynb_checkpoints/` | 3 files |
+| `examples/TJ_site_energy_calculation/.ipynb_checkpoints/` | 1 file |
+
+**Disk space recovered:** ~2-3 MB
+
+#### Phase 18b: Fix Curvature_Comparison.py Bug
+
+**File:** `examples/curvature_calculation/Curvature_Comparison.py`
+
+**Issue:** Reference variables (`r5_vv`, `r20_vv`, etc.) were defined at line 412-419 but used in `plot_test3D()` and `plot_VT_test3D()` at lines 295-302, causing `NameError` at runtime.
+
+**Fix:** Moved reference value definitions to module level (line 79-85) before function definitions:
+```python
+# Theoretical curvature reference values for validation benchmarking
+r1_vv = 1.570796333    # κ = 2/1 = 2.0 (high curvature)
+r2_vv = 0.523598778    # κ = 2/2 = 1.0 (moderate-high curvature)
+r5_vv = 0.204886473    # κ = 2/5 = 0.4 (moderate curvature)
+r20_vv = 0.049205668   # κ = 2/20 = 0.1 (low curvature)
+r50_vv = 0.019873334   # κ = 2/50 = 0.04 (very low curvature)
+r80_vv = 0.012444896   # κ = 2/80 = 0.025 (extremely low curvature)
+```
+
+#### Phase 18c: Remove Remaining Dead Code
+
+| File | Lines Removed | Description |
+|------|---------------|-------------|
+| `dump_to_init/init_neighbor_for_aniso_model_SPPARKS.py` | ~10 | Commented "Option 1" code block |
+| `dump_to_init/Voronoi2Spparks_torch.py` | ~5 | Commented alternative config |
+| `verify_energy_function/plot_misorientation_distribution_for_poly20k_hipergator.py` | ~16 | Commented polar plot code |
+
+**Total Phase 18 reduction:** ~35 lines + bug fix + disk cleanup
+
+---
+
+### Phase 19: Path Setup Standardization
+**Commit:** pending
+
+Created standardized path configuration module to replace inconsistent path setup patterns across example scripts.
+
+**New file:** `examples/shared/path_setup.py` (~45 lines)
+
+```python
+"""Path Configuration Utilities for VECTOR Framework Examples"""
+
+import sys
+from pathlib import Path
+
+def setup_vector_path():
+    """Add VECTOR framework root to sys.path."""
+    vector_root = Path(__file__).parent.parent.parent
+    vector_root_str = str(vector_root)
+    if vector_root_str not in sys.path:
+        sys.path.insert(0, vector_root_str)
+
+def get_vector_root():
+    """Get the absolute path to the VECTOR framework root directory."""
+    return Path(__file__).parent.parent.parent
+```
+
+**Before (inconsistent patterns):**
+```python
+# Pattern A (25+ files)
+import os
+current_path = os.getcwd()
+import sys
+sys.path.append(current_path)
+sys.path.append(current_path+'/../../')
+
+# Pattern B (5 files)
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+```
+
+**After (standardized):**
+```python
+from examples.shared.path_setup import setup_vector_path
+setup_vector_path()
+```
+
+**Files updated to use new pattern (10 files):**
+| File | Lines Changed |
+|------|---------------|
+| `verify_energy_function/plot_grain_size_distribution.py` | -4 |
+| `verify_energy_function/plot_misorientation_distribution_for_poly20k_hipergator.py` | -4 |
+| `microstructure/plot_microstructure_for_poly.py` | -4 |
+| `microstructure/plot_microstructure_for_hex.py` | -4 |
+| `microstructure/plot_microstructure_for_circle.py` | -4 |
+| `dump_to_init/dump_to_init_for_aniso_model_SPPARKS.py` | -3 |
+| `dump_to_init/init_neighbor_for_aniso_model_SPPARKS.py` | -3 |
+| `curvature_calculation/Curvature_Comparison.py` | -4 |
+| `plot_GG_property/plot_average_grain_size_over_time.py` | -6 |
+
+**Total Phase 19 reduction:** ~35 lines (+ improved maintainability)
+
+---
+
 ## File Change Summary
 
-### New Files Created (10)
+### New Files Created (12)
 | File | Lines | Purpose |
 |------|-------|---------|
 | `PACKAGE_MP_Base2D.py` | 342 | Base class for 2D algorithms |
@@ -441,17 +570,23 @@ Created base class and configuration system for microstructure visualization:
 | `verification/smoothing_algorithm_verification/test_cases/test_utils.py` | ~100 | Shared test utilities |
 | `examples/get_normals_TJangles /utils_angles.py` | ~50 | Shared angle calculation utilities |
 | `examples/microstructure/microstructure_plotter.py` | 426 | Base class for microstructure plotting |
+| `examples/shared/crystallographic_utils.py` | ~200 | Crystallographic orientation utilities (Phase 16) |
+| `examples/shared/path_setup.py` | ~45 | Standardized path configuration (Phase 19) |
 
-### Files Deleted (5)
-| File | Lines | Reason |
-|------|-------|--------|
+### Files Deleted (5 files + 4 directories)
+| File/Directory | Lines/Size | Reason |
+|----------------|------------|--------|
 | `examples/calculate_tangent/PACKAGE_MP_3DLinear.py` | 571 | Duplicate of root file |
 | `examples/calculate_tangent/PACKAGE_MP_Bilinear_v4_smoothMatrix.py` | 1,044 | Obsolete version |
 | `examples/calculate_tangent/myInput.py` | 1,435 | Duplicate of root file |
 | `examples/plot_GG_property/utils_poly2d.py` | 110 | Unused utility file |
 | `examples/plot_GG_property/utils_3d.py` | 94 | Unused utility file |
+| `examples/microstructure/.ipynb_checkpoints/` | ~2 MB | Jupyter checkpoint (Phase 18a) |
+| `examples/calculate_inclination/.ipynb_checkpoints/` | ~1 MB | Jupyter checkpoint (Phase 18a) |
+| `examples/dump_to_init/.ipynb_checkpoints/` | ~1 MB | Jupyter checkpoint (Phase 18a) |
+| `examples/TJ_site_energy_calculation/.ipynb_checkpoints/` | ~0.5 MB | Jupyter checkpoint (Phase 18a) |
 
-### Files Modified (70+)
+### Files Modified (80+)
 - 8 algorithm files (Linear, AllenCahn, LevelSet, Vertex × 2D/3D)
 - 14 plot_GG_property scripts → thin wrappers
 - 5 microstructure plotting scripts → thin wrappers (Phase 14)
@@ -461,6 +596,10 @@ Created base class and configuration system for microstructure visualization:
 - 8 verification test files → use shared utilities (Phase 11)
 - 3 get_normals_TJangles scripts → use shared utilities (Phase 12)
 - 2 Jupyter notebooks (GB_velocity, Phase 13)
+- 1 curvature calculation file (bug fix, Phase 18b)
+- 3 dump_to_init files (dead code removal, path standardization, Phase 18-19)
+- 2 verify_energy_function files (dead code removal, path standardization, Phase 18-19)
+- 10 example files (path standardization, Phase 19)
 - Documentation files (README.md, PROJECT_SIMPLIFICATION_SUMMARY.md)
 
 ---
@@ -493,6 +632,17 @@ python -m py_compile examples/microstructure/plot_microstructure_for_poly.py
 python -m py_compile examples/microstructure/plot_microstructure_for_hex.py
 python -c "from examples.GB_velocity.utils_gb_velocity import compute_dV, compute_necessary_info"
 python -c "from examples.microstructure.microstructure_plotter import MicrostructurePlotter, CirclePlotter"
+
+# Phase 18-19 verification
+python -m py_compile examples/shared/path_setup.py
+python -m py_compile examples/curvature_calculation/Curvature_Comparison.py
+python -m py_compile examples/dump_to_init/init_neighbor_for_aniso_model_SPPARKS.py
+python -m py_compile examples/dump_to_init/Voronoi2Spparks_torch.py
+python -m py_compile examples/dump_to_init/dump_to_init_for_aniso_model_SPPARKS.py
+python -m py_compile examples/verify_energy_function/plot_misorientation_distribution_for_poly20k_hipergator.py
+python -m py_compile examples/verify_energy_function/plot_grain_size_distribution.py
+python -m py_compile examples/plot_GG_property/plot_average_grain_size_over_time.py
+python -c "from examples.shared.path_setup import setup_vector_path, get_vector_root; setup_vector_path()"
 
 # Full algorithm test suite (run with moose conda environment)
 PYTHONPATH=/Users/lin/projects/VECTOR python verification/smoothing_algorithm_verification/run_tests.py
@@ -571,19 +721,32 @@ examples/GB_velocity/utils_gb_velocity.py (632 lines, shared analysis utilities)
 ├── Get_GB_movement_information(), filter_anti_curvature_events()
 └── cosine_energy_function(), well_energy_function()
     └── 2 notebooks (use shared functions)
+
+examples/shared/                  (shared utilities directory, Phase 16-19)
+├── __init__.py                   (package marker)
+├── crystallographic_utils.py     (~200 lines, crystallographic orientation functions)
+│   ├── euler2quaternion(), symquat(), quat_Multi(), quaternions()
+│   └── pre_operation_misorientation(), multiP_calM()
+└── path_setup.py                 (~45 lines, standardized path configuration)
+    ├── setup_vector_path()       (add VECTOR root to sys.path)
+    └── get_vector_root()         (get VECTOR root directory)
+        └── 10+ example scripts (use standardized import)
 ```
 
 ---
 
 ## Next Steps (Optional)
 
-1. **Commit Phases 7-14 changes** with descriptive messages
+1. **Commit Phases 7-19 changes** with descriptive messages
 2. **Merge devel to master** when ready
 3. **Update any external documentation** referencing moved/removed files
+4. **Phase 20 (Low Priority):** Extract histogram/distribution utilities (~100-150 lines potential reduction)
+   - Common grain size binning logic in `verify_energy_function/plot_grain_size_distribution.py`
+   - Similar normalization patterns in `plot_GG_property/` scripts
 
 ---
 
 *Generated: 2026-02-03*
-*Updated: 2026-02-08 (Phases 7-14)*
+*Updated: 2026-02-08 (Phases 7-19)*
 *Branch: devel*
 *Author: Lin (with Claude Opus 4.5)*

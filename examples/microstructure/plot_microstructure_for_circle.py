@@ -21,10 +21,8 @@ Created on Mon Jul 31 14:33:57 2023
 
 import os
 import sys
-
-current_path = os.getcwd()
-sys.path.append(current_path)
-sys.path.append(current_path + '/../../')
+from examples.shared.path_setup import setup_vector_path
+setup_vector_path()
 
 from microstructure_plotter import CirclePlotter
 

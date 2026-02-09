@@ -54,21 +54,19 @@ Applications:
 
 # Core scientific computing libraries
 import os
-current_path = os.getcwd()
+import sys
+from examples.shared.path_setup import setup_vector_path
+setup_vector_path()
+
 import numpy as np                    # Numerical array operations and statistical analysis
 from numpy import seterr
 seterr(all='raise')                  # Enable numpy error checking for numerical stability
 import matplotlib.pyplot as plt      # Publication-quality plotting and visualization
 import math                          # Mathematical functions for size calculations
 from tqdm import tqdm                # Progress bar for computationally intensive loops
-import sys
 
-# Add VECTOR framework paths for simulation analysis modules
-sys.path.append(current_path)
-sys.path.append(current_path+'/../../')
 import myInput                       # VECTOR input parameter management
 import PACKAGE_MP_Linear as linear2d # 2D linear algebra operations for grain analysis
-sys.path.append(current_path+'/../calculate_tangent/')
 
 if __name__ == '__main__':
     # =============================================================================

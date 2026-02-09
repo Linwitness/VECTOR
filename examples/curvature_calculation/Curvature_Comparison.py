@@ -68,13 +68,22 @@ of curvature calculation algorithm performance and validation studies.
 """
 
 import os
-current_path = os.getcwd()+'/'
 import sys
-sys.path.append(current_path)
-sys.path.append(current_path+'../../')
+from examples.shared.path_setup import setup_vector_path
+setup_vector_path()
+
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+
+# Theoretical curvature reference values for validation benchmarking
+# These values represent exact analytical solutions for spherical interfaces
+r1_vv = 1.570796333    # κ = 2/1 = 2.0 (high curvature)
+r2_vv = 0.523598778    # κ = 2/2 = 1.0 (moderate-high curvature)
+r5_vv = 0.204886473    # κ = 2/5 = 0.4 (moderate curvature)
+r20_vv = 0.049205668   # κ = 2/20 = 0.1 (low curvature)
+r50_vv = 0.019873334   # κ = 2/50 = 0.04 (very low curvature)
+r80_vv = 0.012444896   # κ = 2/80 = 0.025 (extremely low curvature)
 
 def plot_test2D():
     """
@@ -408,15 +417,6 @@ def plot_VT_test3D():
     plt.title('Comprehensive 3D Vertex Algorithm Performance Analysis')
     plt.grid(True, alpha=0.3)
 
-
-# Theoretical curvature reference values for validation benchmarking
-# These values represent exact analytical solutions for spherical interfaces
-r1_vv = 1.570796333    # κ = 2/1 = 2.0 (high curvature)
-r2_vv = 0.523598778    # κ = 2/2 = 1.0 (moderate-high curvature)
-r5_vv = 0.204886473    # κ = 2/5 = 0.4 (moderate curvature)
-r20_vv = 0.049205668   # κ = 2/20 = 0.1 (low curvature)
-r50_vv = 0.019873334   # κ = 2/50 = 0.04 (very low curvature)
-r80_vv = 0.012444896   # κ = 2/80 = 0.025 (extremely low curvature)
 
 # Main execution block for algorithm comparison visualization
 if __name__ == '__main__':

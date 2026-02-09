@@ -46,15 +46,16 @@ Applications:
 # ENVIRONMENT SETUP AND PATH CONFIGURATION
 # ================================================================================
 import os
-current_path = os.getcwd()                       # Current working directory for file operations
+import sys
+from examples.shared.path_setup import setup_vector_path
+setup_vector_path()
+
 import numpy as np                               # Numerical computing and array operations
 from numpy import seterr                         # Numerical error handling configuration
 seterr(all='raise')                             # Raise exceptions for numerical errors
 import matplotlib.pyplot as plt                  # Advanced scientific visualization
 import math                                      # Mathematical functions for calculations
 from tqdm import tqdm                            # Progress bar for long-running operations
-import sys
-sys.path.append(current_path+'/../../')          # Add VECTOR framework root directory
 
 # ================================================================================
 # VECTOR FRAMEWORK INTEGRATION: SPECIALIZED ANALYSIS MODULES
@@ -62,6 +63,12 @@ sys.path.append(current_path+'/../../')          # Add VECTOR framework root dir
 import myInput                                   # Input parameter management and file handling
 import post_processing                           # Core post-processing functions for crystallographic analysis
 import PACKAGE_MP_3DLinear as linear3d          # 3D linear algebra for crystallographic operations
+
+# Crystallographic utilities from shared module
+from examples.shared.crystallographic_utils import (
+    euler2quaternion, symquat, quat_Multi, quaternions,
+    pre_operation_misorientation, multiP_calM
+)
 
 # ================================================================================
 # STATISTICAL ANALYSIS FUNCTIONS FOR MISORIENTATION CHARACTERIZATION
@@ -110,31 +117,6 @@ def simple_magnitude(freqArray):
     magnitude_stan = np.sqrt(np.sum((abs(freqArray - freqArray_circle)/np.average(freqArray_circle) - magnitude_ave)**2)/binNum)
 
     return magnitude_ave, magnitude_stan
-
-def find_fittingEllipse2(array): #failure
-    """
-    Ellipse Fitting Algorithm for Crystallographic Analysis (Experimental)
-    
-    Note: This function is marked as experimental and may require further development
-    for robust crystallographic ellipse fitting applications.
-    """
-    K_mat = []
-    Y_mat = []
-
-    # Get the self-variable
-    X = array[:,0]
-    Y = array[:,1]
-
-    K_mat = np.hstack([X**2, X*Y, Y**2, X, Y])
-    Y_mat = np.ones_like(X)
-
-    X_mat = np.linalg.lstsq(K_mat, Y_mat)[0].squeeze()
-    # X_mat = (K_mat.T*K_mat).I * K_mat.T * Y_mat
-
-    print('The ellipse is given by {0:.3}x^2 + {1:.3}xy+{2:.3}y^2+{3:.3}x+{4:.3}y = 1'.format(X_mat[0], X_mat[1], X_mat[2], X_mat[3], X_mat[4]))
-    print(X_mat)
-
-    return X_mat
 
 def get_poly_center(micro_matrix, step):
     # Get the center of all non-periodic grains in matrix
@@ -276,22 +258,7 @@ def get_normal_vector_slope(P, sites, step, para_name, bias=None):
     if bias is not None:
         freqArray = freqArray + bias
         freqArray = freqArray/sum(freqArray*binValue)
-    # Plot
-    # plt.close()
-    # fig = plt.figure(figsize=(5, 5))
-    # ax = plt.gca(projection='polar')
 
-    # ax.set_thetagrids(np.arange(0.0, 360.0, 20.0),fontsize=14)
-    # ax.set_thetamin(0.0)
-    # ax.set_thetamax(360.0)
-
-    # ax.set_rgrids(np.arange(0, 0.008, 0.004))
-    # ax.set_rlabel_position(0.0)  # 标签显示在0°
-    # ax.set_rlim(0.0, 0.008)  # 标签范围为[0, 5000)
-    # ax.set_yticklabels(['0', '0.004'],fontsize=14)
-
-    # ax.grid(True, linestyle="-", color="k", linewidth=0.5, alpha=0.5)
-    # ax.set_axisbelow('True')
     plt.plot(np.append(xCor,xCor[0])/180*math.pi, np.append(freqArray,freqArray[0]), linewidth=2, label=para_name)
 
     # fitting
@@ -365,171 +332,6 @@ def get_normal_vector_slope_3d(P, sites, step, para_name, angle_index=0, bias=No
 
     return freqArray
 
-
-def euler2quaternion(yaw, pitch, roll):
-    """Convert euler angle into quaternion"""
-
-    qx = np.cos(pitch/2.)*np.cos((yaw+roll)/2.)
-    qy = np.sin(pitch/2.)*np.cos((yaw-roll)/2.)
-    qz = np.sin(pitch/2.)*np.sin((yaw-roll)/2.)
-    qw = np.cos(pitch/2.)*np.sin((yaw+roll)/2.)
-
-    return [qx, qy, qz, qw]
-
-
-def symquat(index, Osym = 24):
-    """Convert one(index) symmetric matrix into a quaternion """
-
-    q = np.zeros(4)
-
-    if Osym == 24:
-        SYM = np.array([[1, 0, 0,  0, 1, 0,  0, 0, 1],
-                        [1, 0, 0,  0, -1, 0,  0, 0, -1],
-                        [1, 0, 0,  0, 0, -1,  0, 1, 0],
-                        [1, 0, 0,  0, 0, 1,  0, -1, 0],
-                        [-1, 0, 0,  0, 1, 0,  0, 0, -1],
-                        [-1, 0, 0,  0, -1, 0,  0, 0, 1],
-                        [-1, 0, 0,  0, 0, -1,  0, -1, 0],
-                        [-1, 0, 0,  0, 0, 1,  0, 1, 0],
-                        [0, 1, 0, -1, 0, 0,  0, 0, 1],
-                        [0, 1, 0,  0, 0, -1, -1, 0, 0],
-                        [0, 1, 0,  1, 0, 0,  0, 0, -1],
-                        [0, 1, 0,  0, 0, 1,  1, 0, 0],
-                        [0, -1, 0,  1, 0, 0,  0, 0, 1],
-                        [0, -1, 0,  0, 0, -1,  1, 0, 0],
-                        [0, -1, 0, -1, 0, 0,  0, 0, -1],
-                        [0, -1, 0,  0, 0, 1, -1, 0, 0],
-                        [0, 0, 1,  0, 1, 0, -1, 0, 0],
-                        [0, 0, 1,  1, 0, 0,  0, 1, 0],
-                        [0, 0, 1,  0, -1, 0,  1, 0, 0],
-                        [0, 0, 1, -1, 0, 0,  0, -1, 0],
-                        [0, 0, -1,  0, 1, 0,  1, 0, 0],
-                        [0, 0, -1, -1, 0, 0,  0, 1, 0],
-                        [0, 0, -1,  0, -1, 0, -1, 0, 0],
-                        [0, 0, -1,  1, 0, 0,  0, -1, 0]])
-    elif Osym == 12:
-        a = np.sqrt(3)/2
-        SYM = np.array([[1,  0, 0,  0,   1, 0,  0, 0,  1],
-                        [-0.5,  a, 0, -a, -0.5, 0,  0, 0,  1],
-                        [-0.5, -a, 0,  a, -0.5, 0,  0, 0,  1],
-                        [0.5,  a, 0, -a, 0.5, 0,  0, 0,  1],
-                        [-1,  0, 0,  0,  -1, 0,  0, 0,  1],
-                        [0.5, -a, 0,  a, 0.5, 0,  0, 0,  1],
-                        [-0.5, -a, 0, -a, 0.5, 0,  0, 0, -1],
-                        [1,  0, 0,  0,  -1, 0,  0, 0, -1],
-                        [-0.5,  a, 0,  a, 0.5, 0,  0, 0, -1],
-                        [0.5,  a, 0,  a, -0.5, 0,  0, 0, -1],
-                        [-1,  0, 0,  0,   1, 0,  0, 0, -1],
-                        [0.5, -a, 0, -a, -0.5, 0,  0, 0, -1]])
-
-    if (1+SYM[index, 0]+SYM[index, 4]+SYM[index, 8]) > 0:
-        q4 = np.sqrt(1+SYM[index, 0]+SYM[index, 4]+SYM[index, 8])/2
-        q[0] = q4
-        q[1] = (SYM[index, 7]-SYM[index, 5])/(4*q4)
-        q[2] = (SYM[index, 2]-SYM[index, 6])/(4*q4)
-        q[3] = (SYM[index, 3]-SYM[index, 1])/(4*q4)
-    elif (1+SYM[index, 0]-SYM[index, 4]-SYM[index, 8]) > 0:
-        q4 = np.sqrt(1+SYM[index, 0]-SYM[index, 4]-SYM[index, 8])/2
-        q[0] = (SYM[index, 7]-SYM[index, 5])/(4*q4)
-        q[1] = q4
-        q[2] = (SYM[index, 3]+SYM[index, 1])/(4*q4)
-        q[3] = (SYM[index, 2]+SYM[index, 6])/(4*q4)
-    elif (1-SYM[index, 0]+SYM[index, 4]-SYM[index, 8]) > 0:
-        q4 = np.sqrt(1-SYM[index, 0]+SYM[index, 4]-SYM[index, 8])/2
-        q[0] = (SYM[index, 2]-SYM[index, 6])/(4*q4)
-        q[1] = (SYM[index, 3]+SYM[index, 1])/(4*q4)
-        q[2] = q4
-        q[3] = (SYM[index, 7]+SYM[index, 5])/(4*q4)
-    elif (1-SYM[index, 0]-SYM[index, 4]+SYM[index, 8]) > 0:
-        q4 = np.sqrt(1-SYM[index, 0]-SYM[index, 4]+SYM[index, 8])/2
-        q[0] = (SYM[index, 3]-SYM[index, 1])/(4*q4)
-        q[1] = (SYM[index, 2]+SYM[index, 6])/(4*q4)
-        q[2] = (SYM[index, 7]+SYM[index, 5])/(4*q4)
-        q[3] = q4
-
-    return q
-
-
-def quat_Multi(q1, q2):
-    """Return the product of two quaternion"""
-
-    q = np.zeros(4)
-    q[0] = q1[0]*q2[0] - q1[1]*q2[1] - q1[2]*q2[2] - q1[3]*q2[3]
-    q[1] = q1[0]*q2[1] + q1[1]*q2[0] + q1[2]*q2[3] - q1[3]*q2[2]
-    q[2] = q1[0]*q2[2] - q1[1]*q2[3] + q1[2]*q2[0] + q1[3]*q2[1]
-    q[3] = q1[0]*q2[3] + q1[1]*q2[2] - q1[2]*q2[1] + q1[3]*q2[0]
-
-    return q
-
-
-def quaternions(q1, q2, symm2quat_matrix, Osym=24):
-    """Return the misorientation of two quaternion"""
-
-    q = np.zeros(4)
-    misom = 2*np.pi
-    for i in range(0, Osym):
-        for j in range(0, Osym):
-            q1b = quat_Multi(symm2quat_matrix[i], q1)
-            q2b = quat_Multi(symm2quat_matrix[j], q2)
-
-            q2b[1] = -q2b[1]
-            q2b[2] = -q2b[2]
-            q2b[3] = -q2b[3]
-
-            q = quat_Multi(q1b, q2b)
-            # print(q[0])
-            miso0 = 2*math.acos(round(q[0], 5))
-
-            if miso0 > np.pi:
-                miso0 = miso0 - 2*np.pi
-            if abs(miso0) < misom:
-                misom = abs(miso0)
-                qmin = q.copy()
-
-    miso0 = 2*math.acos(round(qmin[0], 5))
-    if miso0 > np.pi:
-        miso0 = miso0 - 2*np.pi
-
-    if math.sin(miso0/2):
-        axis = qmin[1:]/math.sin(miso0/2)
-    else:
-        axis = np.array([0, 0, 1])
-
-    return abs(miso0), axis
-
-
-def multiP_calM(i, quartAngle, symm2quat_matrix, Osym):
-    """output the value of MisoEnergy by inout the two grain ID: i[0] and i[1]"""
-
-    qi = quartAngle[i[0], :]
-    qj = quartAngle[i[1], :]
-
-    theta, axis = quaternions(qi, qj, symm2quat_matrix, Osym)
-    # theta = theta*(theta<1)+(theta>1)
-    # gamma = theta*(1-np.log(theta))
-    gamma = theta
-    return np.insert(axis, 0, gamma)
-
-def pre_operation_misorientation(grainNum, init_filename, Osym=24):
-    # create the marix to store euler angle and misorientation
-    quartAngle = np.ones((grainNum, 4))*-2
-
-    # Create a quaternion matrix to show symmetry
-    symm2quat_matrix = np.zeros((Osym, 4))
-    for i in range(0, Osym):
-        symm2quat_matrix[i, :] = symquat(i, Osym)
-
-    # read the input euler angle from *.init
-    with open(init_filename, 'r', encoding='utf-8') as f:
-        for line in f:
-            eachline = line.split()
-
-            if len(eachline) == 5 and eachline[0] != '#':
-                lineN = int(eachline[1])-1
-                if quartAngle[lineN, 0] == -2:
-                    quartAngle[lineN, :] = euler2quaternion(float(eachline[2]), float(eachline[3]), float(eachline[4]))
-
-    return symm2quat_matrix, quartAngle
 
 def get_line(i, j):
     """

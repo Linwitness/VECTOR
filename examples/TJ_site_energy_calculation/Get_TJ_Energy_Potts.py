@@ -327,73 +327,6 @@ def calculate_energy(P, i, j):
     n1 = get_inclination(P, i, j)                  # Normal vector at center using VECTOR Linear2D
     e1 = energy_function(n1)                       # Anisotropic energy at center site
     print(f"center: {n1}, {e1}")                   # Debug output for center energy
-    
-    
-    # Old Version
-    # for m in range(len(edge_coord)):
-    #     if edge[m] != center:
-    #         n_edge = get_inclination(P , edge_coord[m][0], edge_coord[m][1])
-    #         e_edge = energy_function(n_edge)
-    #         print(f"edge: {n_edge}, {e_edge}")
-            
-    #         e_ave = (e1 + e_edge) / 2
-    #         site_energy += e_ave
-    
-    # Old Version
-    # for m in range(len(edge_coord)):
-    #     if edge[m] != center:
-    #         n_edge = get_inclination(P , edge_coord[m][0], edge_coord[m][1])
-    #         n_edge = n_edge - n1
-    #         n_edge = n_edge / np.linalg.norm(n_edge)
-    #         e_edge = energy_function(n_edge)
-    #         print(f"edge: {n_edge}, {e_edge}")
-            
-    #         e_ave = e_edge
-    #         site_energy += e_ave
-    
-    # Min Energy
-    # num_site = 0
-    # min_eng = 8
-    # for m in range(len(edge_coord)):
-    #     if edge[m] != center:
-    #         num_site += 1
-    #         n_edge = get_inclination(P , edge_coord[m][0], edge_coord[m][1])
-    #         e_edge = energy_function(n_edge)
-    #         print(f"edge: {n_edge}, {e_edge}")
-    #         if e_edge < min_eng: min_eng = e_edge
-    # site_energy = min_eng #* num_site
-    
-    # Max Energy
-    # num_site = 0
-    # max_eng = 0
-    # for m in range(len(edge_coord)):
-    #     if edge[m] != center:
-    #         num_site += 1
-    #         n_edge = get_inclination(P , edge_coord[m][0], edge_coord[m][1])
-    #         e_edge = energy_function(n_edge)
-    #         print(f"edge: {n_edge}, {e_edge}")
-    #         if e_edge > max_eng: max_eng = e_edge
-    # site_energy = max_eng #* num_site
-    
-    # Ave Energy
-    # num_site = 0
-    # nei_grain_id = set(list(edge)+[center])
-    # nei_grain_id.remove(center)
-    # nei_grain_id = list(nei_grain_id)
-    # engs_grain = np.zeros(len(nei_grain_id))
-    # sites_grain = np.zeros(len(nei_grain_id))
-    # ave_eng = 0
-    # for m in range(len(edge_coord)):
-    #     if edge[m] != center:
-    #         num_site += 1
-    #         n_edge = get_inclination(P , edge_coord[m][0], edge_coord[m][1])
-    #         engs_grain[int(nei_grain_id.index(edge[m]))] += energy_function(n_edge)
-    #         sites_grain[int(nei_grain_id.index(edge[m]))] += 1
-    #         print(f"edge: {n_edge}, {energy_function(n_edge)}")
-    # for m in range(len(nei_grain_id)): ave_eng += engs_grain[m] / sites_grain[m]
-    # print(f"nei_eng: {engs_grain/sites_grain}")
-    # ave_eng += e1
-    # site_energy = ave_eng / (len(nei_grain_id) + 1)
 
     # ============================================================================
     # ENERGY AVERAGING METHOD: SUMMATION ENERGY (ACTIVE)
@@ -443,29 +376,6 @@ def calculate_energy(P, i, j):
     ave_eng += e1                                  # Add center site energy
     site_energy = ave_eng                          # Final summation energy
     
-    # ============================================================================
-    # ALTERNATIVE ENERGY AVERAGING METHODS (COMMENTED FOR COMPARISON)
-    # ============================================================================
-    
-    # AVERAGE ENERGY METHOD (COMMENTED)
-    # Calculates arithmetic mean of center and neighbor energies
-    # Provides balanced energy averaging for moderate anisotropy effects
-    
-    # MINIMUM ENERGY METHOD (COMMENTED)  
-    # Selects lowest energy among all neighbors
-    # Promotes energy minimization and stable grain configurations
-    
-    # MAXIMUM ENERGY METHOD (COMMENTED)
-    # Selects highest energy among all neighbors  
-    # Emphasizes high-energy configurations for instability analysis
-    
-    # CONSERVATIVE METHODS (COMMENTED)
-    # Enhanced min/max with grain-wise averaging
-    # Provides more stable energy calculation for complex geometries
-            
-    return site_energy
-    
-            
     return site_energy
 
 def get_inclination(P, i, j, loop_times = 5, ng = 512):
@@ -599,50 +509,6 @@ if __name__ == '__main__':
     nx, ny = 10, 10                               # Grid dimensions for test microstructure
     ic90 = get_2d_ic1(nx,ny)                      # 90° triple junction test geometry
     eng_matrix = np.zeros((nx,ny))                # Energy matrix for spatial visualization
-    
-    # Alternative test geometries (commented for future use)
-    # ic120 = get_2d_ic2(nx,ny)                   # 120° equilibrium triple junction
-    # ic120_2 = np.array(np.rot90(ic120, 3))      # Rotated 120° configuration
-    
-    # Manual microstructure modifications (commented examples)
-    # ic2 = np.array(ic1)
-    # ic2[int(nx/2), int(ny/2-1)] = 1             # Single site modification
-    # ic3 = np.array(ic2)  
-    # ic3[int(nx/2), int(ny/2)] = 2               # Additional site modification
-    
-    # Large-scale microstructure loading (commented for future use)
-    # filename = "VoronoiIC_512_elong.init"       # Large Voronoi microstructure file
-    # nx, ny, ng = 512, 512, 512                  # Large-scale dimensions
-    # ic4, _ = myInput.init2IC(nx, ny, ng, filename, "./")  # Load from file
-    # ic4 = ic4[:,:,0]                            # Extract 2D slice
-    
-    # ================================================================================
-    # INDIVIDUAL SITE ENERGY ANALYSIS (COMMENTED EXAMPLES)
-    # ================================================================================
-    # Single site energy calculation examples for algorithm validation
-    
-    # 90° Triple Junction Energy Analysis:
-    # x , y = 4, 4                                # Triple junction site coordinates
-    # eng = calculate_energy(ic90, x, y)          # Calculate site energy
-    # print(f"The energy at TJ ({x}, {y}) is {eng}")  # Display results
-    
-    # 120° Triple Junction Validation:
-    # print("Vertical:")
-    # x, y = 6, 4                                 # Vertical boundary site
-    # eng = calculate_energy(ic120, x, y)         # Energy before modification
-    # print(f"The energy at TJ ({x}, {y}) is {eng}")
-    # ic120[x,y] = 1                             # Modify grain assignment
-    # eng = calculate_energy(ic120, x, y)         # Energy after modification
-    # print(f"The energy at TJ ({x}, {y}) is {eng}")
-    
-    # Horizontal boundary analysis:
-    # print("Horizontal:")
-    # x, y = 4, 3                                # Horizontal boundary site
-    # eng = calculate_energy(ic120_2, x, y)       # Energy calculation
-    # print(f"The energy at TJ ({x}, {y}) is {eng}")
-    # ic120_2[x,y] = 1                           # Site modification
-    # eng = calculate_energy(ic120_2, x, y)       # Modified energy
-    # print(f"The energy at TJ ({x}, {y}) is {eng}")
     
     # ================================================================================
     # ENERGY MATRIX GENERATION: Spatial Energy Distribution Analysis

@@ -474,11 +474,6 @@ Scientific Rationale:
 - Fine resolution allows accurate grain boundary curvature calculations
 """
 
-# Alternative configuration for smaller test runs:
-# savename = '/blue/michael.tonks/lin.yang/SPPARKS-VirtualIncEnergy/2d_poly_multiCoreCompare/IC/VoronoiIC_1024_5k.init'
-# size_x, size_y = 1024, 1024  # 2D domain for testing
-# grains = 5000  # Moderate grain count for validation
-
 # =================================================================
 # PRODUCTION CONFIGURATION FOR 3D ANISOTROPIC SIMULATIONS
 # =================================================================
@@ -545,5 +540,3 @@ else:
     print("- Reduce domain size or grain count")
     print("- Increase memory_limit parameter")
     print("- Check CUDA installation and GPU availability")
-
-
