@@ -6,33 +6,7 @@ Comparative Dihedral Angle Analysis: Joseph vs Lin Method Validation
 
 This module provides comprehensive comparison and validation of two different
 algorithms for calculating dihedral angles at triple junctions in 2D grain
-boundary systems. It processes SPPARKS simulation data to evaluate the accuracy
-and consistency of the Joseph method versus the Lin method.
-
-Scientific Background:
-- Triple junction dihedral angle measurement methodologies
-- Algorithm validation through statistical comparison
-- Time series analysis of angle evolution during grain growth
-- Method convergence and accuracy assessment
-
-Key Features:
-- Dual algorithm implementation for cross-validation
-- Statistical analysis of angle differences between methods
-- Time-dependent evolution tracking with smoothing
-- Comprehensive error analysis and reporting
-- Progress tracking for large dataset processing
-
-Research Applications:
-- Grain boundary analysis method validation
-- Algorithm development and benchmarking
-- SPPARKS simulation data post-processing
-- Materials science computational method verification
-
-Technical Implementations:
-- Joseph method: [Traditional geometric approach]
-- Lin method: [Advanced computational approach]
-- Statistical comparison metrics
-- Temporal evolution analysis with noise reduction
+boundary systems.
 
 Created on Fri Mar 24 11:48:29 2023
 @author: Lin
@@ -44,8 +18,6 @@ import numpy as np
 from numpy import seterr
 seterr(all='raise')
 import matplotlib.pyplot as plt
-import math
-from itertools import repeat
 import sys
 sys.path.append(current_path)
 sys.path.append(current_path+'/../../')
@@ -55,147 +27,16 @@ sys.path.append(current_path+'/../calculate_tangent/')
 import output_tangent
 from tqdm import tqdm
 
-
-
-def get_gb_sites(P, grain_num):
-    """
-    Identify Grain Boundary Sites in 2D Microstructure
-    
-    This function systematically identifies all grain boundary sites by analyzing
-    neighbor connectivity and detecting interface locations between different grains.
-    Essential preprocessing step for both angle calculation methods.
-    
-    Parameters:
-    -----------
-    P : ndarray
-        3D array representing microstructure evolution (time, x, y)
-    grain_num : int
-        Total number of grains in the microstructure
-        
-    Returns:
-    --------
-    ggn_gbsites : list of lists
-        Grain boundary sites organized by grain ID
-        Each sublist contains [i,j] coordinates of boundary sites for that grain
-        
-    Algorithm Details:
-    -----------------
-    - Uses periodic boundary conditions for edge handling
-    - Excludes boundary region (timestep=5) to avoid edge effects
-    - Identifies sites where neighbors have different grain IDs
-    - Systematic grain-by-grain organization for efficient processing
-    
-    Scientific Applications:
-    -----------------------
-    - Interface area calculation and characterization
-    - Grain boundary network topology analysis
-    - Preprocessing for normal vector calculations
-    - Statistical analysis of grain boundary properties
-    """
-    _, nx, ny = np.shape(P)
-    timestep = 5  # Buffer zone to avoid boundary effects
-    ggn_gbsites = [[] for i in repeat(None, grain_num)]
-    
-    # Systematic scan through domain excluding boundary regions
-    for i in range(timestep, nx-timestep):
-        for j in range(timestep, ny-timestep):
-            # Get periodic boundary condition neighbors
-            ip, im, jp, jm = myInput.periodic_bc(nx, ny, i, j)
-            
-            # Check if current site has neighbors with different grain IDs
-            if (((P[0,ip,j]-P[0,i,j])!=0) or ((P[0,im,j]-P[0,i,j])!=0) or
-                ((P[0,i,jp]-P[0,i,j])!=0) or ((P[0,i,jm]-P[0,i,j])!=0)) and\
-                P[0,i,j] <= grain_num:
-                ggn_gbsites[int(P[0,i,j]-1)].append([i,j])
-    
-    return ggn_gbsites
-
-def norm_list(grain_num, P_matrix):
-    # get the norm list
-    # grain_num -= 1
-    boundary_site = get_gb_sites(P_matrix, grain_num)
-    norm_list = [np.zeros(( len(boundary_site[i]), 2 )) for i in range(grain_num)]
-    for grain_i in range(grain_num):
-        print(f"finish {grain_i}")
-
-        for site in range(len(boundary_site[grain_i])):
-            norm = myInput.get_grad(P_matrix, boundary_site[grain_i][site][0], boundary_site[grain_i][site][1])
-            norm_list[grain_i][site,:] = list(norm)
-
-    return norm_list, boundary_site
-
-def get_orientation(grain_num, init_name ):
-    # read the input euler angle from *.init
-    eulerAngle = np.ones((grain_num,3))*-10
-    with open(init_name, 'r', encoding = 'utf-8') as f:
-        for line in f:
-            eachline = line.split()
-
-            if len(eachline) == 5 and eachline[0] != '#':
-                lineN = int(eachline[1])-1
-                if eulerAngle[lineN,0] == -10:
-                    eulerAngle[lineN,:] = [float(eachline[2]), float(eachline[3]), float(eachline[4])]
-    return eulerAngle[:ng-1]
-
-def output_inclination(output_name, norm_list, site_list, orientation_list=0):
-
-    file = open(output_name,'w')
-    for i in range(len(norm_list)):
-        if orientation_list != 0:
-            file.writelines(['Grain ' + str(i+1) + ' Orientation: ' + str(orientation_list[i]) + ' centroid: ' + '\n'])
-        else:
-            file.writelines(['Grain ' + str(i+1) + ' Orientation: empty centroid: ' + '\n'])
-
-        for j in range(len(norm_list[i])):
-            file.writelines([str(site_list[i][j][0]) + ', ' + str(site_list[i][j][1]) + ', ' + str(norm_list[i][j][0]) + ', ' + str(norm_list[i][j][1]) + '\n'])
-
-        file.writelines(['\n'])
-
-    file.close()
-    return
-
-def output_dihedral_angle(output_name, triple_coord, triple_angle, triple_grain):
-    file = open(output_name,'w')
-    file.writelines(['triple_index triple_coordination grain_id0:dihedral0 grain_id1:dihedral1 grain_id2:dihedral2 angle_sum\n'])
-    for i in range(len(triple_coord)):
-        file.writelines([str(i+1) + ', ' + str(triple_coord[i][0]) + ' ' + str(triple_coord[i][1]) + ', ' + \
-                         str(int(triple_grain[i][0])) + ':' + str(round(triple_angle[i][0],2)) + ' ' + \
-                         str(int(triple_grain[i][1])) + ':' + str(round(triple_angle[i][1],2)) + ' ' + \
-                         str(int(triple_grain[i][2])) + ':' + str(round(triple_angle[i][2],2)) + ' ' + \
-                         str(round(np.sum(triple_angle[i]),2)) + '\n'])
-
-    file.close()
-    return
-
-def find_window(P,i,j,iteration,refer_id):
-    # Find the windows around the voxel i,j, the size depend on iteration
-    nx,ny=P.shape
-    tableL=2*(iteration+1)+1
-    fw_len = tableL
-    fw_half = int((fw_len-1)/2)
-    window = np.zeros((fw_len,fw_len))
-
-    for wi in range(fw_len):
-        for wj in range(fw_len):
-            global_x = (i-fw_half+wi)%nx
-            global_y = (j-fw_half+wj)%ny
-            if P[global_x,global_y] == refer_id:
-                window[wi,wj] = 1
-            else:
-                window[wi,wj] = 0
-
-    return window
-
-def data_smooth(data_array, smooth_level=2):
-
-    data_array_smoothed = np.zeros(len(data_array))
-    for i in range(len(data_array)):
-        if i < smooth_level: data_array_smoothed[i] = np.sum(data_array[0:i+smooth_level+1])/(i+smooth_level+1)
-        elif (len(data_array) - 1 - i) < smooth_level: data_array_smoothed[i] = np.sum(data_array[i-smooth_level:])/(len(data_array)-i+smooth_level)
-        else: data_array_smoothed[i] = np.sum(data_array[i-smooth_level:i+smooth_level+1])/(smooth_level*2+1)
-        # print(data_array_smoothed[i])
-
-    return data_array_smoothed
+# Import shared utilities
+from utils_angles import (
+    get_gb_sites_2d as get_gb_sites,
+    norm_list_2d as norm_list,
+    get_orientation,
+    output_inclination_2d as output_inclination,
+    output_dihedral_angle_2d as output_dihedral_angle,
+    find_window,
+    data_smooth
+)
 
 def dihedral_angle_from_Joseph(case_path, num_steps):
     """

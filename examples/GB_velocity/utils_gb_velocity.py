@@ -172,6 +172,161 @@ def compute_dV_split(npy_file_aniso_current, npy_file_aniso_next, pair_id_pair):
     return dV_positive, dV_negative
 
 
+def compute_dV_split_with_net(npy_file_aniso_current, npy_file_aniso_next, pair_id_pair):
+    """
+    Calculate volume change returning net and directional values.
+
+    Convenience wrapper around compute_dV_split that also returns the net
+    volume change. This matches the interface used in some analysis notebooks.
+
+    Parameters:
+    -----------
+    npy_file_aniso_current : ndarray
+        Current timestep microstructure data
+    npy_file_aniso_next : ndarray
+        Next timestep microstructure data
+    pair_id_pair : tuple or array-like
+        Pair of grain IDs (grain_id_1, grain_id_2)
+
+    Returns:
+    --------
+    tuple (int, int, int)
+        (dV_net, dV_direction1, dV_direction2) where:
+        - dV_net: net volume change (direction1 - direction2)
+        - dV_direction1: sites switched from grain_id_2 to grain_id_1
+        - dV_direction2: sites switched from grain_id_1 to grain_id_2
+    """
+    # Convert to tuple if needed (e.g., from array slice)
+    if hasattr(pair_id_pair, '__len__') and not isinstance(pair_id_pair, tuple):
+        pair_id_pair = (int(pair_id_pair[0]), int(pair_id_pair[1]))
+
+    dV_direction1, dV_direction2 = compute_dV_split(
+        npy_file_aniso_current, npy_file_aniso_next, pair_id_pair
+    )
+    dV_net = dV_direction1 - dV_direction2
+    return dV_net, dV_direction1, dV_direction2
+
+
+def compute_necessary_info(key, time_interval, GB_info_array,
+                           npy_file_aniso_current, npy_file_aniso_next):
+    """
+    Compute velocity and curvature analysis for a single grain boundary.
+
+    This function is used for basic velocity-curvature analysis without
+    energy information, matching the interface used in experimental data
+    analysis notebooks.
+
+    Parameters:
+    -----------
+    key : int or tuple
+        Grain boundary identifier
+    time_interval : int
+        Time step interval for velocity calculation
+    GB_info_array : ndarray
+        Array containing GB information with structure:
+        [count, i, j, k, curvature, area, grain_id_1, grain_id_2]
+        - count: number of GB voxels used
+        - i, j, k: average position
+        - curvature: average curvature value
+        - area: total GB area (voxels)
+        - grain_id_1, grain_id_2: pair of grain IDs
+    npy_file_aniso_current : ndarray
+        Current timestep microstructure data
+    npy_file_aniso_next : ndarray
+        Next timestep microstructure data
+
+    Returns:
+    --------
+    dict
+        Dictionary containing:
+        - 'key': the boundary identifier
+        - 'velocity': boundary velocity (dV / time / normalized_area)
+        - 'current_curvature_value': curvature from GB_info_array
+        - 'is_anti_curvature': boolean flag (velocity * curvature < -0.0001)
+
+    Notes:
+    ------
+    - Uses compute_dV for volume change calculation
+    - Area is normalized by factor of 2 in velocity calculation
+    - Anti-curvature threshold is -0.0001 to exclude numerical noise
+    """
+    # Extract grain IDs from array
+    pair_id_pair = (int(GB_info_array[6]), int(GB_info_array[7]))
+
+    # Calculate dV and velocity
+    dV = compute_dV(npy_file_aniso_current, npy_file_aniso_next, pair_id_pair)
+    velocity = dV / time_interval / (GB_info_array[5] / 2)
+
+    # Get curvature
+    current_curvature_value = GB_info_array[4]
+
+    result = {
+        "key": key,
+        "velocity": velocity,
+        "current_curvature_value": current_curvature_value,
+        "is_anti_curvature": current_curvature_value * velocity < -0.0001
+    }
+
+    return result
+
+
+def compute_necessary_info_split_array(key, time_interval, GB_info_array,
+                                        npy_file_aniso_current, npy_file_aniso_next):
+    """
+    Compute velocity-curvature analysis with directional volume tracking.
+
+    Similar to compute_necessary_info but also returns directional volume
+    changes. This matches the interface used in verification notebooks.
+
+    Parameters:
+    -----------
+    key : int or tuple
+        Grain boundary identifier
+    time_interval : int
+        Time step interval for velocity calculation
+    GB_info_array : ndarray
+        Array containing GB information with structure:
+        [count, i, j, k, curvature, area, grain_id_1, grain_id_2]
+    npy_file_aniso_current : ndarray
+        Current timestep microstructure data
+    npy_file_aniso_next : ndarray
+        Next timestep microstructure data
+
+    Returns:
+    --------
+    dict
+        Dictionary containing:
+        - 'key': the boundary identifier
+        - 'velocity': boundary velocity
+        - 'dV_direction1': volume change in direction 1
+        - 'dV_direction2': volume change in direction 2
+        - 'current_curvature_value': curvature from GB_info_array
+        - 'is_anti_curvature': boolean flag (velocity * curvature < -1e-4)
+    """
+    # Extract grain IDs from array
+    pair_id_pair = (int(GB_info_array[6]), int(GB_info_array[7]))
+
+    # Calculate dV with directional split
+    dV, dV_direction1, dV_direction2 = compute_dV_split_with_net(
+        npy_file_aniso_current, npy_file_aniso_next, pair_id_pair
+    )
+    velocity = dV / time_interval / (GB_info_array[5] / 2)
+
+    # Get curvature
+    current_curvature_value = GB_info_array[4]
+
+    result = {
+        "key": key,
+        "velocity": velocity,
+        "dV_direction1": dV_direction1,
+        "dV_direction2": dV_direction2,
+        "current_curvature_value": current_curvature_value,
+        "is_anti_curvature": current_curvature_value * velocity < -1e-4
+    }
+
+    return result
+
+
 def compute_necessary_info_split(key, time_interval, GB_info, energy_info,
                                   npy_file_aniso_current, npy_file_aniso_next):
     """

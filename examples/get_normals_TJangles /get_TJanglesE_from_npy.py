@@ -4,29 +4,8 @@
 Triple Junction Energy Analysis and Dihedral Angle Calculation
 ==============================================================
 
-This module provides comprehensive analysis of triple junction energies and their 
-relationship with dihedral angles in 2D grain boundary systems. It processes 
-SPPARKS simulation data (.npy files) to extract energy-dihedral angle correlations 
-and validate theoretical predictions against computational results.
-
-Scientific Background:
-- Triple junction energy analysis in polycrystalline materials
-- Dihedral angle measurement and statistical analysis
-- Energy-angle relationship validation using Herring's equation
-- Equilibrium angle prediction from energy minimization principles
-
-Key Features:
-- Multiple energy type analysis: ave, sum, consMin, consMax, consTest
-- Site-specific energy calculation with neighbor connectivity
-- Statistical analysis of dihedral angles over simulation time
-- Curve fitting for energy-angle relationship prediction
-- Validation against theoretical equilibrium angles (145.46°)
-
-Applications:
-- SPPARKS simulation data post-processing
-- Triple junction energy model validation
-- Grain boundary energy anisotropy studies
-- Materials science research on grain boundary behavior
+This module provides comprehensive analysis of triple junction energies and their
+relationship with dihedral angles in 2D grain boundary systems.
 
 Created on Fri Mar 24 11:48:29 2023
 @author: Lin
@@ -36,14 +15,11 @@ import os
 current_path = os.getcwd()
 import numpy as np
 from numpy import seterr
-seterr(all='raise')  # Enable numpy error reporting for debugging
+seterr(all='raise')
 import matplotlib.pyplot as plt
-import math
-from itertools import repeat
-from scipy.optimize import curve_fit  # Required for curve fitting analysis
+from scipy.optimize import curve_fit
 import sys
 
-# Configure system paths for VECTOR framework access
 sys.path.append(current_path)
 sys.path.append(current_path+'/../../')
 import myInput
@@ -51,403 +27,35 @@ import PACKAGE_MP_Linear as linear2d
 sys.path.append(current_path+'/../calculate_tangent/')
 import output_tangent
 
+# Import shared utilities
+from utils_angles import (
+    get_gb_sites_2d as get_gb_sites,
+    norm_list_2d as norm_list,
+    get_orientation,
+    output_inclination_2d as output_inclination,
+    output_dihedral_angle_2d as output_dihedral_angle,
+    find_window,
+    data_smooth
+)
+
+
 def func(x, a, b, c):
     """
-    Exponential Decay Function for Energy-Angle Relationship
-    
-    This function models the relationship between triple junction energy and
-    dihedral angles using an exponential decay with offset.
-    
+    Exponential decay function for energy-angle relationship fitting.
+
     Parameters:
     -----------
     x : float or array
         Input energy values
     a, b, c : float
-        Fitting parameters where:
-        a = amplitude of exponential decay
-        b = decay rate constant
-        c = offset/baseline value
-        
+        Fitting parameters: amplitude, decay rate, offset
+
     Returns:
     --------
     float or array
-        Fitted dihedral angle values
-        
-    Mathematical Model:
-    ------------------
-    angle = a * exp(-x * b) + c
-    
-    This model captures the physical relationship where:
-    - Higher energies tend to produce smaller dihedral angles
-    - The relationship follows exponential decay toward equilibrium
-    - The offset 'c' represents the baseline angle at high energies
-    
-    Scientific Applications:
-    -----------------------
-    - Energy-angle relationship validation
-    - Herring equation comparison
-    - Equilibrium angle prediction
-    - Triple junction energy model fitting
+        Fitted dihedral angle values: a * exp(-x * b) + c
     """
     return a * np.exp(-x * b) + c
-
-def get_gb_sites(P, grain_num):
-    """
-    Identify Grain Boundary Sites in 2D Microstructure
-    
-    This function systematically identifies all grain boundary sites by analyzing
-    neighbor connectivity and detecting interface locations between different grains.
-    
-    Parameters:
-    -----------
-    P : ndarray
-        3D array representing microstructure (layers, x, y)
-    grain_num : int
-        Total number of grains in the microstructure
-        
-    Returns:
-    --------
-    ggn_gbsites : list of lists
-        Grain boundary sites organized by grain ID
-        Each sublist contains [i,j] coordinates of boundary sites for that grain
-        
-    Algorithm Details:
-    -----------------
-    - Uses periodic boundary conditions for edge handling
-    - Excludes boundary region (timestep=5) to avoid edge effects
-    - Identifies sites where neighbors have different grain IDs
-    - Organized output by grain number for systematic analysis
-    
-    Scientific Applications:
-    -----------------------
-    - Interface area calculation
-    - Grain boundary characterization
-    - Normal vector calculation preparation
-    - Statistical analysis of grain boundary properties
-    """
-    _, nx, ny = np.shape(P)
-    timestep = 5  # Buffer zone to avoid boundary effects
-    ggn_gbsites = [[] for i in repeat(None, grain_num)]
-    
-    # Systematic scan through domain excluding boundary regions
-    for i in range(timestep, nx-timestep):
-        for j in range(timestep, ny-timestep):
-            # Get periodic boundary condition neighbors
-            ip, im, jp, jm = myInput.periodic_bc(nx, ny, i, j)
-            
-            # Check if current site has neighbors with different grain IDs
-            if (((P[0,ip,j]-P[0,i,j])!=0) or ((P[0,im,j]-P[0,i,j])!=0) or
-                ((P[0,i,jp]-P[0,i,j])!=0) or ((P[0,i,jm]-P[0,i,j])!=0)) and\
-                P[0,i,j] <= grain_num:
-                ggn_gbsites[int(P[0,i,j]-1)].append([i,j])
-    
-    return ggn_gbsites
-
-def norm_list(grain_num, P_matrix):
-    """
-    Calculate Normal Vectors for All Grain Boundary Sites
-    
-    This function computes the normal vectors at each grain boundary site using
-    gradient calculation methods for interface orientation analysis.
-    
-    Parameters:
-    -----------
-    grain_num : int
-        Total number of grains in the microstructure
-    P_matrix : ndarray
-        Microstructure array for gradient calculation
-        
-    Returns:
-    --------
-    norm_list : list of ndarrays
-        Normal vectors organized by grain number
-        Each array contains [normal_x, normal_y] for boundary sites
-    boundary_site : list of lists
-        Corresponding boundary site coordinates
-        
-    Computational Details:
-    ---------------------
-    - Uses myInput.get_grad() for accurate gradient calculation
-    - Systematic processing grain by grain with progress tracking
-    - Preserves spatial correlation between sites and normal vectors
-    - Memory-efficient storage organized by grain boundaries
-    
-    Scientific Applications:
-    -----------------------
-    - Interface inclination analysis
-    - Grain boundary character distribution
-    - Triple junction angle calculations
-    - Crystallographic orientation relationships
-    """
-    # Get grain boundary sites for all grains
-    boundary_site = get_gb_sites(P_matrix, grain_num)
-    norm_list = [np.zeros((len(boundary_site[i]), 2)) for i in range(grain_num)]
-    
-    # Calculate normal vectors for each grain's boundary sites
-    for grain_i in range(grain_num):
-        print(f"Processing grain {grain_i} boundary normals...")
-
-        for site in range(len(boundary_site[grain_i])):
-            # Calculate normal vector using gradient method
-            norm = myInput.get_grad(P_matrix, boundary_site[grain_i][site][0], 
-                                   boundary_site[grain_i][site][1])
-            norm_list[grain_i][site,:] = list(norm)
-
-    return norm_list, boundary_site
-
-def get_orientation(grain_num, init_name):
-    """
-    Extract Euler Angles from SPPARKS Initialization File
-    
-    This function reads crystallographic orientations (Euler angles) from
-    SPPARKS .init files for anisotropic grain boundary analysis.
-    
-    Parameters:
-    -----------
-    grain_num : int
-        Total number of grains expected
-    init_name : str
-        Path to SPPARKS initialization file
-        
-    Returns:
-    --------
-    eulerAngle : ndarray
-        Array of Euler angles [phi1, Phi, phi2] for each grain
-        
-    File Format Parsing:
-    -------------------
-    Expected format: site_id grain_id phi1 Phi phi2
-    - Skips comment lines starting with '#'
-    - Handles grain ID indexing (converts to 0-based)
-    - Prevents duplicate angle assignment
-    - Returns subset excluding last grain for compatibility
-    
-    Scientific Applications:
-    -----------------------
-    - Anisotropic grain boundary energy calculations
-    - Misorientation analysis between neighboring grains
-    - Texture analysis and crystallographic studies
-    - Grain boundary character distribution analysis
-    """
-    # Initialize Euler angle array with sentinel values
-    eulerAngle = np.ones((grain_num, 3)) * -10
-    
-    with open(init_name, 'r', encoding='utf-8') as f:
-        for line in f:
-            eachline = line.split()
-
-            # Parse data lines (5 columns, not comments)
-            if len(eachline) == 5 and eachline[0] != '#':
-                lineN = int(eachline[1]) - 1  # Convert to 0-based indexing
-                
-                # Assign Euler angles if not already set
-                if eulerAngle[lineN, 0] == -10:
-                    eulerAngle[lineN, :] = [float(eachline[2]), float(eachline[3]), float(eachline[4])]
-    
-    return eulerAngle[:ng-1]  # Note: ng should be defined in calling context
-
-def output_inclination(output_name, norm_list, site_list, orientation_list=0):
-    """
-    Export Grain Boundary Inclination Data to File
-    
-    This function generates comprehensive output files containing grain boundary
-    site coordinates, normal vectors, and associated crystallographic orientations.
-    
-    Parameters:
-    -----------
-    output_name : str
-        Output file path for inclination data
-    norm_list : list of ndarrays
-        Normal vectors organized by grain
-    site_list : list of lists
-        Boundary site coordinates for each grain
-    orientation_list : ndarray, optional
-        Euler angles for each grain (default=0 for empty)
-        
-    Output Format:
-    --------------
-    For each grain:
-    - Header: "Grain N Orientation: [phi1,Phi,phi2] centroid:"
-    - Data lines: "x_coord, y_coord, normal_x, normal_y"
-    - Blank line separator between grains
-    
-    Scientific Applications:
-    -----------------------
-    - Post-processing for inclination distribution analysis
-    - Input for crystallographic analysis software
-    - Grain boundary character classification
-    - Statistical analysis of interface orientations
-    """
-    file = open(output_name, 'w')
-    
-    # Write data for each grain
-    for i in range(len(norm_list)):
-        # Write grain header with orientation information
-        if orientation_list != 0:
-            file.writelines(['Grain ' + str(i+1) + ' Orientation: ' + str(orientation_list[i]) + ' centroid: ' + '\n'])
-        else:
-            file.writelines(['Grain ' + str(i+1) + ' Orientation: empty centroid: ' + '\n'])
-
-        # Write site coordinates and normal vectors
-        for j in range(len(norm_list[i])):
-            file.writelines([str(site_list[i][j][0]) + ', ' + str(site_list[i][j][1]) + ', ' + 
-                           str(norm_list[i][j][0]) + ', ' + str(norm_list[i][j][1]) + '\n'])
-
-        file.writelines(['\n'])  # Separator between grains
-
-    file.close()
-    return
-
-def output_dihedral_angle(output_name, triple_coord, triple_angle, triple_grain):
-    """
-    Export Triple Junction Dihedral Angle Analysis Results
-    
-    This function creates detailed output files containing triple junction
-    coordinates, calculated dihedral angles, and associated grain IDs.
-    
-    Parameters:
-    -----------
-    output_name : str
-        Output file path for dihedral angle data
-    triple_coord : ndarray
-        Coordinates of triple junction points
-    triple_angle : ndarray
-        Calculated dihedral angles for each triple junction
-    triple_grain : ndarray
-        Grain IDs associated with each triple junction
-        
-    Output Format:
-    --------------
-    Header: "triple_index triple_coordination grain_id0:dihedral0 grain_id1:dihedral1 grain_id2:dihedral2 angle_sum"
-    Data: "index, x y, grain1:angle1 grain2:angle2 grain3:angle3 sum"
-    
-    Scientific Applications:
-    -----------------------
-    - Triple junction energy analysis
-    - Equilibrium angle validation (should sum to 360°)
-    - Statistical analysis of dihedral angle distributions
-    - Comparison with theoretical predictions
-    """
-    file = open(output_name, 'w')
-    
-    # Write header for data interpretation
-    file.writelines(['triple_index triple_coordination grain_id0:dihedral0 grain_id1:dihedral1 grain_id2:dihedral2 angle_sum\n'])
-    
-    # Write data for each triple junction
-    for i in range(len(triple_coord)):
-        file.writelines([str(i+1) + ', ' + str(triple_coord[i][0]) + ' ' + str(triple_coord[i][1]) + ', ' +
-                         str(int(triple_grain[i][0])) + ':' + str(round(triple_angle[i][0], 2)) + ' ' +
-                         str(int(triple_grain[i][1])) + ':' + str(round(triple_angle[i][1], 2)) + ' ' +
-                         str(int(triple_grain[i][2])) + ':' + str(round(triple_angle[i][2], 2)) + ' ' +
-                         str(round(np.sum(triple_angle[i]), 2)) + '\n'])
-
-    file.close()
-    return
-
-def find_window(P, i, j, iteration, refer_id):
-    """
-    Generate Local Window Around Specified Voxel
-    
-    This function creates a local neighborhood window for analyzing grain
-    connectivity and calculating site-specific properties with periodic boundaries.
-    
-    Parameters:
-    -----------
-    P : ndarray
-        2D microstructure array
-    i, j : int
-        Center coordinates for window
-    iteration : int
-        Window half-size parameter (total size = 2*iteration+1)
-    refer_id : int
-        Reference grain ID for comparison
-        
-    Returns:
-    --------
-    window : ndarray
-        Binary array where 1=same grain, 0=different grain
-        
-    Algorithm Details:
-    -----------------
-    - Creates square window of size (2*iteration+1) x (2*iteration+1)
-    - Uses periodic boundary conditions for edge handling
-    - Binary classification based on grain ID matching
-    - Used for neighbor counting and energy calculations
-    
-    Scientific Applications:
-    -----------------------
-    - Local environment analysis
-    - Neighbor connectivity calculation
-    - Site energy normalization
-    - Interface characterization
-    """
-    nx, ny = P.shape
-    tableL = 2 * (iteration + 1) + 1
-    fw_len = tableL
-    fw_half = int((fw_len - 1) / 2)
-    window = np.zeros((fw_len, fw_len))
-
-    # Generate window with periodic boundary conditions
-    for wi in range(fw_len):
-        for wj in range(fw_len):
-            global_x = (i - fw_half + wi) % nx
-            global_y = (j - fw_half + wj) % ny
-            
-            # Binary classification: 1 if same grain, 0 if different
-            if P[global_x, global_y] == refer_id:
-                window[wi, wj] = 1
-            else:
-                window[wi, wj] = 0
-
-    return window
-
-def data_smooth(data_array, smooth_level=2):
-    """
-    Apply Moving Average Smoothing to Time Series Data
-    
-    This function performs temporal smoothing using a moving average filter
-    to reduce noise in dihedral angle evolution data.
-    
-    Parameters:
-    -----------
-    data_array : ndarray
-        Input time series data for smoothing
-    smooth_level : int, optional
-        Half-width of smoothing window (default=2)
-        
-    Returns:
-    --------
-    data_array_smoothed : ndarray
-        Smoothed time series data
-        
-    Algorithm Details:
-    -----------------
-    - Uses symmetric moving average when possible
-    - Handles boundaries with asymmetric averaging
-    - Preserves data length and temporal alignment
-    - Adjustable smoothing strength via smooth_level parameter
-    
-    Scientific Applications:
-    -----------------------
-    - Noise reduction in simulation data
-    - Trend identification in evolution studies
-    - Statistical analysis preparation
-    - Visualization enhancement for publication plots
-    """
-    data_array_smoothed = np.zeros(len(data_array))
-    
-    for i in range(len(data_array)):
-        # Handle left boundary
-        if i < smooth_level:
-            data_array_smoothed[i] = np.sum(data_array[0:i+smooth_level+1]) / (i+smooth_level+1)
-        # Handle right boundary  
-        elif (len(data_array) - 1 - i) < smooth_level:
-            data_array_smoothed[i] = np.sum(data_array[i-smooth_level:]) / (len(data_array)-i+smooth_level)
-        # Central smoothing
-        else:
-            data_array_smoothed[i] = np.sum(data_array[i-smooth_level:i+smooth_level+1]) / (smooth_level*2+1)
-
-    return data_array_smoothed
 
 if __name__ == '__main__':
     """

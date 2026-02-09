@@ -18,3 +18,11 @@ from test_config import (
     OUTPUT_CONFIG,
     PLOT_CONFIG
 )
+
+from .test_utils import (
+    calculate_normal_vector_error_2d,
+    calculate_normal_vector_error_3d,
+    calculate_curvature_error_2d,
+    calculate_curvature_error_3d,
+    get_curvature_statistics
+)

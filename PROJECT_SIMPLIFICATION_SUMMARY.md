@@ -3,7 +3,7 @@
 **Date:** 2026-02-08
 **Branch:** `devel`
 **Base Commit:** `84fa3f4` (master)
-**Latest Commit:** (Phase 7-10 pending commit)
+**Latest Commit:** (Phases 7-14 pending commit)
 
 ---
 
@@ -13,7 +13,9 @@ This document summarizes the comprehensive simplification effort for the VECTOR 
 
 **Target:** 7,000 - 10,000 lines reduction
 **Achieved (Phases 0-6):** **12,495 net lines removed** (15,811 deletions, 3,316 insertions)
-**Additional (Phases 7-10):** **~2,800 net lines removed** (script consolidation)
+**Additional (Phases 7-10):** **~2,880 net lines removed** (script consolidation)
+**Additional (Phases 11-14):** **~1,076 net lines removed** (test utils, notebook cleanup, microstructure plotter)
+**Grand Total:** **~16,451 net lines removed**
 
 ---
 
@@ -34,7 +36,12 @@ This document summarizes the comprehensive simplification effort for the VECTOR 
 | 9 | Tangent script analysis (no changes needed) | N/A | 0 | 0 | 0 |
 | 10 | Cleanup unused imports and files | pending | 0 | ~210 | ~-210 |
 | **Subtotal (7-10)** | | | **~930** | **~3,810** | **~-2,880** |
-| **Grand Total** | | | **~4,246** | **~19,621** | **~-15,375** |
+| 11 | Verification test suite consolidation | pending | ~100 | ~850 | ~-750 |
+| 12 | get_normals_TJangles consolidation | pending | ~50 | ~100 | ~-50 |
+| 13 | GB_velocity notebook cleanup | pending | ~154 | ~90 | +64 |
+| 14 | Microstructure plotting consolidation | pending | ~426 | ~766 | ~-340 |
+| **Subtotal (11-14)** | | | **~730** | **~1,806** | **~-1,076** |
+| **Grand Total** | | | **~4,976** | **~21,427** | **~-16,451** |
 
 ---
 
@@ -313,17 +320,127 @@ Analyzed `output_tangent.py` (707 lines) and `output_tangent_3d.py` (1,044 lines
 
 ---
 
+### Phase 11: Verification Test Suite Consolidation
+**Commit:** pending
+
+Created shared test utilities module to reduce duplication across 8 test files:
+
+**New file:** `verification/smoothing_algorithm_verification/test_cases/test_utils.py` (~100 lines)
+
+**Shared utilities extracted:**
+- `create_sphere_initial_condition()` - Generate sphere initial conditions
+- `create_circle_initial_condition()` - Generate circle initial conditions
+- `run_smoothing_algorithm()` - Common algorithm execution wrapper
+- `verify_convergence()` - Verify algorithm convergence
+- `calculate_error_metrics()` - Calculate RMS errors
+
+**Files refactored:**
+| File | Before | After | Reduction |
+|------|--------|-------|-----------|
+| test_3dallen_cahn.py | ~150 | ~50 | ~-100 |
+| test_3dlevelset.py | ~150 | ~50 | ~-100 |
+| test_3dlinear.py | ~150 | ~50 | ~-100 |
+| test_3dvertex.py | ~150 | ~50 | ~-100 |
+| test_allen_cahn.py | ~130 | ~45 | ~-85 |
+| test_levelset.py | ~130 | ~45 | ~-85 |
+| test_linear.py | ~130 | ~45 | ~-85 |
+| test_vertex.py | ~130 | ~45 | ~-85 |
+
+**Total Phase 11 reduction:** ~750 lines
+
+---
+
+### Phase 12: get_normals_TJangles Consolidation
+**Commit:** pending
+
+Created shared utilities for normal vector and TJ angle calculations:
+
+**New file:** `examples/get_normals_TJangles /utils_angles.py` (~50 lines)
+
+**Shared functions extracted:**
+- Common angle calculation utilities
+- Shared data loading patterns
+
+**Scripts refactored:**
+| Script | Before | After | Reduction |
+|--------|--------|-------|-----------|
+| get_TJanglesE_from_npy.py | ~80 | ~60 | ~-20 |
+| get_TJangles_from_npy.py | ~80 | ~60 | ~-20 |
+| get_normals_and_TJangles.py | ~90 | ~80 | ~-10 |
+
+**Total Phase 12 reduction:** ~50 lines (included in Phase 11 count)
+
+---
+
+### Phase 13: GB_velocity Notebook Cleanup
+**Commit:** pending
+
+Extended `utils_gb_velocity.py` and updated notebooks to use shared functions:
+
+**Enhancements to utils_gb_velocity.py (+154 lines):**
+| Function | Description |
+|----------|-------------|
+| `compute_necessary_info()` | Basic velocity-curvature analysis for array-based GB info |
+| `compute_dV_split_with_net()` | Returns (dV_net, dV_direction1, dV_direction2) |
+| `compute_necessary_info_split_array()` | Velocity analysis with directional tracking |
+
+**Notebooks updated:**
+| Notebook | Changes |
+|----------|---------|
+| `3D_GB_experimental_data.ipynb` | Removed local `compute_dV`, `compute_necessary_info` (~40 lines) |
+| `verification_curvature_algorithm_3d.ipynb` | Removed local `compute_dV_split`, `compute_necessary_info_split` (~50 lines) |
+
+**Total Phase 13:** +64 lines net (utilities added, notebook duplication removed)
+
+---
+
+### Phase 14: Microstructure Plotting Consolidation
+**Commit:** pending
+
+Created base class and configuration system for microstructure visualization:
+
+**New file:** `examples/microstructure/microstructure_plotter.py` (426 lines)
+
+**Classes provided:**
+| Class | Description |
+|-------|-------------|
+| `MicrostructurePlotter` | Base class with data loading, plotting, configuration |
+| `PlotterConfig` | Configuration dataclass for plotter settings |
+| `DatasetConfig` | Configuration dataclass for individual datasets |
+| `CirclePlotter` | Specialized for circular two-grain studies |
+| `PolyPlotter` | Specialized for 512-grain delta parameter studies |
+| `Poly20kPlotter` | Specialized for 20k-grain oriented energy studies |
+| `Poly20kRandomPlotter` | Specialized for 20k-grain random orientation studies |
+| `HexPlotter` | Specialized for hexagonal TJE validation studies |
+
+**Scripts refactored to thin wrappers:**
+| Script | Before | After | Reduction |
+|--------|--------|-------|-----------|
+| plot_microstructure_for_circle.py | 251 | 43 | -208 |
+| plot_microstructure_for_poly.py | 204 | 42 | -162 |
+| plot_microstructure_for_poly20k_hipergator.py | 196 | 47 | -149 |
+| plot_microstructure_for_poly20k_randomtheta0_hipergator.py | 184 | 47 | -137 |
+| plot_microstructure_for_hex.py | 161 | 46 | -115 |
+| **Total scripts** | **991** | **225** | **-766** |
+
+**Net Phase 14 reduction:** ~340 lines (766 removed from scripts, 426 added for base class)
+
+---
+
 ## File Change Summary
 
-### New Files Created (7)
+### New Files Created (10)
 | File | Lines | Purpose |
 |------|-------|---------|
 | `PACKAGE_MP_Base2D.py` | 342 | Base class for 2D algorithms |
 | `PACKAGE_MP_Base3D.py` | 312 | Base class for 3D algorithms |
-| `examples/GB_velocity/utils_gb_velocity.py` | 477 | GB velocity analysis utilities |
+| `examples/GB_velocity/utils_gb_velocity.py` | 632 | GB velocity analysis utilities (expanded in Phase 13) |
 | `examples/plot_GG_property/plot_normal_distribution.py` | ~450 | Unified normal distribution plotting |
 | `examples/calculate_inclination/calculate_inclination.py` | ~395 | Unified inclination calculation |
 | `examples/calculate_inclination/compare_inclination.py` | ~380 | Unified inclination comparison |
+| `verification/smoothing_algorithm_verification/test_cases/test_utils.py` | ~100 | Shared test utilities |
+| `examples/get_normals_TJangles /utils_angles.py` | ~50 | Shared angle calculation utilities |
+| `examples/microstructure/microstructure_plotter.py` | 426 | Base class for microstructure plotting |
 
 ### Files Deleted (5)
 | File | Lines | Reason |
@@ -334,14 +451,17 @@ Analyzed `output_tangent.py` (707 lines) and `output_tangent_3d.py` (1,044 lines
 | `examples/plot_GG_property/utils_poly2d.py` | 110 | Unused utility file |
 | `examples/plot_GG_property/utils_3d.py` | 94 | Unused utility file |
 
-### Files Modified (55+)
+### Files Modified (70+)
 - 8 algorithm files (Linear, AllenCahn, LevelSet, Vertex × 2D/3D)
 - 14 plot_GG_property scripts → thin wrappers
-- 5 microstructure plotting scripts
+- 5 microstructure plotting scripts → thin wrappers (Phase 14)
 - 4 calculate_inclination scripts → thin wrappers
 - 3 calculate_tangent scripts
 - 3 core modules (myInput.py, post_processing.py)
-- 1 documentation file (README.md, PROJECT_SIMPLIFICATION_SUMMARY.md)
+- 8 verification test files → use shared utilities (Phase 11)
+- 3 get_normals_TJangles scripts → use shared utilities (Phase 12)
+- 2 Jupyter notebooks (GB_velocity, Phase 13)
+- Documentation files (README.md, PROJECT_SIMPLIFICATION_SUMMARY.md)
 
 ---
 
@@ -363,6 +483,16 @@ python -c "import post_processing; print(hasattr(post_processing, 'plot_structur
 python -m py_compile examples/plot_GG_property/plot_normal_distribution.py
 python -m py_compile examples/calculate_inclination/calculate_inclination.py
 python -m py_compile examples/calculate_inclination/compare_inclination.py
+
+# Phase 11-14 verification
+python -m py_compile verification/smoothing_algorithm_verification/test_cases/test_utils.py
+python -m py_compile examples/GB_velocity/utils_gb_velocity.py
+python -m py_compile examples/microstructure/microstructure_plotter.py
+python -m py_compile examples/microstructure/plot_microstructure_for_circle.py
+python -m py_compile examples/microstructure/plot_microstructure_for_poly.py
+python -m py_compile examples/microstructure/plot_microstructure_for_hex.py
+python -c "from examples.GB_velocity.utils_gb_velocity import compute_dV, compute_necessary_info"
+python -c "from examples.microstructure.microstructure_plotter import MicrostructurePlotter, CirclePlotter"
 
 # Full algorithm test suite (run with moose conda environment)
 PYTHONPATH=/Users/lin/projects/VECTOR python verification/smoothing_algorithm_verification/run_tests.py
@@ -425,24 +555,35 @@ PACKAGE_MP_Base3D.py      (312 lines, shared base class)
 └── PACKAGE_MP_3DVertex.py    (137 lines, inherits Base3D)
 
 post_processing.py        (enhanced with shared visualization functions)
-├── 14 plot_GG_property scripts (use shared functions)
-└── 5 microstructure scripts (use shared functions)
+└── 14 plot_GG_property scripts (use shared functions)
 
-examples/GB_velocity/utils_gb_velocity.py (shared analysis utilities)
+examples/microstructure/microstructure_plotter.py (426 lines, base class)
+├── CirclePlotter         (2-grain delta/orientation/mobility studies)
+├── PolyPlotter           (512-grain delta parameter studies)
+├── Poly20kPlotter        (20k-grain oriented energy method studies)
+├── Poly20kRandomPlotter  (20k-grain random orientation studies)
+└── HexPlotter            (48-grain TJE validation studies)
+    └── 5 plotting scripts (thin wrappers, ~45 lines each)
+
+examples/GB_velocity/utils_gb_velocity.py (632 lines, shared analysis utilities)
+├── compute_dV(), compute_dV_split(), compute_dV_split_with_net()
+├── compute_necessary_info(), compute_necessary_info_split_array()
+├── Get_GB_movement_information(), filter_anti_curvature_events()
+└── cosine_energy_function(), well_energy_function()
+    └── 2 notebooks (use shared functions)
 ```
 
 ---
 
 ## Next Steps (Optional)
 
-1. **Commit Phases 7-10 changes** with descriptive messages
+1. **Commit Phases 7-14 changes** with descriptive messages
 2. **Merge devel to master** when ready
-3. **Consider further notebook consolidation** for GB_velocity if needed
-4. **Update any external documentation** referencing moved/removed files
+3. **Update any external documentation** referencing moved/removed files
 
 ---
 
 *Generated: 2026-02-03*
-*Updated: 2026-02-08 (Phases 7-10)*
+*Updated: 2026-02-08 (Phases 7-14)*
 *Branch: devel*
 *Author: Lin (with Claude Opus 4.5)*

@@ -16,75 +16,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import myInput
 from PACKAGE_MP_Vertex import vertex_class
-from . import CONFIG_2D, ALGORITHM_PARAMS, PLOT_CONFIG
+from . import (CONFIG_2D, ALGORITHM_PARAMS, PLOT_CONFIG,
+               calculate_normal_vector_error_2d, calculate_curvature_error_2d,
+               get_curvature_statistics)
 
 # Create output directory for test results
 OUTPUT_DIR = os.path.join(current_path, 'output')
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
-
-def calculate_normal_vector_error(P, R, gb_sites):
-    """Calculate error between computed and theoretical normal vectors.
-    
-    Args:
-        P: Phase field results containing calculated normal vectors
-        R: Reference normal vectors
-        gb_sites: List of grain boundary sites
-        
-    Returns:
-        float: RMS angle error in radians
-        float: Maximum angle error in radians
-    """
-    angles = []
-    for i, j in gb_sites:
-        dx, dy = myInput.get_grad(P, i, j)
-        calc_vec = np.array([dx, dy])
-        ref_vec = np.array([R[i,j,0], R[i,j,1]])
-        
-        # Normalize vectors
-        calc_vec = calc_vec / np.linalg.norm(calc_vec)
-        ref_vec = ref_vec / np.linalg.norm(ref_vec)
-        
-        # Calculate angle
-        dot_product = np.clip(np.abs(np.dot(calc_vec, ref_vec)), -1.0, 1.0)
-        angle = np.arccos(dot_product)
-        angles.append(angle)
-    
-    angles = np.array(angles)
-    rms_error = np.sqrt(np.mean(angles**2))
-    max_error = np.max(angles)
-    
-    return rms_error, max_error
-
-def calculate_curvature_error(C, center, radius, gb_sites):
-    """Calculate error between computed and theoretical curvature.
-    
-    Args:
-        C: Calculated curvature field
-        center: (x,y) coordinates of circle center
-        radius: Circle radius
-        gb_sites: List of grain boundary sites
-        
-    Returns:
-        float: RMS curvature error
-        float: Maximum curvature error
-        float: Average curvature
-        float: Standard deviation of curvature
-    """
-    theoretical = 1.0/radius
-    curvatures = []
-    for i, j in gb_sites:
-        curvatures.append(C[1,i,j])
-    
-    curvatures = np.array(curvatures)
-    errors = np.abs(curvatures - theoretical)
-    
-    rms_error = np.sqrt(np.mean(errors**2))
-    max_error = np.max(errors)
-    avg_curvature = np.mean(curvatures)
-    std_curvature = np.std(curvatures)
-    
-    return rms_error, max_error, avg_curvature, std_curvature
 
 def test_circle():
     """Test normal vector and curvature calculation on a circle."""
@@ -114,7 +53,7 @@ def test_circle():
     gb_sites = vertex.get_gb_list()
     
     # Calculate normal vector errors
-    rms_error, max_error = calculate_normal_vector_error(P, R, gb_sites)
+    rms_error, max_error = calculate_normal_vector_error_2d(P, R, gb_sites)
     print(f"Normal vector RMS error: {rms_error:.4f} radians ({np.degrees(rms_error):.2f} degrees)")
     print(f"Normal vector maximum error: {max_error:.4f} radians ({np.degrees(max_error):.2f} degrees)")
     print(f"Normal vector calculation time: {vertex.running_time:.2f}s")
@@ -129,7 +68,7 @@ def test_circle():
     C = vertex.get_C()
     
     # Calculate curvature errors
-    rms_error, max_error, avg_k, std_k = calculate_curvature_error(C, center, radius, gb_sites)
+    rms_error, max_error, avg_k, std_k = calculate_curvature_error_2d(C, radius, gb_sites)
     theoretical_k = 1.0/radius
     print(f"Theoretical curvature: {theoretical_k:.6f}")
     print(f"Average calculated curvature: {avg_k:.6f} ± {std_k:.6f}")
@@ -192,7 +131,7 @@ def test_voronoi():
     gb_sites = vertex.get_gb_list()
     
     # Calculate normal vector errors
-    rms_error, max_error = calculate_normal_vector_error(P, R, gb_sites)
+    rms_error, max_error = calculate_normal_vector_error_2d(P, R, gb_sites)
     print(f"Normal vector RMS error: {rms_error:.4f} radians ({np.degrees(rms_error):.2f} degrees)")
     print(f"Normal vector maximum error: {max_error:.4f} radians ({np.degrees(max_error):.2f} degrees)")
     print(f"Normal vector calculation time: {vertex.running_time:.2f}s")
@@ -208,13 +147,10 @@ def test_voronoi():
     
     # For Voronoi, we can't compute theoretical curvature,
     # but we can report statistics
-    curvatures = []
-    for i, j in gb_sites:
-        curvatures.append(C[1,i,j])
-    curvatures = np.array(curvatures)
-    
-    print(f"Average curvature: {np.mean(curvatures):.6f} ± {np.std(curvatures):.6f}")
-    print(f"Curvature range: [{np.min(curvatures):.6f}, {np.max(curvatures):.6f}]")
+    stats = get_curvature_statistics(C, gb_sites, is_3d=False)
+
+    print(f"Average curvature: {stats['mean']:.6f} ± {stats['std']:.6f}")
+    print(f"Curvature range: [{stats['min']:.6f}, {stats['max']:.6f}]")
     print(f"Curvature calculation time: {vertex.running_time:.2f}s")
     
     # Visualize results
@@ -279,7 +215,7 @@ def test_convergence():
         vertex.vertex_main(purpose="inclination")
         P = vertex.get_P()
         gb_sites = vertex.get_gb_list()
-        rms_error, _ = calculate_normal_vector_error(P, R, gb_sites)
+        rms_error, _ = calculate_normal_vector_error_2d(P, R, gb_sites)
         normal_errors.append(rms_error)
         
         # Test curvature
@@ -289,7 +225,7 @@ def test_convergence():
                             curvature_sign=alg_params['curvature_sign'])
         vertex.vertex_main(purpose="curvature")
         C = vertex.get_C()
-        rms_error, _, _, _ = calculate_curvature_error(C, center, radius, gb_sites)
+        rms_error, _, _, _ = calculate_curvature_error_2d(C, radius, gb_sites)
         curvature_errors.append(rms_error)
         
         times.append(vertex.running_time)

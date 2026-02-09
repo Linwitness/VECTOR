@@ -16,35 +16,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import myInput
 from PACKAGE_MP_3DLevelSet import levelSet3d_class
-from . import CONFIG_3D, ALGORITHM_PARAMS, PLOT_CONFIG
+from . import (CONFIG_3D, ALGORITHM_PARAMS, PLOT_CONFIG,
+               calculate_normal_vector_error_3d)
 
 # Create output directory for test results
 OUTPUT_DIR = os.path.join(current_path, 'output')
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
-
-def calculate_normal_vector_error(P, R, gb_sites):
-    """Calculate error between computed and theoretical normal vectors."""
-    angles = []
-    for i, j, k in gb_sites:
-        dx, dy, dz = myInput.get_grad3d(P, i, j, k)
-        calc_vec = np.array([dx, dy, dz])
-        ref_vec = np.array([R[i,j,k,0], R[i,j,k,1], R[i,j,k,2]])
-        
-        # Normalize vectors
-        calc_vec = calc_vec / np.linalg.norm(calc_vec)
-        ref_vec = ref_vec / np.linalg.norm(ref_vec)
-        
-        # Calculate angle
-        dot_product = np.clip(np.abs(np.dot(calc_vec, ref_vec)), -1.0, 1.0)
-        angle = np.arccos(dot_product)
-        angles.append(angle)
-    
-    angles = np.array(angles)
-    rms_error = np.sqrt(np.mean(angles**2))
-    max_error = np.max(angles)
-    
-    return rms_error, max_error
 
 def test_sphere():
     """Test normal vector and curvature calculation on a sphere."""
@@ -75,7 +53,7 @@ def test_sphere():
     gb_sites = levelset3d.get_gb_list()
     
     # Calculate normal vector errors
-    rms_error, max_error = calculate_normal_vector_error(P, R, gb_sites)
+    rms_error, max_error = calculate_normal_vector_error_3d(P, R, gb_sites)
     print(f"Normal vector RMS error: {rms_error:.4f} radians ({np.degrees(rms_error):.2f} degrees)")
     print(f"Normal vector maximum error: {max_error:.4f} radians ({np.degrees(max_error):.2f} degrees)")
     print(f"Normal vector calculation time: {levelset3d.running_time:.2f}s")
@@ -138,7 +116,7 @@ def test_convergence():
         levelset3d.levelSet3d_main(purpose="inclination")
         P = levelset3d.get_P()
         gb_sites = levelset3d.get_gb_list()
-        rms_error, _ = calculate_normal_vector_error(P, R, gb_sites)
+        rms_error, _ = calculate_normal_vector_error_3d(P, R, gb_sites)
         normal_errors.append(rms_error)
         
         times.append(levelset3d.running_time)
