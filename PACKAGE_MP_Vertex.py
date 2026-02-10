@@ -513,12 +513,7 @@ if __name__ == '__main__':
     ng = 2
     cores = [4]
 
-    # P0,R=myInput.init2IC(nx, ny, ng, "PolyIC.init")
     P0,R=myInput.Circle_IC(nx,ny, 5)
-    # P0,R=myInput.Voronoi_IC(nx,ny,ng)
-    # P0,R=myInput.Complex2G_IC(nx,ny)
-    # P0,R=myInput.Abnormal_IC(nx,ny)
-    # P0[:,:,:]=myInput.SmallestGrain_IC(100,100)
     for ci in cores:
         for inti in interval:
             test1 = vertex_class(nx,ny,ng,ci,inti,P0,R)

@@ -439,12 +439,7 @@ if __name__ == '__main__':
     ng = 2
     # cores = 2
 
-    # P0,R=myInput.init2IC(nx, ny, ng, "PolyIC.init")
     P0,R=myInput.Circle_IC(nx,ny)
-    # P0,R=myInput.Voronoi_IC(nx,ny,ng)
-    # P0,R=myInput.Complex2G_IC(nx,ny)
-    # P0,R=myInput.Abnormal_IC(nx,ny)
-    # P0[:,:,:]=myInput.SmallestGrain_IC(100,100)
     for cores in [4]:
 
         for nsteps in range(10,11):

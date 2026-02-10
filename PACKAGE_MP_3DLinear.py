@@ -405,14 +405,7 @@ if __name__ == '__main__':
     nx, ny, nz = 100, 100, 100
     ng = 2
 
-    # P0,R=myInput.init2IC(nx, ny, ng, "PolyIC.init")
-    # P0,R = myInput.Complex2G_IC3d(nx,ny,nz)
-    # P0,R=myInput.Circle_IC(nx,ny)
     P0,R=myInput.Circle_IC3d(nx,ny,nz)
-    # P0,R=myInput.Voronoi_IC(nx,ny,ng)
-    # P0,R=myInput.Complex2G_IC(nx,ny)
-    # P0[:,:,:],R=myInput.Abnormal_IC(nx,ny)
-    # P0[:,:,:]=myInput.SmallestGrain_IC(100,100)
 
     for cores in [8]:
         for loop_times in range(1,2):

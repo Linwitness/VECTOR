@@ -142,35 +142,6 @@ def Circle_IC(nx, ny, r=50):
 
     return P, R
 
-def QuarterCircle_IC(nx, ny):
-    """Generate 2D quarter-circle grain initial condition
-    
-    Args:
-        nx, ny: Grid dimensions
-        
-    Returns:
-        tuple: (grain structure array, reference array)
-    """
-    ng = 2
-    P = np.zeros((nx, ny, ng))
-    R = np.zeros((nx, ny, 2))
-
-    for i in range(0, nx):
-        for j in range(0, ny):
-            radius = math.sqrt((j-ny/2)**2+(i-nx/2)**2)
-            if radius < 40 and i < nx/2 and j < ny/2:
-                P[i, j, 0] = 1.
-                if radius != 0:
-                    R[i, j, 0] = (j-ny/2)/radius
-                    R[i, j, 1] = (i-nx/2)/radius
-            else:
-                P[i, j, 1] = 1.
-                if radius != 0:
-                    R[i, j, 0] = (j-ny/2)/radius
-                    R[i, j, 1] = (i-nx/2)/radius
-
-    return P, R
-
 def Voronoi_IC(nx, ny, ng):
     """Generate 2D Voronoi tessellation initial condition
     
@@ -370,97 +341,6 @@ def Complex2G_IC(nx, ny, wavelength=20):
                 R[i, j, 1] = 0
 
     return P, R
-
-def Abnormal_IC(nx, ny):
-    """Generate 2D abnormal grain growth initial condition
-    
-    Args:
-        nx, ny: Grid dimensions
-        
-    Returns:
-        tuple: (grain structure array, reference array)
-    """
-    ng = 2
-    P = np.zeros((nx, ny, ng))
-    R = np.zeros((nx, ny, 2))
-
-    file = open(f"input/AG{nx}x{ny}.txt")
-    lines = file.readlines()
-
-    row = 0
-    for line in lines:
-        line = line.strip().split()
-        for i in range(0, len(line)):
-            P[row, i, 0] = float(line[i])
-            P[row, i, 1] = 1-float(line[i])
-        row += 1
-
-    if nx == 200:
-        R1 = np.load('npy/ACabnormal20_R.npy')
-        R2 = np.load('npy/BLabnormal04_R.npy')
-        R3 = np.load('npy/LSabnormal01_R.npy')
-        R4 = np.load('npy/VTabnormal03_R.npy')
-
-        m = 0
-        for i in range(0, nx):
-            for j in range(0, ny):
-                if R4[i, j, 1]*R1[i, j, 1]+R4[i, j, 0]*R1[i, j, 0] < -0.7:
-                    R4[i, j, 0] = -R4[i, j, 0]
-                    R4[i, j, 1] = -R4[i, j, 0]
-                    m += 1
-
-        for i in range(0, nx):
-            for j in range(0, ny):
-                R[i, j, 0] = (R1[i, j, 0] + R2[i, j, 0] + R3[i, j, 0] + R4[i, j, 0])/4
-                R[i, j, 1] = (R1[i, j, 1] + R2[i, j, 1] + R3[i, j, 1] + R4[i, j, 1])/4
-                length = math.sqrt(R[i, j, 0]**2+R[i, j, 1]**2)
-                if length == 0:
-                    R[i, j, 0] = 0
-                    R[i, j, 1] = 0
-                else:
-                    R[i, j, 0] = R[i, j, 0]/length
-                    R[i, j, 1] = R[i, j, 1]/length
-
-    return P, R
-
-def SmallestGrain_IC(nx, ny):
-    """Generate 2D initial condition with small grains
-    
-    Args:
-        nx, ny: Grid dimensions
-        
-    Returns:
-        tuple: (grain structure array, reference array)
-    """
-    ng = 2
-    P = np.zeros((nx, ny, ng))
-
-    for i in range(0, nx):
-        for j in range(0, ny):
-            if i == 25 and j == 10:
-                P[i, j, 0] = 1
-            elif i >= 50 and i <= 90 and j == 10:
-                P[i, j, 0] = 1
-            elif i >= 24 and i <= 25 and j >= 25 and j <= 26:
-                P[i, j, 0] = 1
-            elif i >= 50 and i <= 90 and j >= 25 and j <= 26:
-                P[i, j, 0] = 1
-            elif i >= 23 and i <= 25 and j >= 40 and j <= 42:
-                P[i, j, 0] = 1
-            elif i >= 50 and i <= 90 and j >= 40 and j <= 42:
-                P[i, j, 0] = 1
-            elif i >= 22 and i <= 25 and j >= 60 and j <= 63:
-                P[i, j, 0] = 1
-            elif i >= 50 and i <= 90 and j >= 60 and j <= 63:
-                P[i, j, 0] = 1
-            elif i >= 21 and i <= 25 and j >= 83 and j <= 87:
-                P[i, j, 0] = 1
-            elif i >= 50 and i <= 90 and j >= 83 and j <= 87:
-                P[i, j, 0] = 1
-            else:
-                P[i, j, 1] = 1
-
-    return P
 
 ###########################################
 # 3. 3D Initial Condition Generators
@@ -849,36 +729,6 @@ def periodic_bc3d(nx, ny, nz, i, j, k):
         kp = 0
     if km < 0:
         km = nz - 1
-    return ip, im, jp, jm, kp, km
-
-def repeat_bc3d(nx, ny, nz, i, j, k):
-    """Apply 3D repeating boundary conditions
-    
-    Args:
-        nx, ny, nz: Grid dimensions
-        i, j, k: Current indices
-        
-    Returns:
-        tuple: (ip,im,jp,jm,kp,km) neighboring indices with repeat BCs
-    """
-    ip = i + 1
-    im = i - 1
-    jp = j + 1
-    jm = j - 1
-    kp = k + 1
-    km = k - 1
-    if ip > nx - 1:
-        ip = nx
-    if im < 0:
-        im = 0
-    if jp > ny - 1:
-        jp = ny
-    if jm < 0:
-        jm = 0
-    if kp > nz - 1:
-        kp = nz
-    if km < 0:
-        km = 0
     return ip, im, jp, jm, kp, km
 
 def filter_bc3d(nx, ny, nz, i, j, k, length):

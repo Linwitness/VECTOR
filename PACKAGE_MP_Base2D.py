@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import myInput
 import datetime
 import multiprocessing as mp
+import PACKAGE_MP_BaseCommon as BaseCommon
 
 
 class Base2D(object):
@@ -219,21 +220,7 @@ class Base2D(object):
                        (nx, ny, 2) for normal vectors
                 - core_time: float, computation time in seconds
         """
-        res_stime = datetime.datetime.now()
-        (fval, core_time) = back_result
-        if core_time > self.running_coreTime:
-            self.running_coreTime = core_time
-
-        if self.verification_system == True:
-            print("res_back start...")
-        if fval.shape[2] == 1:
-            self.C[1, :, :] += fval[:, :, 0]
-        elif fval.shape[2] == 2:
-            self.P[1, :, :] += fval[:, :, 0]
-            self.P[2, :, :] += fval[:, :, 1]
-        res_etime = datetime.datetime.now()
-        if self.verification_system == True:
-            print("my res time is " + str((res_etime - res_stime).total_seconds()))
+        BaseCommon.res_back_common(self, back_result, dim=2)
 
     def res_back_with_V(self, back_result):
         """Callback to aggregate results including evolution state V.
@@ -245,19 +232,7 @@ class Base2D(object):
             back_result (tuple): (fval, core_time, V) where V is the
                 updated evolution state matrix.
         """
-        res_stime = datetime.datetime.now()
-        (fval, core_time, self.V) = back_result
-        if core_time > self.running_coreTime:
-            self.running_coreTime = core_time
-
-        print("res_back start...")
-        if fval.shape[2] == 1:
-            self.C[1, :, :] += fval[:, :, 0]
-        elif fval.shape[2] == 2:
-            self.P[1, :, :] += fval[:, :, 0]
-            self.P[2, :, :] += fval[:, :, 1]
-        res_etime = datetime.datetime.now()
-        print("my res time is " + str((res_etime - res_stime).total_seconds()))
+        BaseCommon.res_back_with_V_common(self, back_result, dim=2)
 
     def get_2d_plot(self, init, algo, fig_page, arrow_scale=30, cmap='gray',
                     save_prefix='Plot', filter_range=None):

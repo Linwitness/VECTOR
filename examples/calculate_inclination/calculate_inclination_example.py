@@ -107,8 +107,6 @@ These are commented out but provide examples of various microstructure types:
 # P0,R=myInput.Circle_IC3d(nx,ny,nz)                 # Circular grain in 3D
 # P0,R=myInput.Voronoi_IC(nx,ny,ng)                  # Voronoi tessellation 2D
 # P0,R=myInput.Complex2G_IC(nx,ny)                   # Complex 2-grain 2D system
-# P0,R=myInput.Abnormal_IC(nx,ny)                    # Abnormal grain growth configuration
-# P0,R=myInput.SmallestGrain_IC(100,100)             # Smallest grain test system
 
 #%% ================================================================================
 # VECTOR SMOOTHING ALGORITHM EXECUTION
